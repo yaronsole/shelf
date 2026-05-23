@@ -1,0 +1,198 @@
+import SwiftUI
+import SwiftData
+
+struct TasteProfileView: View {
+    @Environment(\.modelContext) private var modelContext
+
+    @Query(sort: \LocalSeedBook.addedAt, order: .reverse)
+    private var seedBooks: [LocalSeedBook]
+
+    @State private var vm = TasteProfileViewModel()
+
+    private let columns = [
+        GridItem(.flexible(), spacing: 12),
+        GridItem(.flexible(), spacing: 12),
+        GridItem(.flexible(), spacing: 12),
+    ]
+
+    var body: some View {
+        NavigationStack {
+            Group {
+                if seedBooks.isEmpty {
+                    EmptyStateView(
+                        systemImage: "person.text.rectangle",
+                        title: "No taste profile yet",
+                        subtitle: "Add books you love to get personalized picks.",
+                        action: { vm.isShowingAddSheet = true },
+                        actionLabel: Strings.TasteProfile.addBook
+                    )
+                } else {
+                    ScrollView {
+                        // Warning banner if below threshold (TASTE-04)
+                        if seedBooks.count <= TasteProfileViewModel.warnThreshold {
+                            HStack(spacing: 8) {
+                                Image(systemName: "exclamationmark.triangle")
+                                    .foregroundStyle(.orange)
+                                Text(Strings.TasteProfile.warningBelowMin)
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+                            .padding(12)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .background(Color(.systemOrange).opacity(0.08))
+                            .clipShape(RoundedRectangle(cornerRadius: 10))
+                            .padding(.horizontal, 16)
+                            .padding(.top, 8)
+                        }
+
+                        LazyVGrid(columns: columns, spacing: 12) {
+                            ForEach(seedBooks) { book in
+                                SeedBookCoverView(
+                                    book: book,
+                                    canRemove: seedBooks.count > TasteProfileViewModel.minimumSeeds
+                                ) {
+                                    vm.confirmRemove(book)
+                                }
+                            }
+                        }
+                        .padding(16)
+                    }
+                }
+            }
+            .navigationTitle(Strings.TasteProfile.tabTitle)
+            .navigationBarTitleDisplayMode(.large)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button {
+                        vm.isShowingAddSheet = true
+                    } label: {
+                        Label(Strings.TasteProfile.addBook, systemImage: "plus")
+                    }
+                }
+            }
+        }
+        .sheet(isPresented: $vm.isShowingAddSheet) {
+            SeedBookAddSheet(vm: vm, modelContext: modelContext)
+        }
+        .confirmationDialog(
+            Strings.TasteProfile.removeWarning,
+            isPresented: $vm.isShowingRemoveConfirm,
+            titleVisibility: .visible
+        ) {
+            Button(Strings.TasteProfile.removeAction, role: .destructive) {
+                vm.executeRemove(modelContext: modelContext, seedCount: seedBooks.count)
+            }
+            Button(Strings.TasteProfile.cancel, role: .cancel) {
+                vm.cancelRemove()
+            }
+        }
+    }
+}
+
+// MARK: - Cover Tile
+
+private struct SeedBookCoverView: View {
+    let book: LocalSeedBook
+    let canRemove: Bool
+    let onRemove: () -> Void
+
+    var body: some View {
+        ZStack(alignment: .topTrailing) {
+            CoverImageView(urlString: book.coverURL, cornerRadius: 8)
+                .aspectRatio(2/3, contentMode: .fit)
+                .contextMenu {
+                    if canRemove {
+                        Button(role: .destructive) {
+                            onRemove()
+                        } label: {
+                            Label(Strings.TasteProfile.removeAction, systemImage: "trash")
+                        }
+                    }
+                }
+        }
+    }
+}
+
+// MARK: - Add Sheet
+
+private struct SeedBookAddSheet: View {
+    @Bindable var vm: TasteProfileViewModel
+    let modelContext: ModelContext
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        NavigationStack {
+            VStack(spacing: 0) {
+                SearchBar(query: $vm.searchQuery, placeholder: Strings.Onboarding.SeedSearch.searchPlaceholder) { query in
+                    vm.onQueryChanged(query)
+                }
+                .padding(16)
+
+                if vm.isSearching {
+                    ProgressView().padding()
+                } else {
+                    List(vm.searchResults) { result in
+                        Button {
+                            vm.addBook(result, modelContext: modelContext)
+                        } label: {
+                            SearchResultRow(book: result)
+                        }
+                        .disabled(vm.isAddingBook)
+                    }
+                    .listStyle(.plain)
+                }
+            }
+            .navigationTitle(Strings.TasteProfile.addBook)
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button(Strings.Common.cancel) { dismiss() }
+                }
+            }
+        }
+    }
+}
+
+// MARK: - Search Bar (reusable within this file)
+
+private struct SearchBar: View {
+    @Binding var query: String
+    let placeholder: String
+    var onChange: (String) -> Void
+
+    var body: some View {
+        HStack {
+            Image(systemName: "magnifyingglass")
+                .foregroundStyle(.secondary)
+            TextField(placeholder, text: $query)
+                .autocorrectionDisabled()
+                .onChange(of: query) { _, new in onChange(new) }
+        }
+        .padding(10)
+        .background(Color(.secondarySystemFill))
+        .clipShape(RoundedRectangle(cornerRadius: 10))
+    }
+}
+
+// MARK: - Search Result Row
+
+private struct SearchResultRow: View {
+    let book: BookSearchResult
+
+    var body: some View {
+        HStack(spacing: 12) {
+            if let url = book.coverURL {
+                CoverImageView(urlString: url, cornerRadius: 4)
+                    .frame(width: 36, height: 52)
+            }
+            VStack(alignment: .leading, spacing: 2) {
+                Text(book.title)
+                    .font(.subheadline.bold())
+                    .lineLimit(2)
+                Text(book.author)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+        }
+    }
+}

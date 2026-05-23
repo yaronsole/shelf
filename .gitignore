@@ -1,0 +1,47 @@
+# macOS
+.DS_Store
+**/.DS_Store
+
+# Xcode / iOS
+**/xcuserdata/
+**/*.xcuserstate
+**/DerivedData/
+**/build/
+**/*.xcworkspace/xcuserdata/
+**/Pods/
+
+# xcodegen output is generated — keep project.yml, regenerate .xcodeproj locally
+# (Commenting out so the generated project IS tracked. Uncomment to ignore.)
+# **/*.xcodeproj/
+
+# Swift
+**/.build/
+**/Package.resolved
+
+# Python / backend
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+.venv/
+venv/
+env/
+.env
+.env.local
+
+# Secrets — never commit
+**/serviceAccount*.json
+**/GoogleService-Info.plist
+*.pem
+*.key
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+*.log
