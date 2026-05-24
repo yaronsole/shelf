@@ -282,20 +282,31 @@ def get_suggestions(body: SuggestionsRequest, user_id: UserID):
         seed_author=body.seed_book_author,
         domain=body.domain,
         count=body.count,
+        exclude=body.exclude,
     )
     message = claude.messages.create(
         model="claude-opus-4-5",
-        max_tokens=512,
+        max_tokens=2048,  # bumped — blurbs need more tokens
         messages=[{"role": "user", "content": prompt}],
     )
     raw = message.content[0].text
     books: list[dict] = json.loads(raw)
 
-    # Enrich with Google Books cover art (sequential — only 3 books per call)
+    # Server-side dedup against the supplied exclude list (lowercased title|author)
+    exclude_keys = {item.lower().strip() for item in (body.exclude or [])}
+    def _key(b: dict) -> str:
+        return f"{b.get('title','').lower().strip()}|{b.get('author','').lower().strip()}"
+    books = [b for b in books if _key(b) not in exclude_keys]
+
+    # Enrich with Google Books cover + rating data
     with httpx.Client(timeout=5.0) as client:
         for b in books:
+            meta = lookup_metadata(b.get("title", ""), b.get("author", ""), client=client)
             if not b.get("cover_url"):
-                b["cover_url"] = lookup_cover(b.get("title", ""), b.get("author", ""), client=client)
+                b["cover_url"] = meta.get("cover_url", "")
+            b["average_rating"] = meta.get("average_rating")
+            b["ratings_count"] = meta.get("ratings_count")
+            b["awards"] = b.get("awards") or []
 
     return [SuggestionResponse(id=str(uuid.uuid4()), **b) for b in books]
 

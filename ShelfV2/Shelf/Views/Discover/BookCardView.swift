@@ -29,21 +29,21 @@ struct BookCardView: View {
                         .foregroundStyle(.secondary)
                 }
 
-                // Rating + Awards
-                if rec.averageRating != nil || !rec.awards.isEmpty {
+                // Rating (only if at least 500 ratings — Google Books data is noisy below that)
+                // + Awards
+                let hasRating = (rec.averageRating != nil) && ((rec.ratingsCount ?? 0) >= 500)
+                if hasRating || !rec.awards.isEmpty {
                     HStack(spacing: 10) {
-                        if let r = rec.averageRating {
+                        if hasRating, let r = rec.averageRating, let count = rec.ratingsCount {
                             HStack(spacing: 3) {
                                 Image(systemName: "star.fill")
                                     .font(.caption2)
                                     .foregroundStyle(.yellow)
                                 Text(String(format: "%.1f", r))
                                     .font(.caption.weight(.semibold))
-                                if let count = rec.ratingsCount {
-                                    Text("(\(count.formatted(.number.notation(.compactName))))")
-                                        .font(.caption2)
-                                        .foregroundStyle(.secondary)
-                                }
+                                Text("(\(count.formatted(.number.notation(.compactName))))")
+                                    .font(.caption2)
+                                    .foregroundStyle(.secondary)
                             }
                         }
                         ForEach(rec.awards, id: \.self) { award in

@@ -2,8 +2,8 @@ import SwiftUI
 import SwiftData
 
 // Bottom sheet shown when the user taps a seed book in the Taste profile.
-// Fetches Claude-generated suggestions for that specific book and lets the
-// user save any of them to the Reading List with one tap.
+// Pulls Claude-generated suggestions for that book and shows them as full
+// Discover-style cards with Save / Read / Pass CTAs.
 struct SimilarBooksSheet: View {
     let seed: LocalSeedBook
     let modelContext: ModelContext
@@ -12,14 +12,19 @@ struct SimilarBooksSheet: View {
     @State private var suggestions: [SuggestionDTO] = []
     @State private var isLoading = true
     @State private var isLoadingMore = false
-    @State private var savedIds: Set<String> = []
-    // Dedup by lowercased "title|author" — IDs are random per Claude call
-    @State private var seenKeys: Set<String> = []
+    // Dedup keys passed to the backend exclude list — lowercased title|author
+    @State private var excludeKeys: [String] = []
+    // Locally-dismissed IDs (Pass / Save / Read removes from view)
+    @State private var hiddenIds: Set<String> = []
+
+    private var visibleSuggestions: [SuggestionDTO] {
+        suggestions.filter { !hiddenIds.contains($0.id) }
+    }
 
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(alignment: .leading, spacing: 20) {
+                VStack(alignment: .leading, spacing: 16) {
                     // Seed header
                     HStack(alignment: .top, spacing: 14) {
                         CoverImageView(urlString: seed.coverURL, cornerRadius: 6)
@@ -38,61 +43,60 @@ struct SimilarBooksSheet: View {
                         }
                         Spacer()
                     }
-                    .padding(.horizontal, 20)
+                    .padding(.horizontal, 16)
                     .padding(.top, 12)
 
-                    Divider().padding(.horizontal, 20)
-
                     if isLoading {
-                        VStack {
+                        VStack(spacing: 8) {
                             ProgressView()
                             Text("Finding similar reads…")
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
-                                .padding(.top, 8)
                         }
                         .frame(maxWidth: .infinity)
                         .padding(.top, 40)
-                    } else if suggestions.isEmpty {
-                        Text("Couldn't find suggestions right now. Try again later.")
+                    } else if visibleSuggestions.isEmpty {
+                        Text("No more suggestions for this book right now.")
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
                             .padding(.horizontal, 20)
                             .padding(.top, 40)
                     } else {
-                        VStack(spacing: 12) {
-                            ForEach(suggestions) { s in
-                                SuggestionRow(
-                                    suggestion: s,
-                                    isSaved: savedIds.contains(s.id),
-                                    onSave: { save(s) }
-                                )
-                            }
-
-                            // "Find more" CTA at the bottom of the suggestions list
-                            Button(action: { Task { await loadMore() } }) {
-                                HStack(spacing: 6) {
-                                    if isLoadingMore {
-                                        ProgressView().controlSize(.small)
-                                    } else {
-                                        Image(systemName: "sparkles")
-                                    }
-                                    Text(isLoadingMore ? "Finding more…" : "Find more like this")
-                                        .font(.subheadline.weight(.semibold))
-                                }
-                                .frame(maxWidth: .infinity)
-                                .padding(.vertical, 12)
-                                .background(
-                                    RoundedRectangle(cornerRadius: 10)
-                                        .fill(Color(.secondarySystemFill))
-                                )
-                                .foregroundStyle(Color(.label))
-                            }
-                            .buttonStyle(.plain)
-                            .disabled(isLoadingMore)
-                            .padding(.top, 8)
+                        ForEach(visibleSuggestions) { s in
+                            SuggestionCard(
+                                suggestion: s,
+                                onSave: { save(s) },
+                                onPass: { hide(s) },
+                                onAlreadyRead: { _ in hide(s) }
+                            )
+                            .padding(.horizontal, 16)
                         }
-                        .padding(.horizontal, 20)
+                    }
+
+                    // "Find more" CTA always shown (unless initial load)
+                    if !isLoading {
+                        Button(action: { Task { await loadMore() } }) {
+                            HStack(spacing: 6) {
+                                if isLoadingMore {
+                                    ProgressView().controlSize(.small)
+                                } else {
+                                    Image(systemName: "sparkles")
+                                }
+                                Text(isLoadingMore ? "Finding more…" : "Find more like this")
+                                    .font(.subheadline.weight(.semibold))
+                            }
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 14)
+                            .background(
+                                RoundedRectangle(cornerRadius: 12)
+                                    .fill(Color(.secondarySystemFill))
+                            )
+                            .foregroundStyle(Color(.label))
+                        }
+                        .buttonStyle(.plain)
+                        .disabled(isLoadingMore)
+                        .padding(.horizontal, 16)
+                        .padding(.top, 8)
                     }
                 }
                 .padding(.bottom, 24)
@@ -106,20 +110,29 @@ struct SimilarBooksSheet: View {
             }
         }
         .presentationDetents([.large])
-        .task { await loadSuggestions() }
+        .task { await initialLoad() }
     }
+
+    // MARK: - Loading
 
     private static func key(_ title: String, _ author: String) -> String {
         "\(title.lowercased())|\(author.lowercased())"
     }
 
-    private func loadSuggestions() async {
-        let result = await fetch()
+    private func initialLoad() async {
+        // Seed exclude with this seed itself + any books already in Reading List for this user
+        let seedKey = Self.key(seed.title, seed.author)
+        let savedKeys: [String] = (try? modelContext.fetch(FetchDescriptor<ReadingListItem>()))?
+            .map { Self.key($0.title, $0.author) } ?? []
+        let initialExclude = ([seedKey] + savedKeys).reduce(into: [String]()) { acc, k in
+            if !acc.contains(k) { acc.append(k) }
+        }
+        excludeKeys = initialExclude
+
+        let result = await fetch(count: 5)
         await MainActor.run {
-            // Seed dedup keys with both this seed itself and the returned books
-            self.seenKeys.insert(Self.key(self.seed.title, self.seed.author))
             for s in result {
-                self.seenKeys.insert(Self.key(s.title, s.author))
+                self.excludeKeys.append(Self.key(s.title, s.author))
             }
             self.suggestions = result
             self.isLoading = false
@@ -129,71 +142,181 @@ struct SimilarBooksSheet: View {
     private func loadMore() async {
         guard !isLoadingMore else { return }
         await MainActor.run { self.isLoadingMore = true }
-        let result = await fetch()
+        let result = await fetch(count: 5)
         await MainActor.run {
-            // Filter out any title/author we've already shown
-            let fresh = result.filter { !self.seenKeys.contains(Self.key($0.title, $0.author)) }
-            for s in fresh {
-                self.seenKeys.insert(Self.key(s.title, s.author))
+            for s in result {
+                self.excludeKeys.append(Self.key(s.title, s.author))
             }
-            self.suggestions.append(contentsOf: fresh)
+            self.suggestions.append(contentsOf: result)
             self.isLoadingMore = false
         }
     }
 
-    private func fetch() async -> [SuggestionDTO] {
+    private func fetch(count: Int) async -> [SuggestionDTO] {
         let request = BookSearchResult(
             id: seed.id, title: seed.title, author: seed.author, coverURL: seed.coverURL
         )
-        return (try? await APIClient.shared.fetchSuggestions(for: request)) ?? []
+        return (try? await APIClient.shared.fetchSuggestions(
+            for: request, count: count, exclude: excludeKeys
+        )) ?? []
     }
 
+    // MARK: - Actions
+
     private func save(_ s: SuggestionDTO) {
-        guard !savedIds.contains(s.id) else { return }
         let item = ReadingListItem(
             id: s.id,
             title: s.title,
             author: s.author,
             coverURL: s.coverURL,
-            blurb: "Suggested because you love \(seed.title)."
+            blurb: s.blurb.isEmpty ? "Suggested because you love \(seed.title)." : s.blurb
         )
         modelContext.insert(item)
-        savedIds.insert(s.id)
+        hide(s)
+    }
+
+    private func hide(_ s: SuggestionDTO) {
+        withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+            hiddenIds.insert(s.id)
+        }
     }
 }
 
-// MARK: - Row
+// MARK: - Suggestion Card (Discover-style)
 
-private struct SuggestionRow: View {
+private struct SuggestionCard: View {
     let suggestion: SuggestionDTO
-    let isSaved: Bool
     let onSave: () -> Void
+    let onPass: () -> Void
+    let onAlreadyRead: (Bool) -> Void
+
+    @State private var showAlreadyReadSheet = false
 
     var body: some View {
-        HStack(alignment: .top, spacing: 12) {
-            CoverImageView(urlString: suggestion.coverURL, cornerRadius: 6)
-                .frame(width: 50, height: 75)
-            VStack(alignment: .leading, spacing: 2) {
-                Text(suggestion.title)
-                    .font(.subheadline.bold())
-                    .lineLimit(2)
-                Text(suggestion.author)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+        VStack(alignment: .leading, spacing: 0) {
+            CoverImageView(urlString: suggestion.coverURL, cornerRadius: 0)
+                .aspectRatio(3/4, contentMode: .fit)
+                .frame(maxWidth: .infinity)
+                .clipped()
+
+            VStack(alignment: .leading, spacing: 10) {
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(suggestion.title)
+                        .font(.title3.bold())
+                        .fixedSize(horizontal: false, vertical: true)
+                    Text(suggestion.author)
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
+
+                // Rating only if >= 500 ratings (PRD-aligned threshold)
+                if let r = suggestion.averageRating,
+                   let count = suggestion.ratingsCount,
+                   count >= 500 {
+                    HStack(spacing: 3) {
+                        Image(systemName: "star.fill")
+                            .font(.caption2)
+                            .foregroundStyle(.yellow)
+                        Text(String(format: "%.1f", r))
+                            .font(.caption.weight(.semibold))
+                        Text("(\(count.formatted(.number.notation(.compactName))))")
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+
+                if !suggestion.genre.isEmpty || !suggestion.era.isEmpty {
+                    HStack(spacing: 6) {
+                        if !suggestion.genre.isEmpty {
+                            TinyTag(text: suggestion.genre)
+                        }
+                        if !suggestion.era.isEmpty {
+                            TinyTag(text: suggestion.era)
+                        }
+                    }
+                }
+
+                if !suggestion.blurb.isEmpty {
+                    Text(suggestion.blurb)
+                        .font(.subheadline)
+                        .foregroundStyle(Color(.label))
+                        .fixedSize(horizontal: false, vertical: true)
+                        .lineSpacing(2)
+                }
+
+                HStack(spacing: 8) {
+                    CardActionButton(label: "Save", icon: "bookmark.fill", kind: .primary, action: onSave)
+                    CardActionButton(label: "Read", icon: "checkmark", kind: .secondary) {
+                        showAlreadyReadSheet = true
+                    }
+                    CardActionButton(label: "Pass", icon: "xmark", kind: .tertiary, action: onPass)
+                }
+                .padding(.top, 4)
             }
-            Spacer()
-            Button(action: onSave) {
-                Image(systemName: isSaved ? "checkmark.circle.fill" : "bookmark")
-                    .font(.title3)
-                    .foregroundStyle(isSaved ? Color.green : Color(.label))
-            }
-            .buttonStyle(.plain)
-            .disabled(isSaved)
+            .padding(14)
         }
-        .padding(12)
-        .background(
-            RoundedRectangle(cornerRadius: 10)
-                .fill(Color(.secondarySystemFill))
-        )
+        .background(Color(.systemBackground))
+        .clipShape(RoundedRectangle(cornerRadius: 14))
+        .shadow(color: .black.opacity(0.06), radius: 10, x: 0, y: 3)
+        .sheet(isPresented: $showAlreadyReadSheet) {
+            AlreadyReadSheet(
+                title: suggestion.title,
+                onLoved: { onAlreadyRead(true) },
+                onDidntLike: { onAlreadyRead(false) }
+            )
+        }
+    }
+}
+
+private struct TinyTag: View {
+    let text: String
+    var body: some View {
+        Text(text)
+            .font(.caption.weight(.medium))
+            .foregroundStyle(Color(.secondaryLabel))
+            .padding(.horizontal, 8)
+            .padding(.vertical, 4)
+            .background(Capsule().fill(Color(.secondarySystemFill)))
+    }
+}
+
+private enum CardActionKind { case primary, secondary, tertiary }
+
+private struct CardActionButton: View {
+    let label: String
+    let icon: String
+    let kind: CardActionKind
+    let action: () -> Void
+
+    private var foreground: Color {
+        switch kind {
+        case .primary: return .white
+        case .secondary: return Color(red: 0.10, green: 0.45, blue: 0.30)
+        case .tertiary: return Color(.tertiaryLabel)
+        }
+    }
+    private var background: Color {
+        switch kind {
+        case .primary: return Color(red: 0.10, green: 0.35, blue: 0.85)
+        case .secondary: return Color(red: 0.10, green: 0.45, blue: 0.30).opacity(0.12)
+        case .tertiary: return Color(.secondarySystemFill)
+        }
+    }
+
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 5) {
+                Image(systemName: icon)
+                    .font(.subheadline.weight(.semibold))
+                Text(label)
+                    .font(.subheadline.weight(.semibold))
+            }
+            .frame(maxWidth: kind == .primary ? .infinity : nil)
+            .padding(.horizontal, kind == .primary ? 14 : 12)
+            .padding(.vertical, 10)
+            .background(RoundedRectangle(cornerRadius: 10).fill(background))
+            .foregroundStyle(foreground)
+        }
+        .buttonStyle(.plain)
     }
 }

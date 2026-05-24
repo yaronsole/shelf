@@ -38,6 +38,8 @@ class SuggestionsRequest(BaseModel):
     seed_book_author: str
     domain: str = "books"
     count: int = Field(default=3, ge=1, le=10)
+    # "title|author" strings already shown to the user — Claude will avoid these
+    exclude: list[str] = Field(default_factory=list)
 
 
 # ---------------------------------------------------------------------------
@@ -73,6 +75,12 @@ class SuggestionResponse(BaseModel):
     title: str
     author: str
     cover_url: str = ""
+    blurb: str = ""
+    genre: str = ""
+    era: str = ""
+    awards: list[str] = []
+    average_rating: float | None = None
+    ratings_count: int | None = None
 
 
 class DebugInfoResponse(BaseModel):

@@ -23,6 +23,9 @@ final class CachedRecommendation {
     var awards: [String] = []
     var averageRating: Double? = nil
     var ratingsCount: Int? = nil
+    // Frequency cap: incremented at launch when isSeen flips from true.
+    // Eliminated (marked reacted) once viewCount >= 2.
+    var viewCount: Int = 0
 
     init(
         id: String,

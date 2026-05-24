@@ -113,9 +113,10 @@ struct SuggestionsRequest: Encodable {
     let seedBookAuthor: String
     let domain: String
     let count: Int
+    let exclude: [String]
 
     enum CodingKeys: String, CodingKey {
-        case domain, count
+        case domain, count, exclude
         case seedBookTitle = "seed_book_title"
         case seedBookAuthor = "seed_book_author"
     }
@@ -126,10 +127,32 @@ struct SuggestionDTO: Decodable, Identifiable {
     let title: String
     let author: String
     let coverURL: String
+    let blurb: String
+    let genre: String
+    let era: String
+    let awards: [String]
+    let averageRating: Double?
+    let ratingsCount: Int?
 
     enum CodingKeys: String, CodingKey {
-        case id, title, author
+        case id, title, author, blurb, genre, era, awards
         case coverURL = "cover_url"
+        case averageRating = "average_rating"
+        case ratingsCount = "ratings_count"
+    }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        id = try c.decode(String.self, forKey: .id)
+        title = try c.decode(String.self, forKey: .title)
+        author = try c.decode(String.self, forKey: .author)
+        coverURL = (try? c.decode(String.self, forKey: .coverURL)) ?? ""
+        blurb = (try? c.decode(String.self, forKey: .blurb)) ?? ""
+        genre = (try? c.decode(String.self, forKey: .genre)) ?? ""
+        era = (try? c.decode(String.self, forKey: .era)) ?? ""
+        awards = (try? c.decode([String].self, forKey: .awards)) ?? []
+        averageRating = try? c.decodeIfPresent(Double.self, forKey: .averageRating)
+        ratingsCount = try? c.decodeIfPresent(Int.self, forKey: .ratingsCount)
     }
 }
 

@@ -24,43 +24,50 @@ struct DiscoverView: View {
     var body: some View {
         NavigationStack {
             ZStack(alignment: .top) {
-                ScrollView {
-                    LazyVStack(spacing: 16) {
-                        if appState.isFirstGeneration && feed.isEmpty {
-                            firstGenerationEmptyState
-                        } else if feed.isEmpty && !vm.isLoading {
-                            noBooksEmptyState
-                        } else {
-                            ForEach(feed) { rec in
-                                BookCardView(
-                                    rec: rec,
-                                    onSave: { vm.save(rec, modelContext: modelContext) },
-                                    onDismiss: { vm.dismiss(rec, modelContext: modelContext) },
-                                    onAlreadyRead: { liked in vm.markAlreadyRead(rec, liked: liked, modelContext: modelContext) }
+                ScrollViewReader { scrollProxy in
+                    ScrollView {
+                        LazyVStack(spacing: 16) {
+                            // Sentinel for scroll-to-top after Load more
+                            Color.clear.frame(height: 1).id("__top")
+
+                            if appState.isFirstGeneration && feed.isEmpty {
+                                firstGenerationEmptyState
+                            } else if feed.isEmpty && !vm.isLoading {
+                                noBooksEmptyState
+                            } else {
+                                ForEach(feed) { rec in
+                                    BookCardView(
+                                        rec: rec,
+                                        onSave: { vm.save(rec, modelContext: modelContext) },
+                                        onDismiss: { vm.dismiss(rec, modelContext: modelContext) },
+                                        onAlreadyRead: { liked in vm.markAlreadyRead(rec, liked: liked, modelContext: modelContext) }
+                                    )
+                                    .padding(.horizontal, 16)
+                                    .id(rec.id)
+                                    .onDisappear {
+                                        markSeenIfScrolledPast(rec)
+                                    }
+                                }
+
+                                EndOfFeedView(
+                                    taglineIndex: vm.currentTaglineIndex,
+                                    isLoading: vm.isLoadingMore,
+                                    onLoadMore: { vm.loadMore(modelContext: modelContext) }
                                 )
                                 .padding(.horizontal, 16)
-                                .id(rec.id)
-                                .onDisappear {
-                                    // Mark seen when card scrolls above the viewport (REC-07)
-                                    // onDisappear fires for both directions; we track the feed index
-                                    // to detect upward scroll.
-                                    markSeenIfScrolledPast(rec)
-                                }
                             }
-
-                            EndOfFeedView(
-                                taglineIndex: vm.currentTaglineIndex,
-                                isLoading: vm.isLoadingMore,
-                                onLoadMore: { vm.loadMore(modelContext: modelContext) }
-                            )
-                            .padding(.horizontal, 16)
+                        }
+                        .padding(.top, 8)
+                        .padding(.bottom, 32)
+                    }
+                    .refreshable {
+                        await refreshAsync()
+                    }
+                    .onChange(of: vm.scrollToTopTick) { _, _ in
+                        withAnimation(.easeOut(duration: 0.5)) {
+                            scrollProxy.scrollTo("__top", anchor: .top)
                         }
                     }
-                    .padding(.top, 8)
-                    .padding(.bottom, 32)
-                }
-                .refreshable {
-                    await refreshAsync()
                 }
 
                 // New batch banner (DISC-02)

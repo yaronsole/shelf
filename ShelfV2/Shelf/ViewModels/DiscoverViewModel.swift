@@ -16,6 +16,9 @@ final class DiscoverViewModel {
     var noMoreContent: Bool = false
     var currentTaglineIndex: Int = Int.random(in: 0..<Strings.Discover.endOfFeedTaglines.count)
     private var lastTaglineIndex: Int = -1
+    // Incremented after a Load-more completes — the view watches this and
+    // scrolls to the top of the feed.
+    var scrollToTopTick: Int = 0
 
     // MARK: - Feed Refresh
 
@@ -37,10 +40,14 @@ final class DiscoverViewModel {
         do {
             let dtos = try await APIClient.shared.fetchRecommendations(force: force)
             await MainActor.run {
-                // Build a lookup of existing recs by id so we can update-in-place
+                // Build lookups: by id (for update-in-place) AND by title|author
+                // (for cross-batch dedup so the same book never appears twice).
                 let existing = (try? modelContext.fetch(FetchDescriptor<CachedRecommendation>())) ?? []
                 let byId = Dictionary(uniqueKeysWithValues: existing.map { ($0.id, $0) })
+                let existingKeys = Set(existing.map { Self.bookKey(title: $0.title, author: $0.author) })
+
                 var insertedCount = 0
+                var seenKeysThisBatch = Set<String>()
                 for dto in dtos {
                     if let rec = byId[dto.id] {
                         // Backfill fields that may have been empty in earlier responses
@@ -59,6 +66,11 @@ final class DiscoverViewModel {
                     }
                     // Filter books without resolvable cover for *new* inserts (RG-04)
                     guard !dto.coverURL.isEmpty else { continue }
+                    // Cross-batch dedup: skip books already in cache OR earlier
+                    // in this same response with the same title|author
+                    let key = Self.bookKey(title: dto.title, author: dto.author)
+                    guard !existingKeys.contains(key), !seenKeysThisBatch.contains(key) else { continue }
+                    seenKeysThisBatch.insert(key)
                     let rec = CachedRecommendation(
                         id: dto.id,
                         title: dto.title,
@@ -173,7 +185,10 @@ final class DiscoverViewModel {
             // force=true tells the backend to generate a fresh batch immediately
             // rather than returning cached recs
             await fetchLatestBatch(modelContext: modelContext, isForegrounded: false, force: true)
-            await MainActor.run { self.isLoadingMore = false }
+            await MainActor.run {
+                self.isLoadingMore = false
+                self.scrollToTopTick += 1   // signal DiscoverView to scroll back to the top
+            }
         }
     }
 
@@ -189,5 +204,10 @@ final class DiscoverViewModel {
 
     func dismissNewBatchBanner() {
         showNewBatchBanner = false
+    }
+
+    // Canonical dedup key — same logic the backend uses for exclude lists.
+    static func bookKey(title: String, author: String) -> String {
+        "\(title.lowercased().trimmingCharacters(in: .whitespaces))|\(author.lowercased().trimmingCharacters(in: .whitespaces))"
     }
 }

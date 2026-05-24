@@ -80,13 +80,19 @@ final class APIClient {
 
     // MARK: - Chain Discovery Suggestions (onboarding Step 2)
 
-    func fetchSuggestions(for seedBook: BookSearchResult, domain: Domain = .books) async throws -> [SuggestionDTO] {
+    func fetchSuggestions(
+        for seedBook: BookSearchResult,
+        domain: Domain = .books,
+        count: Int = 3,
+        exclude: [String] = []
+    ) async throws -> [SuggestionDTO] {
         let url = APIConfig.baseURL.appendingPathComponent(APIConfig.Endpoints.suggestions)
         let body = SuggestionsRequest(
             seedBookTitle: seedBook.title,
             seedBookAuthor: seedBook.author,
             domain: domain.rawValue,
-            count: 3
+            count: count,
+            exclude: exclude
         )
         return try await postForResponse(url: url, body: body)
     }

@@ -4,15 +4,24 @@ import SwiftData
 // One-shot scan for SwiftData rows whose coverURL is empty, looks each up via
 // Google Books, and persists the result. Called on app launch.
 enum CoverBackfillService {
-    // PRD REC-07: at app launch, drop books seen during prior sessions so they
-    // don't reappear in the feed.
+    // Frequency cap: when a session ends, any book marked isSeen has been
+    // "viewed once" — increment viewCount, reset the seen flag, and eliminate
+    // (mark reacted) once it hits 2 cumulative views.
     @MainActor
     static func pruneSeenItems(modelContext: ModelContext) {
         let seen = (try? modelContext.fetch(
             FetchDescriptor<CachedRecommendation>(predicate: #Predicate { $0.isSeen })
         )) ?? []
-        print("[CoverBackfill] pruning \(seen.count) seen books from previous session")
-        for rec in seen { modelContext.delete(rec) }
+        var capped = 0
+        for rec in seen {
+            rec.viewCount += 1
+            rec.isSeen = false
+            if rec.viewCount >= 2 {
+                rec.isReacted = true   // permanently filtered out
+                capped += 1
+            }
+        }
+        print("[CoverBackfill] frequency-capped \(capped) books (out of \(seen.count) seen)")
     }
 
     static func backfillAll(modelContext: ModelContext) {

@@ -62,15 +62,26 @@ def build_suggestions_prompt(
     seed_author: str,
     domain: str,
     count: int,
+    exclude: list[str] | None = None,
 ) -> str:
+    exclude_section = ""
+    if exclude:
+        exclude_section = (
+            "\nDo NOT suggest any of these books (already shown):\n"
+            + "\n".join(f"- {item}" for item in exclude[:50])
+            + "\n"
+        )
     return f"""You are a literary expert helping a reader discover books similar to one they love.
 
 Seed book: "{seed_title}" by {seed_author} (domain: {domain})
-
+{exclude_section}
 Suggest exactly {count} books that readers of this book often enjoy next.
 Choose books that are closely related in theme, style, or readership — not just the same genre.
 
 Respond with ONLY a JSON array. No markdown, no explanation. Each object must have:
   title   (string)
   author  (string)
+  blurb   (string — 1-2 sentences, specific to this book's appeal vs the seed, written like a well-read friend)
+  genre   (string)
+  era     (string — e.g. "1990s", "Contemporary", "Classic")
 """
