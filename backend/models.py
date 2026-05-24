@@ -64,10 +64,13 @@ class RecommendationResponse(BaseModel):
     is_comfort_zone_push: bool
     batch_id: str
     domain: str
-    # New in v2.1: enrichment fields. All optional so older cached docs still decode.
     awards: list[str] = []
-    average_rating: float | None = None
-    ratings_count: int | None = None
+    # v2.2: replace ratings with richer context signals
+    context_tag: str = ""           # Claude-authored editorial hook
+    acclaim: str = ""               # Claude-authored critical acclaim line
+    nyt_bestseller: bool = False    # currently on a NYT list
+    nyt_weeks_on_list: int | None = None
+    reading_time_minutes: int | None = None  # derived from Google Books pageCount
 
 
 class SuggestionResponse(BaseModel):
@@ -79,8 +82,11 @@ class SuggestionResponse(BaseModel):
     genre: str = ""
     era: str = ""
     awards: list[str] = []
-    average_rating: float | None = None
-    ratings_count: int | None = None
+    context_tag: str = ""
+    acclaim: str = ""
+    nyt_bestseller: bool = False
+    nyt_weeks_on_list: int | None = None
+    reading_time_minutes: int | None = None
 
 
 class DebugInfoResponse(BaseModel):

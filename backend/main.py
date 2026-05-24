@@ -29,6 +29,7 @@ from models import (
 )
 from prompts import build_recommendations_prompt, build_suggestions_prompt
 from google_books import lookup_cover, lookup_metadata
+from nyt_bestsellers import lookup_bestseller
 
 import httpx
 
@@ -90,11 +91,51 @@ def recommendation_col(user_id: str):
     return user_ref(user_id).collection("recommendations")
 
 
+def _enrich_book(b: dict, client: httpx.Client) -> None:
+    """Add cover_url, NYT bestseller status, reading time, normalized fields
+    to a book dict in-place. Used by both /v1/recommendations and
+    /v1/onboarding/suggestions before persistence / response."""
+    title = b.get("title", "")
+    author = b.get("author", "")
+
+    meta = lookup_metadata(title, author, client=client)
+    if not b.get("cover_url"):
+        b["cover_url"] = meta.get("cover_url", "")
+
+    # Reading time: ~1.7 min per page on average (200wpm, ~340 words/page)
+    page_count = meta.get("page_count")
+    b["reading_time_minutes"] = round(page_count * 1.7) if isinstance(page_count, int) and page_count > 0 else None
+
+    # NYT bestseller status
+    bs = lookup_bestseller(title, author)
+    if bs:
+        b["nyt_bestseller"] = True
+        b["nyt_weeks_on_list"] = bs.get("weeks_on_list")
+    else:
+        b["nyt_bestseller"] = False
+        b["nyt_weeks_on_list"] = None
+
+    # Normalize Claude-optional fields
+    b["awards"] = b.get("awards") or []
+    b["context_tag"] = b.get("context_tag") or ""
+    b["acclaim"] = b.get("acclaim") or ""
+
+
 # ---------------------------------------------------------------------------
 # POST /v1/seed-books
 # ---------------------------------------------------------------------------
 @app.post("/v1/seed-books", status_code=status.HTTP_201_CREATED)
 def add_seed_book(body: SeedBookRequest, user_id: UserID):
+    """Add a seed book. Idempotent on (title, author) — returns the existing
+    seed's id if the user already has it, instead of creating a duplicate."""
+    title_key = body.title.lower().strip()
+    author_key = body.author.lower().strip()
+    for doc in seed_col(user_id).where("domain", "==", body.domain).stream():
+        d = doc.to_dict()
+        if (d.get("title", "").lower().strip() == title_key and
+                d.get("author", "").lower().strip() == author_key):
+            return {"id": doc.id}
+
     doc_id = str(uuid.uuid4())
     seed_col(user_id).document(doc_id).set(
         {**body.model_dump(), "id": doc_id, "created_at": datetime.now(timezone.utc)}
@@ -232,17 +273,10 @@ def _generate_recommendations(user_id: str, domain: str) -> list[RecommendationR
     raw = message.content[0].text
     books: list[dict] = json.loads(raw)
 
-    # Enrich with Google Books cover + rating data before persisting to Firestore.
-    # One HTTP call per book; runs sequentially for simplicity (~6-8s for 10 books).
+    # Enrich with Google Books cover + NYT bestseller + reading time
     with httpx.Client(timeout=5.0) as client:
         for b in books:
-            meta = lookup_metadata(b.get("title", ""), b.get("author", ""), client=client)
-            if not b.get("cover_url"):
-                b["cover_url"] = meta.get("cover_url", "")
-            b["average_rating"] = meta.get("average_rating")
-            b["ratings_count"] = meta.get("ratings_count")
-            # Normalize awards: Claude sometimes omits, sometimes returns None
-            b["awards"] = b.get("awards") or []
+            _enrich_book(b, client=client)
 
     batch_id = str(uuid.uuid4())
     now = datetime.now(timezone.utc)
@@ -298,15 +332,10 @@ def get_suggestions(body: SuggestionsRequest, user_id: UserID):
         return f"{b.get('title','').lower().strip()}|{b.get('author','').lower().strip()}"
     books = [b for b in books if _key(b) not in exclude_keys]
 
-    # Enrich with Google Books cover + rating data
+    # Enrich with Google Books cover + NYT bestseller + reading time
     with httpx.Client(timeout=5.0) as client:
         for b in books:
-            meta = lookup_metadata(b.get("title", ""), b.get("author", ""), client=client)
-            if not b.get("cover_url"):
-                b["cover_url"] = meta.get("cover_url", "")
-            b["average_rating"] = meta.get("average_rating")
-            b["ratings_count"] = meta.get("ratings_count")
-            b["awards"] = b.get("awards") or []
+            _enrich_book(b, client=client)
 
     return [SuggestionResponse(id=str(uuid.uuid4()), **b) for b in books]
 

@@ -12,6 +12,7 @@ SERVICE_NAME="shelf-api"
 ANTHROPIC_API_KEY="${ANTHROPIC_API_KEY:-}"
 GOOGLE_BOOKS_API_KEY="${GOOGLE_BOOKS_API_KEY:-}"
 CRON_SECRET="${CRON_SECRET:-}"
+NYT_API_KEY="${NYT_API_KEY:-}"
 # ─────────────────────────────────────────────────────────────────────────────
 
 if [[ -z "$PROJECT_ID" ]]; then
@@ -39,7 +40,7 @@ gcloud run deploy "$SERVICE_NAME" \
   --region "$REGION" \
   --platform managed \
   --allow-unauthenticated \
-  --set-env-vars "ANTHROPIC_API_KEY=$ANTHROPIC_API_KEY,GOOGLE_BOOKS_API_KEY=$GOOGLE_BOOKS_API_KEY,CRON_SECRET=$CRON_SECRET" \
+  --set-env-vars "ANTHROPIC_API_KEY=$ANTHROPIC_API_KEY,GOOGLE_BOOKS_API_KEY=$GOOGLE_BOOKS_API_KEY,CRON_SECRET=$CRON_SECRET,NYT_API_KEY=$NYT_API_KEY" \
   --memory 512Mi \
   --cpu 1 \
   --min-instances 0 \

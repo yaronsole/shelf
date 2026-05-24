@@ -21,8 +21,11 @@ final class CachedRecommendation {
     var seenAt: Date?
     var isReacted: Bool
     var awards: [String] = []
-    var averageRating: Double? = nil
-    var ratingsCount: Int? = nil
+    var contextTag: String = ""
+    var acclaim: String = ""
+    var nytBestseller: Bool = false
+    var nytWeeksOnList: Int? = nil
+    var readingTimeMinutes: Int? = nil
     // Frequency cap: incremented at launch when isSeen flips from true.
     // Eliminated (marked reacted) once viewCount >= 2.
     var viewCount: Int = 0
@@ -39,8 +42,11 @@ final class CachedRecommendation {
         batchId: String,
         domain: String = Domain.books.rawValue,
         awards: [String] = [],
-        averageRating: Double? = nil,
-        ratingsCount: Int? = nil
+        contextTag: String = "",
+        acclaim: String = "",
+        nytBestseller: Bool = false,
+        nytWeeksOnList: Int? = nil,
+        readingTimeMinutes: Int? = nil
     ) {
         self.id = id
         self.title = title
@@ -56,8 +62,11 @@ final class CachedRecommendation {
         self.isSeen = false
         self.isReacted = false
         self.awards = awards
-        self.averageRating = averageRating
-        self.ratingsCount = ratingsCount
+        self.contextTag = contextTag
+        self.acclaim = acclaim
+        self.nytBestseller = nytBestseller
+        self.nytWeeksOnList = nytWeeksOnList
+        self.readingTimeMinutes = readingTimeMinutes
     }
 }
 

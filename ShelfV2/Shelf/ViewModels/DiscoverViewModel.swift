@@ -60,8 +60,19 @@ final class DiscoverViewModel {
                         if rec.awards.isEmpty && !dto.awards.isEmpty {
                             rec.awards = dto.awards
                         }
-                        if rec.averageRating == nil { rec.averageRating = dto.averageRating }
-                        if rec.ratingsCount == nil { rec.ratingsCount = dto.ratingsCount }
+                        if rec.contextTag.isEmpty && !dto.contextTag.isEmpty {
+                            rec.contextTag = dto.contextTag
+                        }
+                        if rec.acclaim.isEmpty && !dto.acclaim.isEmpty {
+                            rec.acclaim = dto.acclaim
+                        }
+                        if !rec.nytBestseller && dto.nytBestseller {
+                            rec.nytBestseller = true
+                            rec.nytWeeksOnList = dto.nytWeeksOnList
+                        }
+                        if rec.readingTimeMinutes == nil {
+                            rec.readingTimeMinutes = dto.readingTimeMinutes
+                        }
                         continue
                     }
                     // Filter books without resolvable cover for *new* inserts (RG-04)
@@ -83,8 +94,11 @@ final class DiscoverViewModel {
                         batchId: dto.batchId,
                         domain: dto.domain,
                         awards: dto.awards,
-                        averageRating: dto.averageRating,
-                        ratingsCount: dto.ratingsCount
+                        contextTag: dto.contextTag,
+                        acclaim: dto.acclaim,
+                        nytBestseller: dto.nytBestseller,
+                        nytWeeksOnList: dto.nytWeeksOnList,
+                        readingTimeMinutes: dto.readingTimeMinutes
                     )
                     modelContext.insert(rec)
                     insertedCount += 1

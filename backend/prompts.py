@@ -51,9 +51,16 @@ Respond with ONLY a JSON array. No markdown, no explanation. Each object must ha
   genre          (string)
   era            (string — e.g. "1990s", "Contemporary", "Classic")
   is_comfort_zone_push (boolean)
-  awards         (array of strings — major awards this book won or was shortlisted for. Use short canonical names
-                 e.g. "Pulitzer Prize", "National Book Award", "Booker Prize", "Hugo Award", "Nebula Award",
-                 "Edgar Award", "Pen/Faulkner Award". Empty array if none. Only include if certain.)
+  awards         (array of strings — major awards this book won or was shortlisted for. Short canonical names
+                 e.g. "Pulitzer Prize", "National Book Award", "Booker Prize", "Hugo Award", "Nebula Award".
+                 Empty array if none. Only include if certain.)
+  context_tag    (string — ONE short editorial hook that makes this book interesting, max 8 words. Examples:
+                 "Adapted into HBO series", "Translated from Korean", "Author's debut at 24",
+                 "Obama's 2023 favorite", "Made into Oscar-winning film", "30 years in the making".
+                 Empty string if no notable hook. Only include if certain.)
+  acclaim        (string — short publication-praise line, max 10 words. Examples:
+                 "Acclaimed by The New Yorker and NYT", "A New York Times Notable Book",
+                 "Praised by The Atlantic". Empty string if uncertain.)
 """
 
 
@@ -79,9 +86,13 @@ Suggest exactly {count} books that readers of this book often enjoy next.
 Choose books that are closely related in theme, style, or readership — not just the same genre.
 
 Respond with ONLY a JSON array. No markdown, no explanation. Each object must have:
-  title   (string)
-  author  (string)
-  blurb   (string — 1-2 sentences, specific to this book's appeal vs the seed, written like a well-read friend)
-  genre   (string)
-  era     (string — e.g. "1990s", "Contemporary", "Classic")
+  title         (string)
+  author        (string)
+  blurb         (string — 1-2 sentences, specific to this book's appeal vs the seed)
+  genre         (string)
+  era           (string — e.g. "1990s", "Contemporary", "Classic")
+  awards        (array of strings — short canonical names. Empty if none.)
+  context_tag   (string — ONE editorial hook max 8 words. e.g. "Adapted into HBO series",
+                "Translated from Korean", "Author's debut at 24". Empty if none.)
+  acclaim       (string — short publication-praise line max 10 words. Empty if uncertain.)
 """

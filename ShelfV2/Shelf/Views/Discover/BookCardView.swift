@@ -29,28 +29,19 @@ struct BookCardView: View {
                         .foregroundStyle(.secondary)
                 }
 
-                // Rating (only if at least 500 ratings — Google Books data is noisy below that)
-                // + Awards
-                let hasRating = (rec.averageRating != nil) && ((rec.ratingsCount ?? 0) >= 500)
-                if hasRating || !rec.awards.isEmpty {
-                    HStack(spacing: 10) {
-                        if hasRating, let r = rec.averageRating, let count = rec.ratingsCount {
-                            HStack(spacing: 3) {
-                                Image(systemName: "star.fill")
-                                    .font(.caption2)
-                                    .foregroundStyle(.yellow)
-                                Text(String(format: "%.1f", r))
-                                    .font(.caption.weight(.semibold))
-                                Text("(\(count.formatted(.number.notation(.compactName))))")
-                                    .font(.caption2)
-                                    .foregroundStyle(.secondary)
-                            }
-                        }
-                        ForEach(rec.awards, id: \.self) { award in
-                            AwardBadge(text: award)
-                        }
-                        Spacer()
-                    }
+                // Context row: NYT bestseller · reading time · awards
+                ContextRow(
+                    nytBestseller: rec.nytBestseller,
+                    nytWeeks: rec.nytWeeksOnList,
+                    readingTimeMinutes: rec.readingTimeMinutes,
+                    awards: rec.awards
+                )
+
+                // Editorial context — single sparkle line with a cultural hook
+                if !rec.contextTag.isEmpty {
+                    Label(rec.contextTag, systemImage: "sparkle")
+                        .font(.caption.weight(.medium))
+                        .foregroundStyle(Color(red: 0.30, green: 0.20, blue: 0.55))
                 }
 
                 // Tags row
@@ -119,9 +110,82 @@ struct BookCardView: View {
     }
 }
 
+// MARK: - Context Row (NYT + reading time + awards)
+
+struct ContextRow: View {
+    let nytBestseller: Bool
+    let nytWeeks: Int?
+    let readingTimeMinutes: Int?
+    let awards: [String]
+
+    private var hasAnyContent: Bool {
+        nytBestseller || readingTimeMinutes != nil || !awards.isEmpty
+    }
+
+    var body: some View {
+        if hasAnyContent {
+            HStack(spacing: 8) {
+                if nytBestseller {
+                    NYTBadge(weeks: nytWeeks)
+                }
+                if let mins = readingTimeMinutes, mins > 0 {
+                    ReadingTimeBadge(minutes: mins)
+                }
+                ForEach(awards, id: \.self) { AwardBadge(text: $0) }
+                Spacer(minLength: 0)
+            }
+        }
+    }
+}
+
+private struct NYTBadge: View {
+    let weeks: Int?
+
+    private var label: String {
+        guard let w = weeks, w > 0 else { return "NYT Bestseller" }
+        let weekWord = w == 1 ? "wk" : "wks"
+        return "NYT Bestseller · \(w) \(weekWord) on list"
+    }
+
+    var body: some View {
+        HStack(spacing: 3) {
+            Image(systemName: "chart.line.uptrend.xyaxis")
+                .font(.caption2.weight(.bold))
+            Text(label)
+                .font(.caption2.weight(.bold))
+                .fixedSize(horizontal: true, vertical: false)
+        }
+        .padding(.horizontal, 6)
+        .padding(.vertical, 3)
+        .foregroundStyle(.white)
+        .background(Capsule().fill(Color(red: 0.10, green: 0.10, blue: 0.10)))
+    }
+}
+
+private struct ReadingTimeBadge: View {
+    let minutes: Int
+    private var label: String {
+        if minutes < 60 { return "\(minutes) min" }
+        let h = Double(minutes) / 60
+        return h < 10 ? String(format: "~%.1fh read", h) : "~\(Int(h.rounded()))h read"
+    }
+    var body: some View {
+        HStack(spacing: 3) {
+            Image(systemName: "clock")
+                .font(.caption2)
+            Text(label)
+                .font(.caption2.weight(.medium))
+        }
+        .padding(.horizontal, 6)
+        .padding(.vertical, 3)
+        .foregroundStyle(Color(.secondaryLabel))
+        .background(Capsule().fill(Color(.secondarySystemFill)))
+    }
+}
+
 // MARK: - Award Badge
 
-private struct AwardBadge: View {
+struct AwardBadge: View {
     let text: String
 
     // Map known award names to short labels + colors for visual variety

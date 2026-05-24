@@ -20,7 +20,7 @@ _API_KEY = os.environ.get("GOOGLE_BOOKS_API_KEY", "")
 
 
 def _query_books(query: str, client: httpx.Client) -> dict:
-    """Run a single Google Books query and return a dict with cover/rating/etc.,
+    """Run a single Google Books query and return a dict with cover/page count/etc.,
     or an empty dict if nothing matched."""
     params = {"q": query, "maxResults": "1", "printType": "books", "key": _API_KEY}
     url = f"{_BASE_URL}?{urllib.parse.urlencode(params)}"
@@ -36,18 +36,17 @@ def _query_books(query: str, client: httpx.Client) -> dict:
     cover = links.get("thumbnail") or links.get("smallThumbnail") or ""
     return {
         "cover_url": cover.replace("http://", "https://"),
-        "average_rating": info.get("averageRating"),  # 1.0..5.0 or None
-        "ratings_count": info.get("ratingsCount"),    # int or None
+        "page_count": info.get("pageCount"),
     }
 
 
 def lookup_metadata(title: str, author: str, client: httpx.Client | None = None) -> dict:
-    """Return cover URL + rating data for the given title/author.
+    """Return cover URL + page count for the given title/author.
 
-    Always returns a dict with keys cover_url (str), average_rating (float|None),
-    ratings_count (int|None). Falls back to a loose query if the strict one fails.
+    Always returns a dict with keys cover_url (str), page_count (int|None).
+    Falls back to a loose query if the strict one fails.
     """
-    empty = {"cover_url": "", "average_rating": None, "ratings_count": None}
+    empty = {"cover_url": "", "page_count": None}
     if not _API_KEY:
         return empty
 

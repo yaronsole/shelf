@@ -209,20 +209,19 @@ private struct SuggestionCard: View {
                         .foregroundStyle(.secondary)
                 }
 
-                // Rating only if >= 500 ratings (PRD-aligned threshold)
-                if let r = suggestion.averageRating,
-                   let count = suggestion.ratingsCount,
-                   count >= 500 {
-                    HStack(spacing: 3) {
-                        Image(systemName: "star.fill")
-                            .font(.caption2)
-                            .foregroundStyle(.yellow)
-                        Text(String(format: "%.1f", r))
-                            .font(.caption.weight(.semibold))
-                        Text("(\(count.formatted(.number.notation(.compactName))))")
-                            .font(.caption2)
-                            .foregroundStyle(.secondary)
-                    }
+                // Context row: NYT bestseller, reading time, awards
+                ContextRow(
+                    nytBestseller: suggestion.nytBestseller,
+                    nytWeeks: suggestion.nytWeeksOnList,
+                    readingTimeMinutes: suggestion.readingTimeMinutes,
+                    awards: suggestion.awards
+                )
+
+                // Editorial context — single sparkle line with a cultural hook
+                if !suggestion.contextTag.isEmpty {
+                    Label(suggestion.contextTag, systemImage: "sparkle")
+                        .font(.caption.weight(.medium))
+                        .foregroundStyle(Color(red: 0.30, green: 0.20, blue: 0.55))
                 }
 
                 if !suggestion.genre.isEmpty || !suggestion.era.isEmpty {
