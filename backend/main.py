@@ -30,6 +30,7 @@ from models import (
 from prompts import build_recommendations_prompt, build_suggestions_prompt
 from google_books import lookup_cover, lookup_metadata
 from nyt_bestsellers import lookup_bestseller
+from nyt_history import fetch_next_pages as nyt_history_fetch_next_pages, lookup_bestseller_history
 
 import httpx
 
@@ -106,14 +107,19 @@ def _enrich_book(b: dict, client: httpx.Client) -> None:
     page_count = meta.get("page_count")
     b["reading_time_minutes"] = round(page_count * 1.7) if isinstance(page_count, int) and page_count > 0 else None
 
-    # NYT bestseller status
+    # NYT bestseller status — check current lists first, then historical archive
     bs = lookup_bestseller(title, author)
     if bs:
         b["nyt_bestseller"] = True
         b["nyt_weeks_on_list"] = bs.get("weeks_on_list")
     else:
-        b["nyt_bestseller"] = False
-        b["nyt_weeks_on_list"] = None
+        hist = lookup_bestseller_history(db, title, author)
+        if hist:
+            b["nyt_bestseller"] = True
+            b["nyt_weeks_on_list"] = hist.get("max_weeks_on_list")
+        else:
+            b["nyt_bestseller"] = False
+            b["nyt_weeks_on_list"] = None
 
     # Normalize Claude-optional fields
     b["awards"] = b.get("awards") or []
@@ -394,6 +400,22 @@ def cron_generate_all(
             log.exception("cron generation failed for user %s: %s", user_id, exc)
             failed += 1
     return {"processed": processed, "skipped": skipped, "failed": failed}
+
+
+# ---------------------------------------------------------------------------
+# POST /v1/cron/nyt-backfill  (Cloud Scheduler hook, runs every few minutes)
+# ---------------------------------------------------------------------------
+@app.post("/v1/cron/nyt-backfill")
+def cron_nyt_backfill(
+    x_cloud_scheduler_auth: Annotated[str | None, Header()] = None,
+):
+    """Fetch the next page of NYT bestseller history and persist to Firestore.
+    Designed to be called every 3 minutes by Cloud Scheduler so we stay under
+    NYT's 500-req/day rate limit while building the full ~40k-book archive."""
+    expected = os.environ.get("CRON_SECRET", "")
+    if not expected or x_cloud_scheduler_auth != expected:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="invalid cron secret")
+    return nyt_history_fetch_next_pages(db, pages=1)
 
 
 # ---------------------------------------------------------------------------
