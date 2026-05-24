@@ -51,35 +51,39 @@ struct SeedBookSearchView: View {
             .padding(.horizontal, 20)
             .padding(.bottom, 8)
 
-            // Results
-            List(vm.searchResults) { result in
-                Button {
-                    vm.selectBook(result)
-                } label: {
-                    HStack(spacing: 12) {
-                        if let url = result.coverURL {
-                            CoverImageView(urlString: url, cornerRadius: 4)
-                                .frame(width: 36, height: 52)
-                        }
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(result.title)
-                                .font(.subheadline.bold())
-                                .foregroundStyle(Color(.label))
-                                .lineLimit(2)
-                            Text(result.author)
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                        }
-                        Spacer()
-                        if vm.isSelected(result) {
-                            Image(systemName: "checkmark.circle.fill")
-                                .foregroundStyle(Color(.label))
+            // Results: search list when typing, curated grid when empty
+            if vm.searchQuery.count >= 2 {
+                List(vm.searchResults) { result in
+                    Button {
+                        vm.selectBook(result)
+                    } label: {
+                        HStack(spacing: 12) {
+                            if let url = result.coverURL {
+                                CoverImageView(urlString: url, cornerRadius: 4)
+                                    .frame(width: 36, height: 52)
+                            }
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(result.title)
+                                    .font(.subheadline.bold())
+                                    .foregroundStyle(Color(.label))
+                                    .lineLimit(2)
+                                Text(result.author)
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+                            Spacer()
+                            if vm.isSelected(result) {
+                                Image(systemName: "checkmark.circle.fill")
+                                    .foregroundStyle(Color(.label))
+                            }
                         }
                     }
+                    .listRowBackground(vm.isSelected(result) ? Color(.secondarySystemFill) : Color.clear)
                 }
-                .listRowBackground(vm.isSelected(result) ? Color(.secondarySystemFill) : Color.clear)
+                .listStyle(.plain)
+            } else {
+                PopularBooksGrid(vm: vm)
             }
-            .listStyle(.plain)
 
             // Progress + CTA (OB-05)
             VStack(spacing: 8) {
@@ -112,6 +116,93 @@ struct SeedBookSearchView: View {
             .padding(.vertical, 16)
             .background(.regularMaterial)
         }
+        .onAppear { vm.loadPopularBooksIfNeeded() }
+    }
+}
+
+// MARK: - Popular Books Grid
+
+private struct PopularBooksGrid: View {
+    @Bindable var vm: OnboardingViewModel
+
+    private let columns = [
+        GridItem(.flexible(), spacing: 10),
+        GridItem(.flexible(), spacing: 10),
+        GridItem(.flexible(), spacing: 10),
+    ]
+
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 12) {
+                Text("Popular picks")
+                    .font(.footnote.weight(.semibold))
+                    .foregroundStyle(.secondary)
+                    .textCase(.uppercase)
+                    .tracking(0.5)
+                    .padding(.horizontal, 20)
+                    .padding(.top, 4)
+
+                if vm.isLoadingPopular && vm.popularBooks.isEmpty {
+                    HStack {
+                        Spacer()
+                        ProgressView().padding(.vertical, 32)
+                        Spacer()
+                    }
+                } else {
+                    LazyVGrid(columns: columns, spacing: 12) {
+                        ForEach(vm.popularBooks) { book in
+                            PopularBookTile(
+                                book: book,
+                                isSelected: vm.isSelected(book)
+                            ) {
+                                if vm.isSelected(book) {
+                                    vm.removeBook(book)
+                                } else {
+                                    vm.selectBook(book)
+                                }
+                            }
+                        }
+                    }
+                    .padding(.horizontal, 20)
+                    .padding(.bottom, 16)
+                }
+            }
+        }
+    }
+}
+
+private struct PopularBookTile: View {
+    let book: BookSearchResult
+    let isSelected: Bool
+    let onTap: () -> Void
+
+    var body: some View {
+        Button(action: onTap) {
+            VStack(spacing: 6) {
+                ZStack(alignment: .topTrailing) {
+                    CoverImageView(urlString: book.coverURL ?? "", cornerRadius: 6)
+                        .aspectRatio(2/3, contentMode: .fit)
+
+                    if isSelected {
+                        Image(systemName: "checkmark.circle.fill")
+                            .font(.title3)
+                            .foregroundStyle(.white)
+                            .shadow(radius: 2)
+                            .padding(4)
+                    }
+                }
+                Text(book.title)
+                    .font(.caption2.weight(.medium))
+                    .lineLimit(2)
+                    .multilineTextAlignment(.center)
+                    .foregroundStyle(Color(.label))
+                    .frame(maxWidth: .infinity)
+            }
+            .opacity(isSelected ? 1 : 0.95)
+            .scaleEffect(isSelected ? 0.97 : 1)
+            .animation(.spring(response: 0.25, dampingFraction: 0.7), value: isSelected)
+        }
+        .buttonStyle(.plain)
     }
 }
 

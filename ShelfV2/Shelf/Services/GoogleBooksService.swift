@@ -11,11 +11,21 @@ struct GoogleBooksService {
     func search(query: String) async throws -> [BookSearchResult] {
         guard query.count >= 2 else { return [] }
         let encoded = query.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? query
-        guard let url = URL(string: "\(baseURL)?q=\(encoded)&maxResults=10&printType=books") else {
+        guard let url = URL(string: "\(baseURL)?q=\(encoded)&maxResults=10&printType=books&key=\(Secrets.googleBooksAPIKey)") else {
             throw URLError(.badURL)
         }
         let (data, _) = try await URLSession.shared.data(from: url)
         return try parseResults(data)
+    }
+
+    // Precise lookup by title + author — used to hydrate the curated popular-books grid.
+    func lookup(title: String, author: String) async -> BookSearchResult? {
+        let query = "intitle:\"\(title)\" inauthor:\(author)"
+        let encoded = query.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? query
+        guard let url = URL(string: "\(baseURL)?q=\(encoded)&maxResults=1&printType=books&key=\(Secrets.googleBooksAPIKey)") else { return nil }
+        guard let (data, _) = try? await URLSession.shared.data(from: url),
+              let first = (try? parseResults(data))?.first else { return nil }
+        return first
     }
 
     private func parseResults(_ data: Data) throws -> [BookSearchResult] {

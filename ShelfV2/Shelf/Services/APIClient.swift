@@ -13,16 +13,17 @@ final class APIClient {
         return URLSession(configuration: config)
     }()
 
+    // Note: no .convertFromSnakeCase strategy — explicit CodingKeys on each DTO
+    // handle snake_case ↔ camelCase mapping. The strategy is unreliable when
+    // combined with custom CodingKeys.
     private let decoder: JSONDecoder = {
         let d = JSONDecoder()
-        d.keyDecodingStrategy = .convertFromSnakeCase
         d.dateDecodingStrategy = .iso8601
         return d
     }()
 
     private let encoder: JSONEncoder = {
         let e = JSONEncoder()
-        e.keyEncodingStrategy = .convertToSnakeCase
         return e
     }()
 

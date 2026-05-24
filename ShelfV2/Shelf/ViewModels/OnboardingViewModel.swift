@@ -16,6 +16,11 @@ final class OnboardingViewModel {
     var searchResults: [BookSearchResult] = []
     var isSearching: Bool = false
 
+    // Curated grid of popular books shown above the search field
+    var popularBooks: [BookSearchResult] = []
+    var isLoadingPopular: Bool = false
+    private var hasLoadedPopular = false
+
     // Step 2: chain discovery suggestions keyed by seed book id
     var suggestions: [String: [SuggestionDTO]] = [:]
     var isLoadingSuggestions: Bool = false
@@ -75,6 +80,35 @@ final class OnboardingViewModel {
         selectedBooks.contains(book)
     }
 
+    // MARK: - Curated Popular Books Grid
+
+    func loadPopularBooksIfNeeded() {
+        guard !hasLoadedPopular else { return }
+        hasLoadedPopular = true
+        isLoadingPopular = true
+        Task {
+            var results: [BookSearchResult] = []
+            await withTaskGroup(of: (Int, BookSearchResult?).self) { group in
+                for (index, entry) in PopularBooks.books.enumerated() {
+                    group.addTask {
+                        let result = await GoogleBooksService.shared.lookup(title: entry.title, author: entry.author)
+                        return (index, result)
+                    }
+                }
+                var indexed: [(Int, BookSearchResult)] = []
+                for await (i, book) in group {
+                    if let book { indexed.append((i, book)) }
+                }
+                // Preserve original ordering from PopularBooks.books
+                results = indexed.sorted { $0.0 < $1.0 }.map { $0.1 }
+            }
+            await MainActor.run {
+                self.popularBooks = results
+                self.isLoadingPopular = false
+            }
+        }
+    }
+
     // MARK: - Step 2: Chain Discovery
 
     func loadSuggestions() {
@@ -131,13 +165,15 @@ final class OnboardingViewModel {
         }
 
         Task { @MainActor in
-            for item in allToSubmit {
+            print("[Onboarding] submitting \(allToSubmit.count) seed books…")
+            for (idx, item) in allToSubmit.enumerated() {
                 do {
                     try await APIClient.shared.submitSeedBook(
                         title: item.title,
                         author: item.author,
                         coverURL: item.coverURL
                     )
+                    print("[Onboarding] ✓ submitted #\(idx + 1): \(item.title)")
                     let local = LocalSeedBook(
                         id: UUID().uuidString,
                         title: item.title,
@@ -146,7 +182,7 @@ final class OnboardingViewModel {
                     )
                     modelContext.insert(local)
                 } catch {
-                    // Partial failure is acceptable per OB-11 — continue submitting others
+                    print("[Onboarding] ✗ failed #\(idx + 1) (\(item.title)): \(error)")
                 }
             }
             self.isSubmitting = false

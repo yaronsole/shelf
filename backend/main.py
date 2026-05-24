@@ -28,6 +28,9 @@ from models import (
     SuggestionsRequest,
 )
 from prompts import build_recommendations_prompt, build_suggestions_prompt
+from google_books import lookup_cover
+
+import httpx
 
 # ---------------------------------------------------------------------------
 # Logging
@@ -213,6 +216,12 @@ def _generate_recommendations(user_id: str, domain: str) -> list[RecommendationR
     raw = message.content[0].text
     books: list[dict] = json.loads(raw)
 
+    # Enrich with Google Books cover art before persisting to Firestore
+    with httpx.Client(timeout=5.0) as client:
+        for b in books:
+            if not b.get("cover_url"):
+                b["cover_url"] = lookup_cover(b.get("title", ""), b.get("author", ""), client=client)
+
     batch_id = str(uuid.uuid4())
     now = datetime.now(timezone.utc)
     results: list[RecommendationResponse] = []
@@ -259,6 +268,13 @@ def get_suggestions(body: SuggestionsRequest, user_id: UserID):
     )
     raw = message.content[0].text
     books: list[dict] = json.loads(raw)
+
+    # Enrich with Google Books cover art (sequential — only 3 books per call)
+    with httpx.Client(timeout=5.0) as client:
+        for b in books:
+            if not b.get("cover_url"):
+                b["cover_url"] = lookup_cover(b.get("title", ""), b.get("author", ""), client=client)
+
     return [SuggestionResponse(id=str(uuid.uuid4()), **b) for b in books]
 
 

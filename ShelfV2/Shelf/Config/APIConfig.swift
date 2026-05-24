@@ -1,10 +1,10 @@
 import Foundation
 
 enum APIConfig {
-    // Replace with actual Cloud Run URL before shipping
+    // Cloud Run deployment: shelf-api in shelf-488022 (us-central1)
     static let baseURL: URL = {
         let urlString = ProcessInfo.processInfo.environment["SHELF_API_BASE_URL"]
-            ?? "https://shelf-api.example.com"
+            ?? "https://shelf-api-q2fr45guva-uc.a.run.app"
         return URL(string: urlString)!
     }()
 

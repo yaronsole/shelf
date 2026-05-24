@@ -15,6 +15,14 @@ struct RecommendationDTO: Decodable, Identifiable {
     let isComfortZonePush: Bool
     let batchId: String
     let domain: String
+
+    // Foundation's convertFromSnakeCase produces "coverUrl" — explicit map needed for "coverURL"
+    enum CodingKeys: String, CodingKey {
+        case id, title, author, blurb, genre, era, domain
+        case coverURL = "cover_url"
+        case isComfortZonePush = "is_comfort_zone_push"
+        case batchId = "batch_id"
+    }
 }
 
 // MARK: Seed Book
@@ -25,6 +33,11 @@ struct SeedBookDTO: Codable, Identifiable {
     let author: String
     let coverURL: String
     let domain: String
+
+    enum CodingKeys: String, CodingKey {
+        case id, title, author, domain
+        case coverURL = "cover_url"
+    }
 }
 
 struct SeedBookRequest: Encodable {
@@ -32,6 +45,11 @@ struct SeedBookRequest: Encodable {
     let author: String
     let coverURL: String
     let domain: String
+
+    enum CodingKeys: String, CodingKey {
+        case title, author, domain
+        case coverURL = "cover_url"
+    }
 }
 
 // MARK: Reaction
@@ -47,6 +65,11 @@ struct ReactionRequest: Encodable {
     let bookId: String
     let kind: ReactionKind
     let domain: String
+
+    enum CodingKeys: String, CodingKey {
+        case kind, domain
+        case bookId = "book_id"
+    }
 }
 
 // MARK: Seen Books
@@ -54,6 +77,11 @@ struct ReactionRequest: Encodable {
 struct SeenBooksRequest: Encodable {
     let bookIds: [String]
     let domain: String
+
+    enum CodingKeys: String, CodingKey {
+        case domain
+        case bookIds = "book_ids"
+    }
 }
 
 // MARK: Chain Discovery (onboarding Step 2)
@@ -63,6 +91,12 @@ struct SuggestionsRequest: Encodable {
     let seedBookAuthor: String
     let domain: String
     let count: Int
+
+    enum CodingKeys: String, CodingKey {
+        case domain, count
+        case seedBookTitle = "seed_book_title"
+        case seedBookAuthor = "seed_book_author"
+    }
 }
 
 struct SuggestionDTO: Decodable, Identifiable {
@@ -70,6 +104,11 @@ struct SuggestionDTO: Decodable, Identifiable {
     let title: String
     let author: String
     let coverURL: String
+
+    enum CodingKeys: String, CodingKey {
+        case id, title, author
+        case coverURL = "cover_url"
+    }
 }
 
 // MARK: Debug
@@ -77,6 +116,11 @@ struct SuggestionDTO: Decodable, Identifiable {
 struct DebugInfoDTO: Decodable {
     let lastGenerationTimestamp: Date?
     let lastBatchSize: Int?
+
+    enum CodingKeys: String, CodingKey {
+        case lastGenerationTimestamp = "last_generation_timestamp"
+        case lastBatchSize = "last_batch_size"
+    }
 }
 
 // MARK: - API Error

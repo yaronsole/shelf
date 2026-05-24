@@ -63,6 +63,7 @@ final class DiscoverViewModel {
                 }
             }
         } catch {
+            print("[Discover] fetchRecommendations failed: \(error)")
             await MainActor.run {
                 self.isLoading = false
                 self.errorMessage = Strings.Discover.networkError

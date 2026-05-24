@@ -36,6 +36,7 @@ env/
 **/GoogleService-Info.plist
 *.pem
 *.key
+**/Shelf/Config/Secrets.swift
 
 # IDE
 .vscode/

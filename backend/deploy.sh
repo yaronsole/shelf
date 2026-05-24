@@ -10,6 +10,7 @@ PROJECT_ID="${GCP_PROJECT:-}"          # or hardcode: PROJECT_ID="my-gcp-project
 REGION="${GCP_REGION:-us-central1}"
 SERVICE_NAME="shelf-api"
 ANTHROPIC_API_KEY="${ANTHROPIC_API_KEY:-}"
+GOOGLE_BOOKS_API_KEY="${GOOGLE_BOOKS_API_KEY:-}"
 # ─────────────────────────────────────────────────────────────────────────────
 
 if [[ -z "$PROJECT_ID" ]]; then
@@ -37,7 +38,7 @@ gcloud run deploy "$SERVICE_NAME" \
   --region "$REGION" \
   --platform managed \
   --allow-unauthenticated \
-  --set-env-vars "ANTHROPIC_API_KEY=$ANTHROPIC_API_KEY" \
+  --set-env-vars "ANTHROPIC_API_KEY=$ANTHROPIC_API_KEY,GOOGLE_BOOKS_API_KEY=$GOOGLE_BOOKS_API_KEY" \
   --memory 512Mi \
   --cpu 1 \
   --min-instances 0 \
