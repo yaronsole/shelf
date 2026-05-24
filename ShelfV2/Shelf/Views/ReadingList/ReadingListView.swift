@@ -50,8 +50,6 @@ struct ReadingListView: View {
                     .listStyle(.plain)
                 }
             }
-            .navigationTitle(Strings.ReadingList.tabTitle)
-            .navigationBarTitleDisplayMode(.large)
         }
         .sheet(isPresented: $showSentimentSheet) {
             if let item = itemForSentiment {

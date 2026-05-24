@@ -28,8 +28,6 @@ struct SettingsView: View {
                     debugSection
                 }
             }
-            .navigationTitle(Strings.Settings.tabTitle)
-            .navigationBarTitleDisplayMode(.large)
         }
     }
 

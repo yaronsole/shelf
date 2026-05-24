@@ -25,13 +25,11 @@ enum Strings {
 
         enum ChainDiscovery {
             static let title = "Add more to your taste"
-            static let subtitle = "Readers of your picks also love these. Add ones you've read to your taste profile, or save the rest for later."
+            static let subtitle = "Tap a cover to mark it as read. Hold to save for later. Tap or hold again to undo."
             static let sectionPrefix = "Readers who love"
             static let sectionSuffix = "also love"
             static let continueCTA = "Continue"
             static let skipCTA = "Skip"
-            static let addToTaste = "I've read it"
-            static let saveForLater = "Save"
         }
 
         enum Confirmation {

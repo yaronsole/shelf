@@ -60,8 +60,6 @@ struct TasteProfileView: View {
                     }
                 }
             }
-            .navigationTitle(Strings.TasteProfile.tabTitle)
-            .navigationBarTitleDisplayMode(.large)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {

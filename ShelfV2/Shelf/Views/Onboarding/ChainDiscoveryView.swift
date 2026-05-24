@@ -113,6 +113,7 @@ private struct SuggestionCard: View {
     let onAddToTaste: () -> Void
     let onSaveForLater: () -> Void
 
+    @State private var isPressing = false
     private let cardWidth: CGFloat = 132
 
     var body: some View {
@@ -120,6 +121,8 @@ private struct SuggestionCard: View {
             ZStack(alignment: .topTrailing) {
                 CoverImageView(urlString: suggestion.coverURL, cornerRadius: 8)
                     .frame(width: cardWidth, height: cardWidth * 1.5)
+                    .scaleEffect(isPressing ? 0.93 : 1)
+                    .animation(.easeInOut(duration: 0.12), value: isPressing)
 
                 if isAddedToTaste {
                     Image(systemName: "checkmark.circle.fill")
@@ -135,6 +138,12 @@ private struct SuggestionCard: View {
                         .padding(6)
                 }
             }
+            .onTapGesture { onAddToTaste() }
+            .onLongPressGesture(minimumDuration: 0.45, pressing: { pressing in
+                isPressing = pressing
+            }, perform: {
+                onSaveForLater()
+            })
 
             Text(suggestion.title)
                 .font(.caption.bold())
@@ -145,57 +154,6 @@ private struct SuggestionCard: View {
                 .foregroundStyle(.secondary)
                 .lineLimit(1)
                 .frame(width: cardWidth, alignment: .leading)
-
-            HStack(spacing: 6) {
-                CompactButton(
-                    label: Strings.Onboarding.ChainDiscovery.addToTaste,
-                    icon: "checkmark",
-                    isActive: isAddedToTaste,
-                    activeColor: Color(red: 0.10, green: 0.45, blue: 0.30),
-                    action: onAddToTaste
-                )
-                CompactButton(
-                    label: Strings.Onboarding.ChainDiscovery.saveForLater,
-                    icon: "bookmark",
-                    isActive: isSavedForLater,
-                    activeColor: Color(red: 0.10, green: 0.35, blue: 0.85),
-                    action: onSaveForLater
-                )
-            }
-            .frame(width: cardWidth)
         }
-    }
-}
-
-private struct CompactButton: View {
-    let label: String
-    let icon: String
-    let isActive: Bool
-    let activeColor: Color
-    let action: () -> Void
-
-    var body: some View {
-        Button(action: action) {
-            HStack(spacing: 3) {
-                Image(systemName: icon)
-                    .font(.caption2.weight(.semibold))
-                Text(label)
-                    .font(.caption2.weight(.semibold))
-                    .lineLimit(1)
-            }
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 7)
-            .padding(.horizontal, 6)
-            .background(
-                RoundedRectangle(cornerRadius: 6)
-                    .fill(isActive ? activeColor : Color.white)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 6)
-                            .strokeBorder(activeColor.opacity(isActive ? 0 : 0.45), lineWidth: 1.2)
-                    )
-            )
-            .foregroundStyle(isActive ? Color.white : activeColor)
-        }
-        .buttonStyle(.plain)
     }
 }

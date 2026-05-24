@@ -260,15 +260,15 @@ private struct ActionButton: View {
         switch kind {
         case .primary: return .white
         case .secondary: return Color(red: 0.10, green: 0.45, blue: 0.30)
-        case .tertiary: return Color(.tertiaryLabel)
+        case .tertiary: return Color(.label)
         }
     }
 
     private var background: Color {
         switch kind {
-        case .primary: return Color(red: 0.10, green: 0.35, blue: 0.85) // accent blue
-        case .secondary: return Color(red: 0.10, green: 0.45, blue: 0.30).opacity(0.12) // soft green
-        case .tertiary: return Color(.secondarySystemFill) // subtle grey
+        case .primary: return Color(red: 0.10, green: 0.35, blue: 0.85)
+        case .secondary: return Color(red: 0.10, green: 0.45, blue: 0.30).opacity(0.12)
+        case .tertiary: return .clear
         }
     }
 
@@ -286,6 +286,13 @@ private struct ActionButton: View {
             .background(
                 RoundedRectangle(cornerRadius: 10)
                     .fill(background)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 10)
+                            .strokeBorder(
+                                kind == .tertiary ? Color(.separator) : .clear,
+                                lineWidth: 1
+                            )
+                    )
             )
             .foregroundStyle(foreground)
         }

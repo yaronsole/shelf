@@ -83,8 +83,6 @@ struct DiscoverView: View {
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                 }
             }
-            .navigationTitle(Strings.Discover.tabTitle)
-            .navigationBarTitleDisplayMode(.large)
         }
         .onChange(of: scenePhase) { _, phase in
             if phase == .active {
