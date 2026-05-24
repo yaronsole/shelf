@@ -69,12 +69,12 @@ struct BookCardView: View {
                     .fixedSize(horizontal: false, vertical: true)
                     .lineSpacing(3)
 
-                // Action buttons (DISC-08)
-                HStack(spacing: 10) {
+                // Action buttons (DISC-08) — primary Save, secondary Read, tertiary Pass
+                HStack(spacing: 8) {
                     ActionButton(
-                        label: Strings.Discover.Actions.save,
-                        icon: "bookmark",
-                        style: .primary,
+                        label: "Save",
+                        icon: "bookmark.fill",
+                        kind: .primary,
                         action: {
                             withAnimation(.spring(response: 0.35, dampingFraction: 0.75)) {
                                 isRemoving = true
@@ -83,15 +83,15 @@ struct BookCardView: View {
                         }
                     )
                     ActionButton(
-                        label: Strings.Discover.Actions.alreadyRead,
-                        icon: "checkmark.circle",
-                        style: .secondary,
+                        label: "Read",
+                        icon: "checkmark",
+                        kind: .secondary,
                         action: { showAlreadyReadSheet = true }
                     )
                     ActionButton(
-                        label: Strings.Discover.Actions.dismiss,
+                        label: "Pass",
                         icon: "xmark",
-                        style: .secondary,
+                        kind: .tertiary,
                         action: {
                             withAnimation(.spring(response: 0.35, dampingFraction: 0.75)) {
                                 isRemoving = true
@@ -184,31 +184,46 @@ private struct TagView: View {
 
 // MARK: - Action Button
 
-private enum ActionButtonStyle { case primary, secondary }
+private enum ActionButtonKind { case primary, secondary, tertiary }
 
 private struct ActionButton: View {
     let label: String
     let icon: String
-    let style: ActionButtonStyle
+    let kind: ActionButtonKind
     let action: () -> Void
+
+    private var foreground: Color {
+        switch kind {
+        case .primary: return .white
+        case .secondary: return Color(red: 0.10, green: 0.45, blue: 0.30)
+        case .tertiary: return Color(.tertiaryLabel)
+        }
+    }
+
+    private var background: Color {
+        switch kind {
+        case .primary: return Color(red: 0.10, green: 0.35, blue: 0.85) // accent blue
+        case .secondary: return Color(red: 0.10, green: 0.45, blue: 0.30).opacity(0.12) // soft green
+        case .tertiary: return Color(.secondarySystemFill) // subtle grey
+        }
+    }
 
     var body: some View {
         Button(action: action) {
             HStack(spacing: 5) {
                 Image(systemName: icon)
+                    .font(.subheadline.weight(.semibold))
                 Text(label)
-                    .font(.subheadline.weight(.medium))
+                    .font(.subheadline.weight(.semibold))
             }
-            .frame(maxWidth: style == .primary ? .infinity : nil)
-            .padding(.horizontal, 14)
+            .frame(maxWidth: kind == .primary ? .infinity : nil)
+            .padding(.horizontal, kind == .primary ? 14 : 12)
             .padding(.vertical, 10)
             .background(
                 RoundedRectangle(cornerRadius: 10)
-                    .fill(style == .primary
-                          ? Color(.label)
-                          : Color(.secondarySystemFill))
+                    .fill(background)
             )
-            .foregroundStyle(style == .primary ? Color(.systemBackground) : Color(.label))
+            .foregroundStyle(foreground)
         }
         .buttonStyle(.plain)
     }

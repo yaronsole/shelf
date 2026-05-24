@@ -11,7 +11,10 @@ struct SimilarBooksSheet: View {
     @Environment(\.dismiss) private var dismiss
     @State private var suggestions: [SuggestionDTO] = []
     @State private var isLoading = true
+    @State private var isLoadingMore = false
     @State private var savedIds: Set<String> = []
+    // Dedup by lowercased "title|author" — IDs are random per Claude call
+    @State private var seenKeys: Set<String> = []
 
     var body: some View {
         NavigationStack {
@@ -65,6 +68,29 @@ struct SimilarBooksSheet: View {
                                     onSave: { save(s) }
                                 )
                             }
+
+                            // "Find more" CTA at the bottom of the suggestions list
+                            Button(action: { Task { await loadMore() } }) {
+                                HStack(spacing: 6) {
+                                    if isLoadingMore {
+                                        ProgressView().controlSize(.small)
+                                    } else {
+                                        Image(systemName: "sparkles")
+                                    }
+                                    Text(isLoadingMore ? "Finding more…" : "Find more like this")
+                                        .font(.subheadline.weight(.semibold))
+                                }
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 12)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 10)
+                                        .fill(Color(.secondarySystemFill))
+                                )
+                                .foregroundStyle(Color(.label))
+                            }
+                            .buttonStyle(.plain)
+                            .disabled(isLoadingMore)
+                            .padding(.top, 8)
                         }
                         .padding(.horizontal, 20)
                     }
@@ -83,15 +109,43 @@ struct SimilarBooksSheet: View {
         .task { await loadSuggestions() }
     }
 
+    private static func key(_ title: String, _ author: String) -> String {
+        "\(title.lowercased())|\(author.lowercased())"
+    }
+
     private func loadSuggestions() async {
-        let request = BookSearchResult(
-            id: seed.id, title: seed.title, author: seed.author, coverURL: seed.coverURL
-        )
-        let result = (try? await APIClient.shared.fetchSuggestions(for: request)) ?? []
+        let result = await fetch()
         await MainActor.run {
+            // Seed dedup keys with both this seed itself and the returned books
+            self.seenKeys.insert(Self.key(self.seed.title, self.seed.author))
+            for s in result {
+                self.seenKeys.insert(Self.key(s.title, s.author))
+            }
             self.suggestions = result
             self.isLoading = false
         }
+    }
+
+    private func loadMore() async {
+        guard !isLoadingMore else { return }
+        await MainActor.run { self.isLoadingMore = true }
+        let result = await fetch()
+        await MainActor.run {
+            // Filter out any title/author we've already shown
+            let fresh = result.filter { !self.seenKeys.contains(Self.key($0.title, $0.author)) }
+            for s in fresh {
+                self.seenKeys.insert(Self.key(s.title, s.author))
+            }
+            self.suggestions.append(contentsOf: fresh)
+            self.isLoadingMore = false
+        }
+    }
+
+    private func fetch() async -> [SuggestionDTO] {
+        let request = BookSearchResult(
+            id: seed.id, title: seed.title, author: seed.author, coverURL: seed.coverURL
+        )
+        return (try? await APIClient.shared.fetchSuggestions(for: request)) ?? []
     }
 
     private func save(_ s: SuggestionDTO) {

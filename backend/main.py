@@ -316,6 +316,47 @@ def debug_info(user_id: UserID):
 
 
 # ---------------------------------------------------------------------------
+# POST /v1/cron/generate-all  (Cloud Scheduler hook, runs nightly)
+# ---------------------------------------------------------------------------
+@app.post("/v1/cron/generate-all")
+def cron_generate_all(
+    x_cloud_scheduler_auth: Annotated[str | None, Header()] = None,
+):
+    """Trigger fresh recommendation generation for every user.
+
+    Protected by a shared secret in the X-CloudScheduler-Auth header. Cap of
+    60 unseen recs per user (PRD REC-04) is honored: if a user already has
+    60+ undelivered, we skip their generation.
+    """
+    expected = os.environ.get("CRON_SECRET", "")
+    if not expected or x_cloud_scheduler_auth != expected:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="invalid cron secret")
+
+    processed = 0
+    skipped = 0
+    failed = 0
+    for user in db.collection("users").stream():
+        user_id = user.id
+        # Skip if user already has too many unseen (PRD REC-03 / REC-04)
+        unseen_count = sum(
+            1 for _ in recommendation_col(user_id)
+            .where("delivered", "==", False)
+            .limit(60)
+            .stream()
+        )
+        if unseen_count >= 60:
+            skipped += 1
+            continue
+        try:
+            _generate_recommendations(user_id, "books")
+            processed += 1
+        except Exception as exc:
+            log.exception("cron generation failed for user %s: %s", user_id, exc)
+            failed += 1
+    return {"processed": processed, "skipped": skipped, "failed": failed}
+
+
+# ---------------------------------------------------------------------------
 # Health check
 # ---------------------------------------------------------------------------
 @app.get("/healthz")

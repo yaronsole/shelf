@@ -26,8 +26,12 @@ final class DiscoverViewModel {
     }
 
     private func fetchLatestBatch(modelContext: ModelContext, isForegrounded: Bool, force: Bool) async {
-        guard !isLoading else { return }
-        if !isForegrounded { isLoading = true }
+        // User-initiated force fetches (Generate more) bypass the in-flight guard —
+        // otherwise an auto-refresh started by onAppear can block the explicit tap.
+        if !force {
+            guard !isLoading else { return }
+        }
+        if !isForegrounded && !force { isLoading = true }
         errorMessage = nil
 
         do {
