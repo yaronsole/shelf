@@ -19,10 +19,55 @@ _BASE_URL = "https://www.googleapis.com/books/v1/volumes"
 _API_KEY = os.environ.get("GOOGLE_BOOKS_API_KEY", "")
 
 
-def _query_books(query: str, client: httpx.Client) -> dict:
-    """Run a single Google Books query and return a dict with cover/page count/etc.,
-    or an empty dict if nothing matched."""
-    params = {"q": query, "maxResults": "1", "printType": "books", "key": _API_KEY}
+_JUNK_PUBLISHERS = {"createspace", "independently published", "lulu", "scholar select"}
+
+
+def _score_volume(item: dict, expected_title: str) -> int:
+    """Score a Google Books volume. Higher = cleaner / more representative edition."""
+    info = item.get("volumeInfo", {}) or {}
+    links = info.get("imageLinks") or {}
+    if not (links.get("thumbnail") or links.get("smallThumbnail")):
+        return -1000  # disqualify if no cover
+
+    score = 0
+    raw_title = (info.get("title", "") or "").lower().strip()
+    expected = expected_title.lower().strip()
+    if raw_title == expected:
+        score += 100
+    if raw_title.startswith(expected):
+        score += 30
+    if ":" in raw_title and ":" not in expected:
+        score -= 25  # "Author Name: Title" edition
+
+    if (info.get("categories") or []):
+        score += 20
+    if len(info.get("description", "") or "") > 100:
+        score += 15
+    if isinstance(info.get("pageCount"), int) and info["pageCount"] >= 100:
+        score += 10
+
+    publisher = (info.get("publisher", "") or "").lower()
+    if any(jp in publisher for jp in _JUNK_PUBLISHERS):
+        score -= 40
+
+    cover = links.get("thumbnail") or links.get("smallThumbnail") or ""
+    if "edge=curl" in cover:
+        score += 5
+    return score
+
+
+def _query_books(query: str, client: httpx.Client, expected_title: str = "") -> dict:
+    """Run a Google Books query and pick the highest-scoring volume.
+
+    Returns {cover_url, page_count} or {} if nothing matched.
+    """
+    params = {
+        "q": query,
+        "maxResults": "10",  # pull more so we can pick the best edition
+        "printType": "books",
+        "langRestrict": "en",
+        "key": _API_KEY,
+    }
     url = f"{_BASE_URL}?{urllib.parse.urlencode(params)}"
     resp = client.get(url)
     if resp.status_code != 200:
@@ -31,7 +76,12 @@ def _query_books(query: str, client: httpx.Client) -> dict:
     items = resp.json().get("items") or []
     if not items:
         return {}
-    info = items[0].get("volumeInfo", {})
+
+    target = expected_title or ""
+    best = max(items, key=lambda it: _score_volume(it, target))
+    if _score_volume(best, target) < 0:
+        return {}
+    info = best.get("volumeInfo", {}) or {}
     links = info.get("imageLinks") or {}
     cover = links.get("thumbnail") or links.get("smallThumbnail") or ""
     return {
@@ -54,9 +104,9 @@ def lookup_metadata(title: str, author: str, client: httpx.Client | None = None)
     if owns_client:
         client = httpx.Client(timeout=5.0)
     try:
-        result = _query_books(f'intitle:"{title}" inauthor:{author}', client)
+        result = _query_books(f'intitle:"{title}" inauthor:{author}', client, expected_title=title)
         if not result.get("cover_url"):
-            result = _query_books(f"{title} {author}", client)
+            result = _query_books(f"{title} {author}", client, expected_title=title)
         return result or empty
     except Exception as exc:
         log.warning("google_books lookup failed for %r / %r: %s", title, author, exc)
