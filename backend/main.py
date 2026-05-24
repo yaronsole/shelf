@@ -221,12 +221,12 @@ def _generate_recommendations(user_id: str, domain: str) -> list[RecommendationR
         disliked=disliked,
         exclude_ids=exclude_ids,
         domain=domain,
-        count=6,
+        count=10,
     )
 
     message = claude.messages.create(
         model="claude-opus-4-5",
-        max_tokens=2048,
+        max_tokens=4096,
         messages=[{"role": "user", "content": prompt}],
     )
     raw = message.content[0].text

@@ -100,14 +100,33 @@ struct DiscoverView: View {
     }
 
     private var noBooksEmptyState: some View {
-        EmptyStateView(
-            systemImage: "books.vertical",
-            title: "No picks right now",
-            subtitle: vm.errorMessage ?? Strings.Discover.noRecsAvailable,
-            action: vm.errorMessage != nil ? { vm.refreshIfNeeded(modelContext: modelContext) } : nil,
-            actionLabel: vm.errorMessage != nil ? Strings.Common.retry : nil
+        // Three distinct sub-cases:
+        // 1. Network/decode error → "Try Again"
+        // 2. Empty feed with no error → "Generate more" (user has reacted through them all)
+        // 3. Default → "Generate more" too; tomorrow-morning copy is no longer accurate
+        //    now that Load more / Generate more force fresh batches on demand.
+        if vm.errorMessage != nil {
+            return AnyView(
+                EmptyStateView(
+                    systemImage: "exclamationmark.icloud",
+                    title: "No picks right now",
+                    subtitle: vm.errorMessage ?? Strings.Discover.networkError,
+                    action: { vm.refreshIfNeeded(modelContext: modelContext) },
+                    actionLabel: Strings.Common.retry
+                )
+                .padding(.top, 60)
+            )
+        }
+        return AnyView(
+            EmptyStateView(
+                systemImage: "books.vertical",
+                title: "You're caught up",
+                subtitle: "Tap below to generate a fresh batch based on your latest reactions.",
+                action: { vm.loadMore(modelContext: modelContext) },
+                actionLabel: vm.isLoadingMore ? Strings.Common.loading : "Generate more"
+            )
+            .padding(.top, 60)
         )
-        .padding(.top, 60)
     }
 
     // MARK: - New Batch Banner
