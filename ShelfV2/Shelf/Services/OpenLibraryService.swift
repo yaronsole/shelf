@@ -17,7 +17,8 @@ struct OpenLibraryService {
             URLQueryItem(name: "title", value: title),
             URLQueryItem(name: "author", value: author),
             URLQueryItem(name: "limit", value: "5"),
-            URLQueryItem(name: "fields", value: "title,author_name,cover_i,first_publish_year"),
+            URLQueryItem(name: "fields", value: "title,author_name,cover_i,first_publish_year,edition_count"),
+            URLQueryItem(name: "sort", value: "editions"),
         ]
         guard let url = components.url else { return nil }
         var request = URLRequest(url: url)

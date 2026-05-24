@@ -32,7 +32,7 @@ def lookup_cover(title: str, author: str, client: httpx.Client | None = None) ->
     if owns_client:
         client = httpx.Client(timeout=5.0)
     try:
-        params = {"title": title, "author": author, "limit": "5", "fields": "title,author_name,cover_i,first_publish_year"}
+        params = {"title": title, "author": author, "limit": "5", "sort": "editions", "fields": "title,author_name,cover_i,first_publish_year,edition_count"}
         url = f"{_SEARCH_URL}?{urllib.parse.urlencode(params)}"
         resp = client.get(url, headers={"User-Agent": "ShelfApp/2.0 (yaronsole@github)"})
         if resp.status_code != 200:

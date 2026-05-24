@@ -80,6 +80,9 @@ enum CoverBackfillService {
     }
 
     private static func lookup(title: String, author: String) async -> String? {
+        if let cover = await OpenLibraryService.shared.lookupCoverURL(title: title, author: author) {
+            return cover
+        }
         guard let result = await GoogleBooksService.shared.lookup(title: title, author: author),
               let cover = result.coverURL,
               !cover.isEmpty else { return nil }
