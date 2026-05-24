@@ -177,66 +177,44 @@ private struct PopularBookTile: View {
     let onToggleSelect: () -> Void
     let onToggleSave: () -> Void
 
-    private let tasteColor = Color(red: 0.10, green: 0.45, blue: 0.30)
-    private let saveColor = Color(red: 0.10, green: 0.35, blue: 0.85)
+    @State private var isPressing = false
 
     var body: some View {
         VStack(spacing: 6) {
             ZStack(alignment: .topTrailing) {
                 CoverImageView(urlString: book.coverURL ?? "", cornerRadius: 6)
                     .aspectRatio(2/3, contentMode: .fit)
+                    .scaleEffect(isPressing ? 0.93 : 1)
+                    .animation(.easeInOut(duration: 0.12), value: isPressing)
 
                 if isSelected {
                     Image(systemName: "checkmark.circle.fill")
                         .font(.title3)
-                        .foregroundStyle(.white, tasteColor)
+                        .foregroundStyle(.white)
+                        .shadow(radius: 2)
                         .padding(4)
                 } else if isSaved {
                     Image(systemName: "bookmark.fill")
                         .font(.title3)
-                        .foregroundStyle(saveColor)
+                        .foregroundStyle(.white)
+                        .shadow(radius: 2)
                         .padding(4)
                 }
             }
+            .onTapGesture { onToggleSelect() }
+            .onLongPressGesture(minimumDuration: 0.45, pressing: { pressing in
+                isPressing = pressing
+            }, perform: {
+                onToggleSave()
+            })
+
             Text(book.title)
                 .font(.caption2.weight(.medium))
                 .lineLimit(2)
                 .multilineTextAlignment(.center)
                 .foregroundStyle(Color(.label))
                 .frame(maxWidth: .infinity)
-            HStack(spacing: 4) {
-                TinyToggleButton(systemImage: "checkmark", isActive: isSelected, activeColor: tasteColor, action: onToggleSelect)
-                TinyToggleButton(systemImage: "bookmark", isActive: isSaved, activeColor: saveColor, action: onToggleSave)
-            }
         }
-    }
-}
-
-// Tappable mini-button used in the popular-picks tile and chain-discovery card.
-// Inactive state shows colored outline (not gray fill) so it doesn't look disabled.
-private struct TinyToggleButton: View {
-    let systemImage: String
-    let isActive: Bool
-    let activeColor: Color
-    let action: () -> Void
-
-    var body: some View {
-        Button(action: action) {
-            Image(systemName: systemImage)
-                .font(.caption.weight(.bold))
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 7)
-                .background(
-                    RoundedRectangle(cornerRadius: 6)
-                        .fill(isActive ? activeColor : Color.white)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 6)
-                                .strokeBorder(activeColor.opacity(isActive ? 0 : 0.45), lineWidth: 1.2)
-                        )
-                )
-                .foregroundStyle(isActive ? Color.white : activeColor)
-        }
-        .buttonStyle(.plain)
     }
 }
 
