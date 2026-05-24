@@ -21,7 +21,7 @@ struct OpenLibraryService {
             URLQueryItem(name: "sort", value: "editions"),
         ]
         guard let url = components.url else { return nil }
-        var request = URLRequest(url: url)
+        var request = URLRequest(url: url, timeoutInterval: 6)
         request.setValue("ShelfApp/2.0 (iOS)", forHTTPHeaderField: "User-Agent")
         guard let (data, _) = try? await URLSession.shared.data(for: request),
               let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
