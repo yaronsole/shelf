@@ -14,18 +14,29 @@ def build_recommendations_prompt(
     domain: str,
     count: int,
 ) -> str:
+    def _fmt(reaction: dict) -> str | None:
+        title, author = reaction.get("title", "").strip(), reaction.get("author", "").strip()
+        if not title:
+            return None
+        return f"- {title} by {author}" if author else f"- {title}"
+
     seed_list = "\n".join(f"- {s['title']} by {s['author']}" for s in seeds)
-    liked_list = "\n".join(f"- {r.get('book_id', '')}" for r in liked[:30]) or "none"
-    disliked_list = "\n".join(f"- {r.get('book_id', '')}" for r in disliked[:30]) or "none"
+    liked_list = "\n".join(line for r in liked[:30] if (line := _fmt(r))) or "none"
+    disliked_list = "\n".join(line for r in disliked[:30] if (line := _fmt(r))) or "none"
     exclude_json = json.dumps(exclude_ids[:150])
 
     return f"""You are a literary expert generating personalized book recommendations.
 
-The reader loves these books:
+The reader's taste profile (books they explicitly love):
 {seed_list}
 
-Books they have saved or rated positively (IDs): {liked_list}
-Books they dismissed or rated negatively (IDs): {disliked_list}
+Books they saved or rated positively after we recommended them — these are STRONG positive signals:
+{liked_list}
+
+Books they dismissed or rated negatively — these are STRONG negative signals; avoid recommending books with similar appeal:
+{disliked_list}
+
+Use both the seed list and the reaction history to refine your picks. The reactions are recent feedback and should weigh more heavily than the original seeds when they conflict.
 
 Do NOT recommend any book whose ID appears in this exclusion list: {exclude_json}
 

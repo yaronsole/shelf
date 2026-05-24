@@ -20,6 +20,7 @@ struct ShelfApp: App {
 
 private struct RootView: View {
     @Environment(AppState.self) private var appState
+    @Environment(\.modelContext) private var modelContext
 
     var body: some View {
         Group {
@@ -30,5 +31,10 @@ private struct RootView: View {
             }
         }
         .animation(.easeInOut(duration: 0.35), value: appState.hasCompletedOnboarding)
+        .task {
+            // Backfill any locally-cached books missing covers (e.g. from earlier
+            // builds where covers were empty). Idempotent — no-op for rows with covers.
+            CoverBackfillService.backfillAll(modelContext: modelContext)
+        }
     }
 }

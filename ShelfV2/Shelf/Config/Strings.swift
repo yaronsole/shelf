@@ -66,14 +66,14 @@ enum Strings {
 
         // At least 6 pairs required (DISC-12)
         static let endOfFeedTaglines: [(witty: String, cta: String)] = [
-            ("You've reached the bottom of the shelf.", "Load more"),
-            ("All caught up. Impressive.", "See what else is out there"),
-            ("That's today's batch.", "Want more?"),
-            ("The algorithm has spoken.", "Keep exploring"),
+            ("You've reached the bottom of the shelf.", "Generate more"),
+            ("All caught up. Impressive.", "Pull more picks"),
+            ("That's this batch.", "Want more?"),
+            ("The algorithm has spoken.", "Make it speak again"),
             ("End of the stack.", "Dig deeper"),
-            ("Your shelf, fully explored.", "Load more picks"),
-            ("Nothing left to scroll. For now.", "Try loading more"),
-            ("You read faster than we recommend.", "Load more picks"),
+            ("Your shelf, fully explored.", "Find more"),
+            ("Nothing left to scroll. For now.", "Generate fresh picks"),
+            ("You read faster than we recommend.", "Generate more"),
         ]
     }
 

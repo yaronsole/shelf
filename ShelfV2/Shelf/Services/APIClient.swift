@@ -29,9 +29,15 @@ final class APIClient {
 
     // MARK: - Recommendations
 
-    func fetchRecommendations() async throws -> [RecommendationDTO] {
-        let url = APIConfig.baseURL.appendingPathComponent(APIConfig.Endpoints.recommendations)
-        return try await get(url: url)
+    func fetchRecommendations(force: Bool = false) async throws -> [RecommendationDTO] {
+        var components = URLComponents(
+            url: APIConfig.baseURL.appendingPathComponent(APIConfig.Endpoints.recommendations),
+            resolvingAgainstBaseURL: false
+        )!
+        if force {
+            components.queryItems = [URLQueryItem(name: "force", value: "true")]
+        }
+        return try await get(url: components.url!)
     }
 
     // MARK: - Seed Books

@@ -21,27 +21,35 @@ final class DiscoverViewModel {
 
     func refreshIfNeeded(modelContext: ModelContext, isForegrounded: Bool = false) {
         Task {
-            await fetchLatestBatch(modelContext: modelContext, isForegrounded: isForegrounded)
+            await fetchLatestBatch(modelContext: modelContext, isForegrounded: isForegrounded, force: false)
         }
     }
 
-    private func fetchLatestBatch(modelContext: ModelContext, isForegrounded: Bool) async {
+    private func fetchLatestBatch(modelContext: ModelContext, isForegrounded: Bool, force: Bool) async {
         guard !isLoading else { return }
         if !isForegrounded { isLoading = true }
         errorMessage = nil
 
         do {
-            let dtos = try await APIClient.shared.fetchRecommendations()
+            let dtos = try await APIClient.shared.fetchRecommendations(force: force)
             await MainActor.run {
-                // Fetch all existing IDs upfront — avoids per-item #Predicate captures
-                let existingIds = Set(
-                    (try? modelContext.fetch(FetchDescriptor<CachedRecommendation>()))?.map(\.id) ?? []
-                )
+                // Build a lookup of existing recs by id so we can update-in-place
+                let existing = (try? modelContext.fetch(FetchDescriptor<CachedRecommendation>())) ?? []
+                let byId = Dictionary(uniqueKeysWithValues: existing.map { ($0.id, $0) })
                 var insertedCount = 0
                 for dto in dtos {
-                    // Filter books without resolvable cover (RG-04)
+                    if let rec = byId[dto.id] {
+                        // Backfill fields that may have been empty in earlier responses
+                        if rec.coverURL.isEmpty && !dto.coverURL.isEmpty {
+                            rec.coverURL = dto.coverURL
+                        }
+                        if rec.blurb.isEmpty && !dto.blurb.isEmpty {
+                            rec.blurb = dto.blurb
+                        }
+                        continue
+                    }
+                    // Filter books without resolvable cover for *new* inserts (RG-04)
                     guard !dto.coverURL.isEmpty else { continue }
-                    guard !existingIds.contains(dto.id) else { continue }
                     let rec = CachedRecommendation(
                         id: dto.id,
                         title: dto.title,
@@ -150,7 +158,9 @@ final class DiscoverViewModel {
         isLoadingMore = true
         advanceTagline()
         Task {
-            await fetchLatestBatch(modelContext: modelContext, isForegrounded: false)
+            // force=true tells the backend to generate a fresh batch immediately
+            // rather than returning cached recs
+            await fetchLatestBatch(modelContext: modelContext, isForegrounded: false, force: true)
             await MainActor.run { self.isLoadingMore = false }
         }
     }

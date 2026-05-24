@@ -125,9 +125,20 @@ def delete_seed_book(book_id: str, user_id: UserID):
 @app.post("/v1/reactions", status_code=status.HTTP_201_CREATED)
 def add_reaction(body: ReactionRequest, user_id: UserID):
     doc_id = str(uuid.uuid4())
-    reaction_col(user_id).document(doc_id).set(
-        {**body.model_dump(), "id": doc_id, "created_at": datetime.now(timezone.utc)}
-    )
+
+    # Look up the book so we can store title/author alongside the reaction.
+    # This makes the data directly usable in the recommendation prompt without
+    # a second lookup step at generation time.
+    book_doc = recommendation_col(user_id).document(body.book_id).get()
+    book = book_doc.to_dict() if book_doc.exists else {}
+
+    reaction_col(user_id).document(doc_id).set({
+        **body.model_dump(),
+        "id": doc_id,
+        "created_at": datetime.now(timezone.utc),
+        "title": book.get("title", ""),
+        "author": book.get("author", ""),
+    })
     return {"id": doc_id}
 
 
@@ -151,8 +162,13 @@ def mark_seen(body: SeenBooksRequest, user_id: UserID):
 # GET /v1/recommendations  (generate if needed, else return cached batch)
 # ---------------------------------------------------------------------------
 @app.get("/v1/recommendations", response_model=list[RecommendationResponse])
-def get_recommendations(user_id: UserID, domain: str = "books"):
-    # Return any unseen cached recommendations first
+def get_recommendations(user_id: UserID, domain: str = "books", force: bool = False):
+    # If force=true, skip the cache and generate a fresh batch immediately
+    # (used by the Discover feed's "Load more" CTA).
+    if force:
+        return _generate_recommendations(user_id, domain)
+
+    # Otherwise return any unseen cached recommendations first
     unseen = (
         recommendation_col(user_id)
         .where("domain", "==", domain)
