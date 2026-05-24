@@ -24,7 +24,8 @@ final class OnboardingViewModel {
     // Step 2: chain discovery suggestions keyed by seed book id
     var suggestions: [String: [SuggestionDTO]] = [:]
     var isLoadingSuggestions: Bool = false
-    var addedSuggestions: Set<String> = []   // suggestion IDs added to seed list
+    var addedSuggestions: Set<String> = []   // suggestion IDs the user marked "I've read it"
+    var savedSuggestions: Set<String> = []   // suggestion IDs the user marked "Save for later"
 
     // Step 3: submission
     var isSubmitting: Bool = false
@@ -134,16 +135,32 @@ final class OnboardingViewModel {
         }
     }
 
-    func toggleSuggestion(_ suggestion: SuggestionDTO) {
+    // "I've read it" — adds to taste profile (seed books). Mutually exclusive with Save.
+    func toggleAddToTaste(_ suggestion: SuggestionDTO) {
         if addedSuggestions.contains(suggestion.id) {
             addedSuggestions.remove(suggestion.id)
         } else {
             addedSuggestions.insert(suggestion.id)
+            savedSuggestions.remove(suggestion.id)
+        }
+    }
+
+    // "Save for later" — adds to Reading List, NOT to seed taste profile.
+    func toggleSaveForLater(_ suggestion: SuggestionDTO) {
+        if savedSuggestions.contains(suggestion.id) {
+            savedSuggestions.remove(suggestion.id)
+        } else {
+            savedSuggestions.insert(suggestion.id)
+            addedSuggestions.remove(suggestion.id)
         }
     }
 
     func isSuggestionAdded(_ suggestion: SuggestionDTO) -> Bool {
         addedSuggestions.contains(suggestion.id)
+    }
+
+    func isSuggestionSaved(_ suggestion: SuggestionDTO) -> Bool {
+        savedSuggestions.contains(suggestion.id)
     }
 
     // MARK: - Step 3: Submit & Transition
@@ -152,39 +169,58 @@ final class OnboardingViewModel {
         isSubmitting = true
         submissionError = nil
 
-        // Snapshot values before crossing async boundary (Sendable safety)
-        var allToSubmit: [(title: String, author: String, coverURL: String)] = selectedBooks.map {
+        // Books that become SEED books (taste profile): selected picks + "I've read it" suggestions
+        var seedsToSubmit: [(title: String, author: String, coverURL: String)] = selectedBooks.map {
             (title: $0.title, author: $0.author, coverURL: $0.coverURL ?? "")
         }
+        // Books that become READING LIST items only ("Save for later" suggestions)
+        var savesToSubmit: [(title: String, author: String, coverURL: String, blurb: String)] = []
+
         for book in selectedBooks {
-            if let subs = suggestions[book.id] {
-                for s in subs where addedSuggestions.contains(s.id) {
-                    allToSubmit.append((title: s.title, author: s.author, coverURL: s.coverURL))
+            guard let subs = suggestions[book.id] else { continue }
+            for s in subs {
+                if addedSuggestions.contains(s.id) {
+                    seedsToSubmit.append((title: s.title, author: s.author, coverURL: s.coverURL))
+                } else if savedSuggestions.contains(s.id) {
+                    savesToSubmit.append((
+                        title: s.title, author: s.author, coverURL: s.coverURL,
+                        blurb: s.blurb.isEmpty ? "Suggested during onboarding because you love \(book.title)." : s.blurb
+                    ))
                 }
             }
         }
 
         Task { @MainActor in
-            print("[Onboarding] submitting \(allToSubmit.count) seed books…")
-            for (idx, item) in allToSubmit.enumerated() {
+            print("[Onboarding] submitting \(seedsToSubmit.count) seeds, \(savesToSubmit.count) saves…")
+
+            // Seeds: send to backend + mirror to local SwiftData
+            for (idx, item) in seedsToSubmit.enumerated() {
                 do {
                     try await APIClient.shared.submitSeedBook(
-                        title: item.title,
-                        author: item.author,
-                        coverURL: item.coverURL
+                        title: item.title, author: item.author, coverURL: item.coverURL
                     )
-                    print("[Onboarding] ✓ submitted #\(idx + 1): \(item.title)")
                     let local = LocalSeedBook(
                         id: UUID().uuidString,
-                        title: item.title,
-                        author: item.author,
-                        coverURL: item.coverURL
+                        title: item.title, author: item.author, coverURL: item.coverURL
                     )
                     modelContext.insert(local)
+                    print("[Onboarding] ✓ seed #\(idx + 1): \(item.title)")
                 } catch {
-                    print("[Onboarding] ✗ failed #\(idx + 1) (\(item.title)): \(error)")
+                    print("[Onboarding] ✗ seed #\(idx + 1) (\(item.title)): \(error)")
                 }
             }
+
+            // Saves: insert directly into local Reading List (no backend reading-list endpoint)
+            for save in savesToSubmit {
+                let item = ReadingListItem(
+                    id: UUID().uuidString,
+                    title: save.title, author: save.author,
+                    coverURL: save.coverURL, blurb: save.blurb
+                )
+                modelContext.insert(item)
+                print("[Onboarding] ✓ saved to reading list: \(save.title)")
+            }
+
             self.isSubmitting = false
             appState.isFirstGeneration = true
             appState.completeOnboarding()

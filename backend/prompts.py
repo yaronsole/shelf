@@ -10,7 +10,7 @@ def build_recommendations_prompt(
     seeds: list[dict],
     liked: list[dict],
     disliked: list[dict],
-    exclude_ids: list[str],
+    exclude_ids: list[str],  # actually "Title by Author" strings now — name kept for back-compat
     domain: str,
     count: int,
 ) -> str:
@@ -23,7 +23,7 @@ def build_recommendations_prompt(
     seed_list = "\n".join(f"- {s['title']} by {s['author']}" for s in seeds)
     liked_list = "\n".join(line for r in liked[:30] if (line := _fmt(r))) or "none"
     disliked_list = "\n".join(line for r in disliked[:30] if (line := _fmt(r))) or "none"
-    exclude_json = json.dumps(exclude_ids[:150])
+    exclude_lines = "\n".join(f"- {e}" for e in exclude_ids[:150]) or "(none)"
 
     return f"""You are a literary expert generating personalized book recommendations.
 
@@ -38,7 +38,8 @@ Books they dismissed or rated negatively — these are STRONG negative signals; 
 
 Use both the seed list and the reaction history to refine your picks. The reactions are recent feedback and should weigh more heavily than the original seeds when they conflict.
 
-Do NOT recommend any book whose ID appears in this exclusion list: {exclude_json}
+CRITICAL: Do NOT recommend any of the following books — they have already been shown to this reader or are in their taste profile. Pick entirely new titles.
+{exclude_lines}
 
 Generate exactly {count} book recommendations for domain "{domain}".
 For each book include roughly 80% books that clearly match their taste, and 20% that are a gentle stretch outside their comfort zone (set is_comfort_zone_push true for those).

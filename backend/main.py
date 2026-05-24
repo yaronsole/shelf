@@ -237,15 +237,21 @@ def _generate_recommendations(user_id: str, domain: str) -> list[RecommendationR
     if not seeds:
         return []
 
-    # Build exclusion list (cap to avoid token blowup)
-    seen_ids = [d.id for d in user_ref(user_id).collection("seen_books").select([]).stream()]
-    dismissed = [
-        d.to_dict().get("book_id", "")
-        for d in reaction_col(user_id)
-        .where("kind", "==", ReactionKind.dismiss)
-        .stream()
-    ]
-    exclude_ids = list(dict.fromkeys(seen_ids + dismissed))[:MAX_EXCLUSION_LIST]
+    # Build exclude list as "Title by Author" strings — Claude needs human-readable
+    # context, not opaque UUIDs. Include every rec we've EVER generated for this user
+    # (so the same book never appears in two consecutive Generate-more sessions),
+    # plus the seed books themselves (no need to recommend what they already love).
+    exclude_set: set[str] = set()
+    for r in recommendation_col(user_id).stream():
+        d = r.to_dict()
+        t, a = (d.get("title") or "").strip(), (d.get("author") or "").strip()
+        if t:
+            exclude_set.add(f"{t} by {a}" if a else t)
+    for s in seeds:
+        t, a = (s.get("title") or "").strip(), (s.get("author") or "").strip()
+        if t:
+            exclude_set.add(f"{t} by {a}" if a else t)
+    exclude_list = sorted(exclude_set)[:MAX_EXCLUSION_LIST]
 
     # Positive / negative taste signals
     liked = [
@@ -266,7 +272,7 @@ def _generate_recommendations(user_id: str, domain: str) -> list[RecommendationR
         seeds=seeds,
         liked=liked,
         disliked=disliked,
-        exclude_ids=exclude_ids,
+        exclude_ids=exclude_list,
         domain=domain,
         count=10,
     )
