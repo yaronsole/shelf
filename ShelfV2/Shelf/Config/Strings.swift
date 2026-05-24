@@ -13,12 +13,14 @@ enum Strings {
 
         enum SeedSearch {
             static let title = "Books You Love"
-            static let subtitle = "Pick the books that shaped your taste."
+            static let subtitle = "Tap ✓ on books you've read & loved (we use these to learn your taste). Tap 🔖 to save anything else for later."
             static let searchPlaceholder = "Search by title or author…"
             static let minimumCount = "3 of 3 minimum"
             static let encouragement = "More books = better picks"
             static let continueCTA = "Continue"
             static let chipTitleMaxLength = 20
+            static let readLabel = "I've read it"
+            static let saveLabel = "Save"
         }
 
         enum ChainDiscovery {

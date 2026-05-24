@@ -11,7 +11,10 @@ enum OnboardingStep {
 @Observable
 final class OnboardingViewModel {
     var step: OnboardingStep = .welcome
+    // Step 1: selected = "I've read it" → goes to taste profile (seed)
     var selectedBooks: [BookSearchResult] = []
+    // Step 1: saved = "Save for later" → goes to Reading List (NOT seed)
+    var savedBooks: [BookSearchResult] = []
     var searchQuery: String = ""
     var searchResults: [BookSearchResult] = []
     var isSearching: Bool = false
@@ -68,8 +71,10 @@ final class OnboardingViewModel {
         }
     }
 
+    // "I've read it" → adds to taste seeds. Mutually exclusive with Save.
     func selectBook(_ book: BookSearchResult) {
         guard !selectedBooks.contains(book) else { return }
+        savedBooks.removeAll { $0.id == book.id }
         selectedBooks.append(book)
     }
 
@@ -79,6 +84,20 @@ final class OnboardingViewModel {
 
     func isSelected(_ book: BookSearchResult) -> Bool {
         selectedBooks.contains(book)
+    }
+
+    // "Save for later" → adds to Reading List, NOT to seed taste profile.
+    func toggleSaveBook(_ book: BookSearchResult) {
+        if let idx = savedBooks.firstIndex(where: { $0.id == book.id }) {
+            savedBooks.remove(at: idx)
+        } else {
+            selectedBooks.removeAll { $0.id == book.id }
+            savedBooks.append(book)
+        }
+    }
+
+    func isSaved(_ book: BookSearchResult) -> Bool {
+        savedBooks.contains(where: { $0.id == book.id })
     }
 
     // MARK: - Curated Popular Books Grid
@@ -92,6 +111,15 @@ final class OnboardingViewModel {
             await withTaskGroup(of: (Int, BookSearchResult?).self) { group in
                 for (index, entry) in PopularBooks.books.enumerated() {
                     group.addTask {
+                        // Open Library has FAR better cover-art quality than Google Books
+                        // for known classics. Use it as the canonical source for our
+                        // curated picks; fall back to Google Books only if it has no cover.
+                        if let cover = await OpenLibraryService.shared.lookupCoverURL(title: entry.title, author: entry.author) {
+                            // Synthesize a BookSearchResult — id needs to be stable per title|author
+                            let stableId = "\(entry.title)|\(entry.author)".lowercased()
+                            return (index, BookSearchResult(id: stableId, title: entry.title, author: entry.author, coverURL: cover))
+                        }
+                        // Fallback to Google Books lookup
                         let result = await GoogleBooksService.shared.lookup(title: entry.title, author: entry.author)
                         return (index, result)
                     }
@@ -100,7 +128,6 @@ final class OnboardingViewModel {
                 for await (i, book) in group {
                     if let book { indexed.append((i, book)) }
                 }
-                // Preserve original ordering from PopularBooks.books
                 results = indexed.sorted { $0.0 < $1.0 }.map { $0.1 }
             }
             await MainActor.run {
@@ -173,8 +200,11 @@ final class OnboardingViewModel {
         var seedsToSubmit: [(title: String, author: String, coverURL: String)] = selectedBooks.map {
             (title: $0.title, author: $0.author, coverURL: $0.coverURL ?? "")
         }
-        // Books that become READING LIST items only ("Save for later" suggestions)
-        var savesToSubmit: [(title: String, author: String, coverURL: String, blurb: String)] = []
+        // Books that become READING LIST items: Step 1 saves + Step 2 saves
+        var savesToSubmit: [(title: String, author: String, coverURL: String, blurb: String)] = savedBooks.map {
+            (title: $0.title, author: $0.author, coverURL: $0.coverURL ?? "",
+             blurb: "Saved during onboarding.")
+        }
 
         for book in selectedBooks {
             guard let subs = suggestions[book.id] else { continue }

@@ -149,18 +149,17 @@ private struct PopularBooksGrid: View {
                         Spacer()
                     }
                 } else {
-                    LazyVGrid(columns: columns, spacing: 12) {
+                    LazyVGrid(columns: columns, spacing: 16) {
                         ForEach(vm.popularBooks) { book in
                             PopularBookTile(
                                 book: book,
-                                isSelected: vm.isSelected(book)
-                            ) {
-                                if vm.isSelected(book) {
-                                    vm.removeBook(book)
-                                } else {
-                                    vm.selectBook(book)
-                                }
-                            }
+                                isSelected: vm.isSelected(book),
+                                isSaved: vm.isSaved(book),
+                                onToggleSelect: {
+                                    if vm.isSelected(book) { vm.removeBook(book) } else { vm.selectBook(book) }
+                                },
+                                onToggleSave: { vm.toggleSaveBook(book) }
+                            )
                         }
                     }
                     .padding(.horizontal, 20)
@@ -174,33 +173,68 @@ private struct PopularBooksGrid: View {
 private struct PopularBookTile: View {
     let book: BookSearchResult
     let isSelected: Bool
-    let onTap: () -> Void
+    let isSaved: Bool
+    let onToggleSelect: () -> Void
+    let onToggleSave: () -> Void
+
+    private let tasteColor = Color(red: 0.10, green: 0.45, blue: 0.30)
+    private let saveColor = Color(red: 0.10, green: 0.35, blue: 0.85)
 
     var body: some View {
-        Button(action: onTap) {
-            VStack(spacing: 6) {
-                ZStack(alignment: .topTrailing) {
-                    CoverImageView(urlString: book.coverURL ?? "", cornerRadius: 6)
-                        .aspectRatio(2/3, contentMode: .fit)
+        VStack(spacing: 6) {
+            ZStack(alignment: .topTrailing) {
+                CoverImageView(urlString: book.coverURL ?? "", cornerRadius: 6)
+                    .aspectRatio(2/3, contentMode: .fit)
 
-                    if isSelected {
-                        Image(systemName: "checkmark.circle.fill")
-                            .font(.title3)
-                            .foregroundStyle(.white)
-                            .shadow(radius: 2)
-                            .padding(4)
-                    }
+                if isSelected {
+                    Image(systemName: "checkmark.circle.fill")
+                        .font(.title3)
+                        .foregroundStyle(.white, tasteColor)
+                        .padding(4)
+                } else if isSaved {
+                    Image(systemName: "bookmark.fill")
+                        .font(.title3)
+                        .foregroundStyle(saveColor)
+                        .padding(4)
                 }
-                Text(book.title)
-                    .font(.caption2.weight(.medium))
-                    .lineLimit(2)
-                    .multilineTextAlignment(.center)
-                    .foregroundStyle(Color(.label))
-                    .frame(maxWidth: .infinity)
             }
-            .opacity(isSelected ? 1 : 0.95)
-            .scaleEffect(isSelected ? 0.97 : 1)
-            .animation(.spring(response: 0.25, dampingFraction: 0.7), value: isSelected)
+            Text(book.title)
+                .font(.caption2.weight(.medium))
+                .lineLimit(2)
+                .multilineTextAlignment(.center)
+                .foregroundStyle(Color(.label))
+                .frame(maxWidth: .infinity)
+            HStack(spacing: 4) {
+                TinyToggleButton(systemImage: "checkmark", isActive: isSelected, activeColor: tasteColor, action: onToggleSelect)
+                TinyToggleButton(systemImage: "bookmark", isActive: isSaved, activeColor: saveColor, action: onToggleSave)
+            }
+        }
+    }
+}
+
+// Tappable mini-button used in the popular-picks tile and chain-discovery card.
+// Inactive state shows colored outline (not gray fill) so it doesn't look disabled.
+private struct TinyToggleButton: View {
+    let systemImage: String
+    let isActive: Bool
+    let activeColor: Color
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            Image(systemName: systemImage)
+                .font(.caption.weight(.bold))
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 7)
+                .background(
+                    RoundedRectangle(cornerRadius: 6)
+                        .fill(isActive ? activeColor : Color.white)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 6)
+                                .strokeBorder(activeColor.opacity(isActive ? 0 : 0.45), lineWidth: 1.2)
+                        )
+                )
+                .foregroundStyle(isActive ? Color.white : activeColor)
         }
         .buttonStyle(.plain)
     }

@@ -29,6 +29,7 @@ from models import (
 )
 from prompts import build_recommendations_prompt, build_suggestions_prompt
 from google_books import lookup_cover, lookup_metadata
+from open_library import lookup_cover as open_library_lookup_cover
 from nyt_bestsellers import lookup_bestseller
 from nyt_history import fetch_next_pages as nyt_history_fetch_next_pages, lookup_bestseller_history
 
@@ -99,9 +100,12 @@ def _enrich_book(b: dict, client: httpx.Client) -> None:
     title = b.get("title", "")
     author = b.get("author", "")
 
-    meta = lookup_metadata(title, author, client=client)
+    # Prefer Open Library for covers — far better data quality than Google Books.
+    # Fall back to Google Books if Open Library has nothing.
+    meta = lookup_metadata(title, author, client=client)   # still need for pageCount
     if not b.get("cover_url"):
-        b["cover_url"] = meta.get("cover_url", "")
+        ol_cover = open_library_lookup_cover(title, author, client=client)
+        b["cover_url"] = ol_cover or meta.get("cover_url", "")
 
     # Reading time: ~1.7 min per page on average (200wpm, ~340 words/page)
     page_count = meta.get("page_count")
@@ -215,23 +219,38 @@ def get_recommendations(user_id: UserID, domain: str = "books", force: bool = Fa
     if force:
         return _generate_recommendations(user_id, domain)
 
-    # Otherwise return any unseen cached recommendations first
-    unseen = (
+    # Otherwise return any undelivered cached recommendations.
+    # CRITICAL: mark them delivered=True as we return, so the SAME books aren't
+    # served on every poll — that was the source of the "I keep seeing the same
+    # recs back-to-back" bug.
+    unseen_docs = list(
         recommendation_col(user_id)
         .where("domain", "==", domain)
         .where("delivered", "==", False)
         .limit(10)
         .stream()
     )
-    cached = [RecommendationResponse(**d.to_dict()) for d in unseen]
-    if cached:
+    if unseen_docs:
+        cached = [RecommendationResponse(**d.to_dict()) for d in unseen_docs]
+        # Batch mark as delivered
+        batch = db.batch()
+        for doc in unseen_docs:
+            batch.update(doc.reference, {"delivered": True})
+        batch.commit()
         return cached
 
-    # Otherwise generate a fresh batch
+    # No cached undelivered → generate a fresh batch
     return _generate_recommendations(user_id, domain)
 
 
-def _generate_recommendations(user_id: str, domain: str) -> list[RecommendationResponse]:
+def _generate_recommendations(user_id: str, domain: str, mark_delivered: bool = True) -> list[RecommendationResponse]:
+    """Generate a fresh batch and persist to Firestore.
+
+    mark_delivered=True (default) is used when the user is requesting recs right
+    now — those go straight to delivered=True so we don't re-serve them.
+    Cron-generated batches use mark_delivered=False so they're picked up by
+    the next /v1/recommendations call.
+    """
     # Gather seed books
     seeds = [d.to_dict() for d in seed_col(user_id).where("domain", "==", domain).stream()]
     if not seeds:
@@ -301,7 +320,7 @@ def _generate_recommendations(user_id: str, domain: str) -> list[RecommendationR
             "id": doc_id,
             "batch_id": batch_id,
             "domain": domain,
-            "delivered": False,
+            "delivered": mark_delivered,
             "created_at": now,
             **book,
         }
@@ -400,7 +419,7 @@ def cron_generate_all(
             skipped += 1
             continue
         try:
-            _generate_recommendations(user_id, "books")
+            _generate_recommendations(user_id, "books", mark_delivered=False)
             processed += 1
         except Exception as exc:
             log.exception("cron generation failed for user %s: %s", user_id, exc)

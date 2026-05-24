@@ -131,7 +131,7 @@ struct DiscoverView: View {
             EmptyStateView(
                 systemImage: "books.vertical",
                 title: "You're caught up",
-                subtitle: "Tap below to generate a fresh batch based on your latest reactions.",
+                subtitle: "A fresh batch lands every morning at 3am.\nOr tap below to generate one now based on your latest reactions.",
                 action: { vm.loadMore(modelContext: modelContext) },
                 actionLabel: vm.isLoadingMore ? Strings.Common.loading : "Generate more"
             )

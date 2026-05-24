@@ -184,13 +184,17 @@ private struct CompactButton: View {
                     .lineLimit(1)
             }
             .frame(maxWidth: .infinity)
-            .padding(.vertical, 6)
-            .padding(.horizontal, 4)
+            .padding(.vertical, 7)
+            .padding(.horizontal, 6)
             .background(
                 RoundedRectangle(cornerRadius: 6)
-                    .fill(isActive ? activeColor : Color(.secondarySystemFill))
+                    .fill(isActive ? activeColor : Color.white)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 6)
+                            .strokeBorder(activeColor.opacity(isActive ? 0 : 0.45), lineWidth: 1.2)
+                    )
             )
-            .foregroundStyle(isActive ? Color.white : Color(.label))
+            .foregroundStyle(isActive ? Color.white : activeColor)
         }
         .buttonStyle(.plain)
     }
