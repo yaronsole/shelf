@@ -28,7 +28,7 @@ from models import (
     SuggestionsRequest,
 )
 from prompts import build_recommendations_prompt, build_suggestions_prompt
-from google_books import lookup_cover
+from google_books import lookup_cover, lookup_metadata
 
 import httpx
 
@@ -232,11 +232,17 @@ def _generate_recommendations(user_id: str, domain: str) -> list[RecommendationR
     raw = message.content[0].text
     books: list[dict] = json.loads(raw)
 
-    # Enrich with Google Books cover art before persisting to Firestore
+    # Enrich with Google Books cover + rating data before persisting to Firestore.
+    # One HTTP call per book; runs sequentially for simplicity (~6-8s for 10 books).
     with httpx.Client(timeout=5.0) as client:
         for b in books:
+            meta = lookup_metadata(b.get("title", ""), b.get("author", ""), client=client)
             if not b.get("cover_url"):
-                b["cover_url"] = lookup_cover(b.get("title", ""), b.get("author", ""), client=client)
+                b["cover_url"] = meta.get("cover_url", "")
+            b["average_rating"] = meta.get("average_rating")
+            b["ratings_count"] = meta.get("ratings_count")
+            # Normalize awards: Claude sometimes omits, sometimes returns None
+            b["awards"] = b.get("awards") or []
 
     batch_id = str(uuid.uuid4())
     now = datetime.now(timezone.utc)

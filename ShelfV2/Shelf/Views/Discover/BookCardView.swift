@@ -29,6 +29,30 @@ struct BookCardView: View {
                         .foregroundStyle(.secondary)
                 }
 
+                // Rating + Awards
+                if rec.averageRating != nil || !rec.awards.isEmpty {
+                    HStack(spacing: 10) {
+                        if let r = rec.averageRating {
+                            HStack(spacing: 3) {
+                                Image(systemName: "star.fill")
+                                    .font(.caption2)
+                                    .foregroundStyle(.yellow)
+                                Text(String(format: "%.1f", r))
+                                    .font(.caption.weight(.semibold))
+                                if let count = rec.ratingsCount {
+                                    Text("(\(count.formatted(.number.notation(.compactName))))")
+                                        .font(.caption2)
+                                        .foregroundStyle(.secondary)
+                                }
+                            }
+                        }
+                        ForEach(rec.awards, id: \.self) { award in
+                            AwardBadge(text: award)
+                        }
+                        Spacer()
+                    }
+                }
+
                 // Tags row
                 HStack(spacing: 6) {
                     TagView(text: rec.genre)
@@ -92,6 +116,48 @@ struct BookCardView: View {
                 onDidntLike: { onAlreadyRead(false) }
             )
         }
+    }
+}
+
+// MARK: - Award Badge
+
+private struct AwardBadge: View {
+    let text: String
+
+    // Map known award names to short labels + colors for visual variety
+    private var icon: String { "rosette" }
+    private var tint: Color {
+        let lower = text.lowercased()
+        if lower.contains("pulitzer") { return Color(red: 0.65, green: 0.50, blue: 0.10) }
+        if lower.contains("booker") { return Color(red: 0.40, green: 0.20, blue: 0.50) }
+        if lower.contains("national book") { return Color(red: 0.20, green: 0.40, blue: 0.30) }
+        if lower.contains("hugo") || lower.contains("nebula") {
+            return Color(red: 0.20, green: 0.30, blue: 0.55)
+        }
+        return Color(red: 0.45, green: 0.30, blue: 0.10)
+    }
+
+    private var shortLabel: String {
+        // Strip "Prize"/"Award" suffix for compactness in the card
+        text
+            .replacingOccurrences(of: " Prize", with: "")
+            .replacingOccurrences(of: " Award", with: "")
+    }
+
+    var body: some View {
+        HStack(spacing: 3) {
+            Image(systemName: icon)
+                .font(.caption2)
+            Text(shortLabel)
+                .font(.caption2.weight(.semibold))
+                .lineLimit(1)
+        }
+        .padding(.horizontal, 6)
+        .padding(.vertical, 3)
+        .foregroundStyle(tint)
+        .background(
+            Capsule().fill(tint.opacity(0.12))
+        )
     }
 }
 

@@ -4,6 +4,17 @@ import SwiftData
 // One-shot scan for SwiftData rows whose coverURL is empty, looks each up via
 // Google Books, and persists the result. Called on app launch.
 enum CoverBackfillService {
+    // PRD REC-07: at app launch, drop books seen during prior sessions so they
+    // don't reappear in the feed.
+    @MainActor
+    static func pruneSeenItems(modelContext: ModelContext) {
+        let seen = (try? modelContext.fetch(
+            FetchDescriptor<CachedRecommendation>(predicate: #Predicate { $0.isSeen })
+        )) ?? []
+        print("[CoverBackfill] pruning \(seen.count) seen books from previous session")
+        for rec in seen { modelContext.delete(rec) }
+    }
+
     static func backfillAll(modelContext: ModelContext) {
         print("[CoverBackfill] starting…")
         Task { @MainActor in

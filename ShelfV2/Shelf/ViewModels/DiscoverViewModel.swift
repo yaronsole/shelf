@@ -46,6 +46,11 @@ final class DiscoverViewModel {
                         if rec.blurb.isEmpty && !dto.blurb.isEmpty {
                             rec.blurb = dto.blurb
                         }
+                        if rec.awards.isEmpty && !dto.awards.isEmpty {
+                            rec.awards = dto.awards
+                        }
+                        if rec.averageRating == nil { rec.averageRating = dto.averageRating }
+                        if rec.ratingsCount == nil { rec.ratingsCount = dto.ratingsCount }
                         continue
                     }
                     // Filter books without resolvable cover for *new* inserts (RG-04)
@@ -60,7 +65,10 @@ final class DiscoverViewModel {
                         era: dto.era,
                         isComfortZonePush: dto.isComfortZonePush,
                         batchId: dto.batchId,
-                        domain: dto.domain
+                        domain: dto.domain,
+                        awards: dto.awards,
+                        averageRating: dto.averageRating,
+                        ratingsCount: dto.ratingsCount
                     )
                     modelContext.insert(rec)
                     insertedCount += 1

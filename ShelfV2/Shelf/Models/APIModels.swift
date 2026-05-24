@@ -15,13 +15,35 @@ struct RecommendationDTO: Decodable, Identifiable {
     let isComfortZonePush: Bool
     let batchId: String
     let domain: String
+    let awards: [String]
+    let averageRating: Double?
+    let ratingsCount: Int?
 
-    // Foundation's convertFromSnakeCase produces "coverUrl" — explicit map needed for "coverURL"
     enum CodingKeys: String, CodingKey {
-        case id, title, author, blurb, genre, era, domain
+        case id, title, author, blurb, genre, era, domain, awards
         case coverURL = "cover_url"
         case isComfortZonePush = "is_comfort_zone_push"
         case batchId = "batch_id"
+        case averageRating = "average_rating"
+        case ratingsCount = "ratings_count"
+    }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        id = try c.decode(String.self, forKey: .id)
+        title = try c.decode(String.self, forKey: .title)
+        author = try c.decode(String.self, forKey: .author)
+        coverURL = try c.decode(String.self, forKey: .coverURL)
+        blurb = try c.decode(String.self, forKey: .blurb)
+        genre = try c.decode(String.self, forKey: .genre)
+        era = try c.decode(String.self, forKey: .era)
+        isComfortZonePush = try c.decode(Bool.self, forKey: .isComfortZonePush)
+        batchId = try c.decode(String.self, forKey: .batchId)
+        domain = try c.decode(String.self, forKey: .domain)
+        // Be lenient — older cached docs won't have these fields
+        awards = (try? c.decode([String].self, forKey: .awards)) ?? []
+        averageRating = try? c.decodeIfPresent(Double.self, forKey: .averageRating)
+        ratingsCount = try? c.decodeIfPresent(Int.self, forKey: .ratingsCount)
     }
 }
 

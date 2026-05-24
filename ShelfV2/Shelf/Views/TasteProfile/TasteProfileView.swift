@@ -8,6 +8,7 @@ struct TasteProfileView: View {
     private var seedBooks: [LocalSeedBook]
 
     @State private var vm = TasteProfileViewModel()
+    @State private var bookForSuggestions: LocalSeedBook? = nil
 
     private let columns = [
         GridItem(.flexible(), spacing: 12),
@@ -49,10 +50,10 @@ struct TasteProfileView: View {
                             ForEach(seedBooks) { book in
                                 SeedBookCoverView(
                                     book: book,
-                                    canRemove: seedBooks.count > TasteProfileViewModel.minimumSeeds
-                                ) {
-                                    vm.confirmRemove(book)
-                                }
+                                    canRemove: seedBooks.count > TasteProfileViewModel.minimumSeeds,
+                                    onTap: { bookForSuggestions = book },
+                                    onRemove: { vm.confirmRemove(book) }
+                                )
                             }
                         }
                         .padding(16)
@@ -74,6 +75,9 @@ struct TasteProfileView: View {
         .sheet(isPresented: $vm.isShowingAddSheet) {
             SeedBookAddSheet(vm: vm, modelContext: modelContext)
         }
+        .sheet(item: $bookForSuggestions) { book in
+            SimilarBooksSheet(seed: book, modelContext: modelContext)
+        }
         .confirmationDialog(
             Strings.TasteProfile.removeWarning,
             isPresented: $vm.isShowingRemoveConfirm,
@@ -94,21 +98,23 @@ struct TasteProfileView: View {
 private struct SeedBookCoverView: View {
     let book: LocalSeedBook
     let canRemove: Bool
+    let onTap: () -> Void
     let onRemove: () -> Void
 
     var body: some View {
-        ZStack(alignment: .topTrailing) {
+        Button(action: onTap) {
             CoverImageView(urlString: book.coverURL, cornerRadius: 8)
                 .aspectRatio(2/3, contentMode: .fit)
-                .contextMenu {
-                    if canRemove {
-                        Button(role: .destructive) {
-                            onRemove()
-                        } label: {
-                            Label(Strings.TasteProfile.removeAction, systemImage: "trash")
-                        }
-                    }
+        }
+        .buttonStyle(.plain)
+        .contextMenu {
+            if canRemove {
+                Button(role: .destructive) {
+                    onRemove()
+                } label: {
+                    Label(Strings.TasteProfile.removeAction, systemImage: "trash")
                 }
+            }
         }
     }
 }

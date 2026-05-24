@@ -6,8 +6,11 @@ struct DiscoverView: View {
     @Environment(\.scenePhase) private var scenePhase
     @Environment(AppState.self) private var appState
 
+    // Per PRD REC-07: seen books are excluded on the NEXT app open, not mid-session.
+    // Pruning of seen books happens at launch in CoverBackfillService.pruneSeenItems;
+    // here we only filter out books the user has reacted to.
     @Query(
-        filter: #Predicate<CachedRecommendation> { !$0.isReacted && !$0.isSeen },
+        filter: #Predicate<CachedRecommendation> { !$0.isReacted },
         sort: \CachedRecommendation.fetchedAt,
         order: .reverse
     )

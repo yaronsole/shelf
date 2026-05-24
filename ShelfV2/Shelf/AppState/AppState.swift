@@ -10,6 +10,9 @@ final class AppState {
     // Set to true when onboarding submission is in-flight and the first batch is generating.
     var isFirstGeneration: Bool = false
 
+    // Per-launch flags — reset each app launch (not persisted).
+    var hasDoneLaunchTimePrune: Bool = false
+
     init() {
         self.hasCompletedOnboarding = UserDefaults.standard.bool(forKey: Keys.onboardingComplete)
     }

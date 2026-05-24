@@ -20,6 +20,9 @@ final class CachedRecommendation {
     var isSeen: Bool
     var seenAt: Date?
     var isReacted: Bool
+    var awards: [String] = []
+    var averageRating: Double? = nil
+    var ratingsCount: Int? = nil
 
     init(
         id: String,
@@ -31,7 +34,10 @@ final class CachedRecommendation {
         era: String,
         isComfortZonePush: Bool,
         batchId: String,
-        domain: String = Domain.books.rawValue
+        domain: String = Domain.books.rawValue,
+        awards: [String] = [],
+        averageRating: Double? = nil,
+        ratingsCount: Int? = nil
     ) {
         self.id = id
         self.title = title
@@ -46,6 +52,9 @@ final class CachedRecommendation {
         self.domain = domain
         self.isSeen = false
         self.isReacted = false
+        self.awards = awards
+        self.averageRating = averageRating
+        self.ratingsCount = ratingsCount
     }
 }
 

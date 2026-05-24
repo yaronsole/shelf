@@ -92,13 +92,30 @@ private struct ReadingListRowView: View {
                     .lineLimit(isExpanded ? nil : 2)
                     .animation(.easeInOut(duration: 0.2), value: isExpanded)
 
-                Button(isExpanded ? Strings.ReadingList.showLess : Strings.ReadingList.showMore) {
-                    onToggleExpand()
+                HStack(spacing: 12) {
+                    Button(isExpanded ? Strings.ReadingList.showLess : Strings.ReadingList.showMore) {
+                        onToggleExpand()
+                    }
+                    .font(.caption.weight(.medium))
+                    .foregroundStyle(.secondary)
+                    .buttonStyle(.plain)
+
+                    if let url = amazonSearchURL {
+                        Link(destination: url) {
+                            Label("Amazon", systemImage: "arrow.up.right.square")
+                                .font(.caption.weight(.medium))
+                                .foregroundStyle(.secondary)
+                        }
+                    }
                 }
-                .font(.caption.weight(.medium))
-                .foregroundStyle(.secondary)
-                .buttonStyle(.plain)
             }
         }
+    }
+
+    // PRD RG-01: clean search URL, no affiliate tag injection.
+    private var amazonSearchURL: URL? {
+        let q = "\(item.title) \(item.author)"
+            .addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
+        return URL(string: "https://www.amazon.com/s?k=\(q)&i=stripbooks")
     }
 }

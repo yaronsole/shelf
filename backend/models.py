@@ -62,6 +62,10 @@ class RecommendationResponse(BaseModel):
     is_comfort_zone_push: bool
     batch_id: str
     domain: str
+    # New in v2.1: enrichment fields. All optional so older cached docs still decode.
+    awards: list[str] = []
+    average_rating: float | None = None
+    ratings_count: int | None = None
 
 
 class SuggestionResponse(BaseModel):

@@ -51,6 +51,9 @@ Respond with ONLY a JSON array. No markdown, no explanation. Each object must ha
   genre          (string)
   era            (string — e.g. "1990s", "Contemporary", "Classic")
   is_comfort_zone_push (boolean)
+  awards         (array of strings — major awards this book won or was shortlisted for. Use short canonical names
+                 e.g. "Pulitzer Prize", "National Book Award", "Booker Prize", "Hugo Award", "Nebula Award",
+                 "Edgar Award", "Pen/Faulkner Award". Empty array if none. Only include if certain.)
 """
 
 

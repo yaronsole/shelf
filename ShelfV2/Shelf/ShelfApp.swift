@@ -32,8 +32,14 @@ private struct RootView: View {
         }
         .animation(.easeInOut(duration: 0.35), value: appState.hasCompletedOnboarding)
         .task {
-            // Backfill any locally-cached books missing covers (e.g. from earlier
-            // builds where covers were empty). Idempotent — no-op for rows with covers.
+            // Prune books seen in previous sessions exactly once per launch (PRD REC-07).
+            if !appState.hasDoneLaunchTimePrune {
+                appState.hasDoneLaunchTimePrune = true
+                await MainActor.run {
+                    CoverBackfillService.pruneSeenItems(modelContext: modelContext)
+                }
+            }
+            // Backfill any locally-cached books missing covers. Idempotent.
             CoverBackfillService.backfillAll(modelContext: modelContext)
         }
     }
