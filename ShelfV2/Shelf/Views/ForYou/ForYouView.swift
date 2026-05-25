@@ -61,7 +61,7 @@ struct ForYouView: View {
                             // Sentinel for scroll-to-top after Load more
                             Color.clear.frame(height: 1).id("__top")
 
-                            if appState.isFirstGeneration && feed.isEmpty {
+                            if appState.isFirstGeneration && feed.isEmpty && !vm.didReceiveFirstBatch {
                                 firstGenerationEmptyState
                             } else if feed.isEmpty && !vm.isLoading {
                                 noBooksEmptyState
@@ -117,10 +117,22 @@ struct ForYouView: View {
                         .zIndex(10)
                 }
 
-                // Loading overlay on initial load only
+                // Loading overlay on initial load only. First-batch generation
+                // can take up to a minute (Claude + per-book enrichment); the
+                // explanatory line keeps the user from thinking it's stuck.
                 if vm.isLoading && feed.isEmpty {
-                    ProgressView()
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    VStack(spacing: 12) {
+                        ProgressView()
+                        Text("Curating your picks…")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                        Text("This can take up to a minute the first time.")
+                            .font(.caption)
+                            .foregroundStyle(.tertiary)
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal, 32)
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
                 }
         }
     }

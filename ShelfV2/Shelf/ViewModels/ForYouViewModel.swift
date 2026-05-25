@@ -6,6 +6,10 @@ final class ForYouViewModel {
     var isLoading: Bool = false
     var errorMessage: String? = nil
     var showNewBatchBanner: Bool = false
+    // Flips true after the first successful batch lands, so emptying the feed
+    // later doesn't bounce the user back to the "your shelf is being built"
+    // first-generation state.
+    var didReceiveFirstBatch: Bool = false
 
     // Tracks IDs newly seen this session (scrolled past upward) — written to backend in batches
     private var pendingSeenIds: Set<String> = []
@@ -107,6 +111,11 @@ final class ForYouViewModel {
                 self.isLoading = false
                 if isForegrounded && insertedCount > 0 {
                     self.showNewBatchBanner = true
+                }
+                if insertedCount > 0 {
+                    // Once any batch lands, the "Your shelf is being built"
+                    // empty state shouldn't reappear if the feed later empties.
+                    self.didReceiveFirstBatch = true
                 }
             }
         } catch {

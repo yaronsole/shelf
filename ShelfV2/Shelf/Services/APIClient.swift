@@ -9,7 +9,11 @@ final class APIClient {
 
     private let session: URLSession = {
         let config = URLSessionConfiguration.default
-        config.timeoutIntervalForRequest = 30
+        // First-time /v1/recommendations for a new user generates inline
+        // (Claude call + 10 enrichments) and can take 30–55s. Cloud Run
+        // is configured with --timeout 60, so we match that on the client.
+        config.timeoutIntervalForRequest = 60
+        config.timeoutIntervalForResource = 90
         return URLSession(configuration: config)
     }()
 
