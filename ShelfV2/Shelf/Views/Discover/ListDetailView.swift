@@ -110,6 +110,9 @@ private struct ListBookTile: View {
     let onTap: () -> Void
     let onLongPress: () -> Void
 
+    // Brief bounce on long-press to confirm the save gesture (1.0 → 1.05 → 1.0).
+    @State private var saveBounce: Bool = false
+
     var body: some View {
         ZStack(alignment: .topTrailing) {
             BookCoverView(url: book.coverURL)
@@ -125,19 +128,33 @@ private struct ListBookTile: View {
             case .read:
                 StatusBadge(systemImage: "checkmark", background: Color(red: 0.23, green: 0.43, blue: 0.07))
                     .padding(6)
+                    .transition(.scale.combined(with: .opacity))
             case .saved:
                 StatusBadge(systemImage: "bookmark.fill", background: Color(red: 0.09, green: 0.37, blue: 0.65))
                     .padding(6)
+                    .transition(.scale.combined(with: .opacity))
             case .passed:
                 StatusBadge(systemImage: "xmark", background: Color(.systemGray2))
                     .padding(6)
+                    .transition(.scale.combined(with: .opacity))
             case .none:
                 EmptyView()
             }
         }
+        .scaleEffect(saveBounce ? 1.05 : 1.0)
         .contentShape(Rectangle())
-        .onTapGesture { onTap() }
-        .onLongPressGesture(minimumDuration: 0.45) { onLongPress() }
+        .onTapGesture {
+            Haptics.light()
+            onTap()
+        }
+        .onLongPressGesture(minimumDuration: 0.45) {
+            Haptics.medium()
+            withAnimation(.spring(response: 0.18, dampingFraction: 0.55)) { saveBounce = true }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.12) {
+                withAnimation(.spring(response: 0.22, dampingFraction: 0.7)) { saveBounce = false }
+            }
+            onLongPress()
+        }
         .animation(.spring(response: 0.25, dampingFraction: 0.7), value: status)
     }
 }

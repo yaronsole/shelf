@@ -193,6 +193,7 @@ struct EmptyForYouView: View {
 
     private func addAsSeed(_ book: BookSearchResult) {
         guard !addedBookIds.contains(book.id) else { return }
+        Haptics.light()
         addedBookIds.insert(book.id)
         let coverURL = book.coverURL ?? ""
         Task { @MainActor in
@@ -214,6 +215,7 @@ struct EmptyForYouView: View {
 
     private func saveToShelf(_ book: BookSearchResult) {
         guard !savedBookIds.contains(book.id) else { return }
+        Haptics.medium()
         savedBookIds.insert(book.id)
         let item = ReadingListItem(
             id: UUID().uuidString,

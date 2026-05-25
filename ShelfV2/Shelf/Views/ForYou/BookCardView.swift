@@ -81,13 +81,18 @@ struct BookCardView: View {
             // 7. CTA row — Save dominant, ✓/✕ icon squares
             CTARow(
                 onSave: {
+                    Haptics.light()
                     withAnimation(.spring(response: 0.35, dampingFraction: 0.75)) {
                         isRemoving = true
                     }
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { onSave() }
                 },
-                onAlreadyRead: { showAlreadyReadSheet = true },
+                onAlreadyRead: {
+                    Haptics.light()
+                    showAlreadyReadSheet = true
+                },
                 onPass: {
+                    Haptics.light()
                     withAnimation(.spring(response: 0.35, dampingFraction: 0.75)) {
                         isRemoving = true
                     }

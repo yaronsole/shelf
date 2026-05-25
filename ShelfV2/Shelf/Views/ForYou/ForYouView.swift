@@ -27,6 +27,9 @@ struct ForYouView: View {
     // Tracks which card IDs have scrolled fully above the viewport
     @State private var visibleIds: Set<String> = []
 
+    // Top toast for rec-card actions (Save / Read / Pass).
+    @State private var toast: Toast? = nil
+
     var body: some View {
         NavigationStack {
             if seedBooks.count < seedThreshold {
@@ -37,6 +40,7 @@ struct ForYouView: View {
                 feedBody
             }
         }
+        .toast($toast)
         .onChange(of: scenePhase) { _, phase in
             if phase == .active {
                 vm.refreshIfNeeded(modelContext: modelContext, isForegrounded: true)
@@ -65,9 +69,18 @@ struct ForYouView: View {
                                 ForEach(feed) { rec in
                                     BookCardView(
                                         rec: rec,
-                                        onSave: { vm.save(rec, modelContext: modelContext) },
-                                        onDismiss: { vm.dismiss(rec, modelContext: modelContext) },
-                                        onAlreadyRead: { liked in vm.markAlreadyRead(rec, liked: liked, modelContext: modelContext) }
+                                        onSave: {
+                                            vm.save(rec, modelContext: modelContext)
+                                            toast = Toast(kind: .save, message: "Saved to Shelf")
+                                        },
+                                        onDismiss: {
+                                            vm.dismiss(rec, modelContext: modelContext)
+                                            toast = Toast(kind: .pass, message: "Got it — we'll skip similar")
+                                        },
+                                        onAlreadyRead: { liked in
+                                            vm.markAlreadyRead(rec, liked: liked, modelContext: modelContext)
+                                            toast = Toast(kind: .read, message: "Marked as read")
+                                        }
                                     )
                                     .padding(.horizontal, 16)
                                     .id(rec.id)
