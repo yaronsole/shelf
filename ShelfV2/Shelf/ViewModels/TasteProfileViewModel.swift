@@ -33,14 +33,14 @@ final class TasteProfileViewModel {
         searchTask = Task {
             try? await Task.sleep(for: .milliseconds(300))
             guard !Task.isCancelled else { return }
-            do {
-                let results = try await GoogleBooksService.shared.search(query: newQuery)
-                await MainActor.run {
-                    self.searchResults = results
-                    self.isSearching = false
-                }
-            } catch {
-                await MainActor.run { self.isSearching = false }
+            // Open Library: no API key, no quota. Fall back to Google Books if OL is empty.
+            var results = await OpenLibraryService.shared.search(query: newQuery)
+            if results.isEmpty {
+                results = (try? await GoogleBooksService.shared.search(query: newQuery)) ?? []
+            }
+            await MainActor.run {
+                self.searchResults = results
+                self.isSearching = false
             }
         }
     }
