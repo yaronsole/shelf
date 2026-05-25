@@ -188,6 +188,107 @@ struct DebugInfoDTO: Decodable {
     }
 }
 
+// MARK: - Curated Lists (Phase 6)
+
+struct ListMetadataDTO: Decodable, Identifiable {
+    let slug: String
+    let title: String
+    let subtitle: String
+    let description: String
+    let curator: String
+    let bookCount: Int
+    let lastUpdated: String
+    let colorStart: String
+    let colorEnd: String
+    let sortOrder: Int
+
+    var id: String { slug }
+
+    enum CodingKeys: String, CodingKey {
+        case slug, title, subtitle, description, curator
+        case bookCount = "book_count"
+        case lastUpdated = "last_updated"
+        case colorStart = "color_start"
+        case colorEnd = "color_end"
+        case sortOrder = "sort_order"
+    }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        slug = try c.decode(String.self, forKey: .slug)
+        title = try c.decode(String.self, forKey: .title)
+        subtitle = (try? c.decode(String.self, forKey: .subtitle)) ?? ""
+        description = (try? c.decode(String.self, forKey: .description)) ?? ""
+        curator = (try? c.decode(String.self, forKey: .curator)) ?? ""
+        bookCount = (try? c.decode(Int.self, forKey: .bookCount)) ?? 0
+        lastUpdated = (try? c.decode(String.self, forKey: .lastUpdated)) ?? ""
+        colorStart = (try? c.decode(String.self, forKey: .colorStart)) ?? "#534AB7"
+        colorEnd = (try? c.decode(String.self, forKey: .colorEnd)) ?? "#7F77DD"
+        sortOrder = (try? c.decode(Int.self, forKey: .sortOrder)) ?? 0
+    }
+}
+
+struct ListCatalogDTO: Decodable {
+    let lists: [ListMetadataDTO]
+}
+
+enum ListUserStatus: String, Codable {
+    case read, saved, passed
+}
+
+struct ListBookDTO: Decodable, Identifiable {
+    let bookId: String
+    let title: String
+    let author: String
+    let year: Int?
+    let coverURL: String
+    let userStatus: ListUserStatus?
+
+    var id: String { bookId }
+
+    enum CodingKeys: String, CodingKey {
+        case title, author, year
+        case bookId = "book_id"
+        case coverURL = "cover_url"
+        case userStatus = "user_status"
+    }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        bookId = try c.decode(String.self, forKey: .bookId)
+        title = try c.decode(String.self, forKey: .title)
+        author = try c.decode(String.self, forKey: .author)
+        year = try? c.decodeIfPresent(Int.self, forKey: .year)
+        coverURL = (try? c.decode(String.self, forKey: .coverURL)) ?? ""
+        userStatus = try? c.decodeIfPresent(ListUserStatus.self, forKey: .userStatus)
+    }
+}
+
+struct ListDetailDTO: Decodable {
+    let slug: String
+    let metadata: ListMetadataDTO
+    let books: [ListBookDTO]
+}
+
+enum ListReactionKind: String, Encodable {
+    case read, saved, passed
+}
+
+struct ListReactionRequest: Encodable {
+    let bookId: String
+    let title: String
+    let author: String
+    let coverURL: String
+    let kind: ListReactionKind
+    let domain: String
+
+    enum CodingKeys: String, CodingKey {
+        case title, author, kind, domain
+        case bookId = "book_id"
+        case coverURL = "cover_url"
+    }
+}
+
 // MARK: - API Error
 
 enum APIError: LocalizedError {

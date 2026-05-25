@@ -22,6 +22,9 @@ struct EmptyForYouView: View {
             .padding(.horizontal, horizontalPadding)
             .padding(.vertical, 16)
         }
+        .navigationDestination(for: String.self) { slug in
+            ListDetailView(slug: slug)
+        }
         .onAppear { loadPopularPicksIfNeeded() }
     }
 
@@ -68,18 +71,24 @@ struct EmptyForYouView: View {
         VStack(alignment: .leading, spacing: 10) {
             sectionLabel("OR BROWSE A LIST")
             VStack(spacing: 12) {
-                ListShortcutCard(
-                    title: "Oprah's Book Club",
-                    subtitle: "Since 1996",
-                    colorStart: Color(hex: 0x534AB7),
-                    colorEnd: Color(hex: 0x7F77DD)
-                )
-                ListShortcutCard(
-                    title: "Reese's Book Club",
-                    subtitle: "Hello Sunshine",
-                    colorStart: Color(hex: 0xD67C5C),
-                    colorEnd: Color(hex: 0xF2B69A)
-                )
+                NavigationLink(value: "oprah_book_club") {
+                    ListShortcutCard(
+                        title: "Oprah's Book Club",
+                        subtitle: "Since 1996",
+                        colorStart: Color(hex: 0x534AB7),
+                        colorEnd: Color(hex: 0x7F77DD)
+                    )
+                }
+                .buttonStyle(.plain)
+                NavigationLink(value: "reese_book_club") {
+                    ListShortcutCard(
+                        title: "Reese's Book Club",
+                        subtitle: "Hello Sunshine",
+                        colorStart: Color(hex: 0xD67C5C),
+                        colorEnd: Color(hex: 0xF2B69A)
+                    )
+                }
+                .buttonStyle(.plain)
             }
         }
     }
@@ -174,13 +183,3 @@ private struct ListShortcutCard: View {
     }
 }
 
-// MARK: - Color hex helper
-
-private extension Color {
-    init(hex: UInt32) {
-        let r = Double((hex >> 16) & 0xFF) / 255
-        let g = Double((hex >> 8) & 0xFF) / 255
-        let b = Double(hex & 0xFF) / 255
-        self.init(red: r, green: g, blue: b)
-    }
-}

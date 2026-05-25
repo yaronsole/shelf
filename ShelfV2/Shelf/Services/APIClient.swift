@@ -104,6 +104,57 @@ final class APIClient {
         return try await get(url: url)
     }
 
+    // MARK: - Curated Lists (Phase 6)
+
+    func fetchListCatalog() async throws -> ListCatalogDTO {
+        let url = APIConfig.baseURL.appendingPathComponent(APIConfig.Endpoints.lists)
+        return try await get(url: url)
+    }
+
+    func fetchListDetail(slug: String) async throws -> ListDetailDTO {
+        let url = APIConfig.baseURL
+            .appendingPathComponent(APIConfig.Endpoints.lists)
+            .appendingPathComponent(slug)
+        return try await get(url: url)
+    }
+
+    func reactToListBook(
+        slug: String,
+        bookId: String,
+        title: String,
+        author: String,
+        coverURL: String,
+        kind: ListReactionKind,
+        domain: Domain = .books
+    ) async throws {
+        let url = APIConfig.baseURL
+            .appendingPathComponent(APIConfig.Endpoints.lists)
+            .appendingPathComponent(slug)
+            .appendingPathComponent("react")
+        let body = ListReactionRequest(
+            bookId: bookId,
+            title: title,
+            author: author,
+            coverURL: coverURL,
+            kind: kind,
+            domain: domain.rawValue
+        )
+        try await post(url: url, body: body)
+    }
+
+    func deleteListReaction(slug: String, bookId: String, domain: Domain = .books) async throws {
+        var components = URLComponents(
+            url: APIConfig.baseURL
+                .appendingPathComponent(APIConfig.Endpoints.lists)
+                .appendingPathComponent(slug)
+                .appendingPathComponent("react")
+                .appendingPathComponent(bookId),
+            resolvingAgainstBaseURL: false
+        )!
+        components.queryItems = [URLQueryItem(name: "domain", value: domain.rawValue)]
+        try await delete(url: components.url!)
+    }
+
     // MARK: - Private HTTP primitives
 
     private func makeRequest(url: URL, method: String) -> URLRequest {
