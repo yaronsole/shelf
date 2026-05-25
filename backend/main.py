@@ -267,7 +267,9 @@ def _generate_recommendations(user_id: str, domain: str, mark_delivered: bool = 
     # Build exclude list as "Title by Author" strings — Claude needs human-readable
     # context, not opaque UUIDs. Include every rec we've EVER generated for this user
     # (so the same book never appears in two consecutive Generate-more sessions),
-    # plus the seed books themselves (no need to recommend what they already love).
+    # plus the seed books themselves (no need to recommend what they already love),
+    # plus any reaction that carries a title/author (e.g. list-saved/passed books
+    # from Phase 1 don't have a corresponding recommendation_col entry).
     exclude_set: set[str] = set()
     for r in recommendation_col(user_id).stream():
         d = r.to_dict()
@@ -276,6 +278,11 @@ def _generate_recommendations(user_id: str, domain: str, mark_delivered: bool = 
             exclude_set.add(f"{t} by {a}" if a else t)
     for s in seeds:
         t, a = (s.get("title") or "").strip(), (s.get("author") or "").strip()
+        if t:
+            exclude_set.add(f"{t} by {a}" if a else t)
+    for rxn in reaction_col(user_id).stream():
+        d = rxn.to_dict()
+        t, a = (d.get("title") or "").strip(), (d.get("author") or "").strip()
         if t:
             exclude_set.add(f"{t} by {a}" if a else t)
     exclude_list = sorted(exclude_set)[:MAX_EXCLUSION_LIST]
