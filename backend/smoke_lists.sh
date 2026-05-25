@@ -47,7 +47,7 @@ pass "marked read"
 echo
 echo "== Verify status persists on subsequent GET =="
 DETAIL2=$(curl -s -H "$AUTH" "$BASE/v1/lists/oprah_book_club")
-STATUS=$(echo "$DETAIL2" | python3 -c "import sys, json, os; d=json.load(sys.stdin); fid=os.environ['FIRST_ID']; b=next(x for x in d['books'] if x['book_id']==fid); print(b.get('user_status'))" FIRST_ID="$FIRST_ID")
+STATUS=$(echo "$DETAIL2" | FIRST_ID="$FIRST_ID" python3 -c "import sys, json, os; d=json.load(sys.stdin); fid=os.environ['FIRST_ID']; b=next(x for x in d['books'] if x['book_id']==fid); print(b.get('user_status'))")
 [[ "$STATUS" == "read" ]] || fail "expected user_status=read, got: $STATUS"
 pass "user_status=read persisted"
 
@@ -67,7 +67,7 @@ curl -s -X POST -H "$AUTH" -H "Content-Type: application/json" \
     -d "{\"book_id\":\"$SECOND_ID\",\"title\":\"$SECOND_TITLE\",\"author\":\"$SECOND_AUTHOR\",\"kind\":\"saved\"}" \
     "$BASE/v1/lists/oprah_book_club/react" > /dev/null
 DETAIL3=$(curl -s -H "$AUTH" "$BASE/v1/lists/oprah_book_club")
-STATUS2=$(echo "$DETAIL3" | python3 -c "import sys, json, os; d=json.load(sys.stdin); fid=os.environ['SECOND_ID']; b=next(x for x in d['books'] if x['book_id']==fid); print(b.get('user_status'))" SECOND_ID="$SECOND_ID")
+STATUS2=$(echo "$DETAIL3" | SECOND_ID="$SECOND_ID" python3 -c "import sys, json, os; d=json.load(sys.stdin); fid=os.environ['SECOND_ID']; b=next(x for x in d['books'] if x['book_id']==fid); print(b.get('user_status'))")
 [[ "$STATUS2" == "saved" ]] || fail "expected saved status, got: $STATUS2"
 pass "saved status applied"
 
@@ -75,7 +75,7 @@ echo
 echo "== DELETE /v1/lists/.../react (undo) =="
 curl -s -X DELETE -H "$AUTH" "$BASE/v1/lists/oprah_book_club/react/$FIRST_ID" > /dev/null
 DETAIL4=$(curl -s -H "$AUTH" "$BASE/v1/lists/oprah_book_club")
-STATUS3=$(echo "$DETAIL4" | python3 -c "import sys, json, os; d=json.load(sys.stdin); fid=os.environ['FIRST_ID']; b=next(x for x in d['books'] if x['book_id']==fid); print(b.get('user_status'))" FIRST_ID="$FIRST_ID")
+STATUS3=$(echo "$DETAIL4" | FIRST_ID="$FIRST_ID" python3 -c "import sys, json, os; d=json.load(sys.stdin); fid=os.environ['FIRST_ID']; b=next(x for x in d['books'] if x['book_id']==fid); print(b.get('user_status'))")
 [[ "$STATUS3" == "None" ]] || fail "expected user_status=None after undo, got: $STATUS3"
 pass "undo cleared status"
 
