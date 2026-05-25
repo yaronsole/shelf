@@ -1,23 +1,44 @@
 import SwiftUI
+import SwiftData
 
-/// Shown in the For You tab when the user has < 3 seeds OR has no personalized recs.
-/// Contains a search box placeholder (wired in Phase 7), six popular-picks covers,
-/// and two shortcut cards into curated lists (Phase 6 wires the destination).
+/// Shown in the For You tab when the user has < 3 seeds.
+/// • Default view: instructional line, search box, popular-picks grid, list shortcuts.
+/// • Search mode (query ≥ 2 chars): search box + results list (popular picks + shortcuts hidden).
 struct EmptyForYouView: View {
+    @Environment(\.modelContext) private var modelContext
+
     @State private var popularPicks: [PopularPickItem] = []
     @State private var searchQuery: String = ""
+    @State private var searchResults: [BookSearchResult] = []
+    @State private var isSearching: Bool = false
+    @State private var searchTask: Task<Void, Never>? = nil
+    // Local "added" sets so the row reflects the action immediately and we can
+    // ignore double-taps; these are per-session and reset when the view is
+    // re-created.
+    @State private var addedBookIds: Set<String> = []
+    @State private var savedBookIds: Set<String> = []
 
     private let horizontalPadding: CGFloat = 16
     private let gridSpacing: CGFloat = 12
 
+    private var isInSearchMode: Bool {
+        searchQuery.trimmingCharacters(in: .whitespacesAndNewlines).count >= 2
+    }
+
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 24) {
-                instructionalLine
+                if !isInSearchMode {
+                    instructionalLine
+                }
                 searchBox
-                popularPicksSection
-                browseListSection
-                footerLine
+                if isInSearchMode {
+                    searchResultsSection
+                } else {
+                    popularPicksSection
+                    browseListSection
+                    footerLine
+                }
             }
             .padding(.horizontal, horizontalPadding)
             .padding(.vertical, 16)
@@ -43,7 +64,18 @@ struct EmptyForYouView: View {
                 .foregroundStyle(.secondary)
             TextField("Search for a book…", text: $searchQuery)
                 .autocorrectionDisabled()
-                .disabled(true)  // wired in Phase 7
+                .onChange(of: searchQuery) { _, newValue in
+                    performSearch(query: newValue)
+                }
+            if isInSearchMode {
+                Button("Cancel") {
+                    searchQuery = ""
+                    searchResults = []
+                    isSearching = false
+                    searchTask?.cancel()
+                }
+                .font(.subheadline)
+            }
         }
         .padding(10)
         .background(Color(.secondarySystemFill))
@@ -93,6 +125,32 @@ struct EmptyForYouView: View {
         }
     }
 
+    private var searchResultsSection: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            if isSearching && searchResults.isEmpty {
+                ProgressView().padding(.vertical, 24).frame(maxWidth: .infinity)
+            } else if searchResults.isEmpty {
+                Text("No results for \"\(searchQuery)\"")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .padding(.vertical, 24)
+                    .frame(maxWidth: .infinity)
+            } else {
+                ForEach(searchResults) { result in
+                    SearchResultRow(
+                        book: result,
+                        isAdded: addedBookIds.contains(result.id),
+                        isSaved: savedBookIds.contains(result.id),
+                        onMarkRead: { addAsSeed(result) },
+                        onSave: { saveToShelf(result) }
+                    )
+                    .padding(.vertical, 6)
+                    Divider()
+                }
+            }
+        }
+    }
+
     private var footerLine: some View {
         Text("Pick at least 3 to unlock personalized recs ✦")
             .font(.footnote)
@@ -109,6 +167,62 @@ struct EmptyForYouView: View {
             .font(.caption.weight(.semibold))
             .foregroundStyle(.secondary)
             .tracking(0.8)
+    }
+
+    private func performSearch(query: String) {
+        searchTask?.cancel()
+        let trimmed = query.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard trimmed.count >= 2 else {
+            searchResults = []
+            isSearching = false
+            return
+        }
+        searchTask = Task {
+            // 300ms debounce: if the user keeps typing, this Task gets cancelled
+            try? await Task.sleep(for: .milliseconds(300))
+            if Task.isCancelled { return }
+            await MainActor.run { self.isSearching = true }
+            let results = await OpenLibraryService.shared.search(query: trimmed)
+            if Task.isCancelled { return }
+            await MainActor.run {
+                self.searchResults = results
+                self.isSearching = false
+            }
+        }
+    }
+
+    private func addAsSeed(_ book: BookSearchResult) {
+        guard !addedBookIds.contains(book.id) else { return }
+        addedBookIds.insert(book.id)
+        let coverURL = book.coverURL ?? ""
+        Task { @MainActor in
+            do {
+                try await APIClient.shared.submitSeedBook(
+                    title: book.title, author: book.author, coverURL: coverURL
+                )
+                let local = LocalSeedBook(
+                    id: UUID().uuidString,
+                    title: book.title, author: book.author, coverURL: coverURL
+                )
+                modelContext.insert(local)
+            } catch {
+                // Roll back UI feedback so user can retry
+                addedBookIds.remove(book.id)
+            }
+        }
+    }
+
+    private func saveToShelf(_ book: BookSearchResult) {
+        guard !savedBookIds.contains(book.id) else { return }
+        savedBookIds.insert(book.id)
+        let item = ReadingListItem(
+            id: UUID().uuidString,
+            title: book.title,
+            author: book.author,
+            coverURL: book.coverURL ?? "",
+            blurb: "Saved from search."
+        )
+        modelContext.insert(item)
     }
 
     private func loadPopularPicksIfNeeded() {
@@ -148,6 +262,50 @@ private struct PopularPickItem: Identifiable {
     var id: String { "\(title)|\(author)".lowercased() }
 }
 
+// MARK: - Search Result Row
+
+private struct SearchResultRow: View {
+    let book: BookSearchResult
+    let isAdded: Bool
+    let isSaved: Bool
+    let onMarkRead: () -> Void
+    let onSave: () -> Void
+
+    var body: some View {
+        HStack(spacing: 12) {
+            BookCoverView(url: book.coverURL ?? "", width: 50)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(book.title)
+                    .font(.subheadline.bold())
+                    .lineLimit(2)
+                Text(book.author)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+            }
+            Spacer(minLength: 8)
+            Button(action: onMarkRead) {
+                Image(systemName: isAdded ? "checkmark.circle.fill" : "checkmark.circle")
+                    .font(.title2)
+                    .foregroundStyle(isAdded
+                                     ? Color(red: 0.10, green: 0.45, blue: 0.30)
+                                     : Color(.secondaryLabel))
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Mark as read")
+            Button(action: onSave) {
+                Image(systemName: isSaved ? "bookmark.fill" : "bookmark")
+                    .font(.title2)
+                    .foregroundStyle(isSaved
+                                     ? Color(red: 0.09, green: 0.37, blue: 0.65)
+                                     : Color(.secondaryLabel))
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Save to shelf")
+        }
+    }
+}
+
 // MARK: - List Shortcut Card
 
 private struct ListShortcutCard: View {
@@ -182,4 +340,3 @@ private struct ListShortcutCard: View {
         .clipShape(RoundedRectangle(cornerRadius: 12))
     }
 }
-
