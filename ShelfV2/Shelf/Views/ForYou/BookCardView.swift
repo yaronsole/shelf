@@ -11,11 +11,8 @@ struct BookCardView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            // Cover image — prominent, full width
-            CoverImageView(urlString: rec.coverURL, cornerRadius: 0)
-                .aspectRatio(3/4, contentMode: .fit)
-                .frame(maxWidth: .infinity)
-                .clipped()
+            // Cover image — prominent, full width. Phase 5 will re-design this card around a centered hero.
+            BookCoverView(url: rec.coverURL)
 
             VStack(alignment: .leading, spacing: 12) {
                 // Title + Author

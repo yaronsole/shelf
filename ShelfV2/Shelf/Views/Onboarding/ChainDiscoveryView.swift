@@ -119,8 +119,7 @@ private struct SuggestionCard: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
             ZStack(alignment: .topTrailing) {
-                CoverImageView(urlString: suggestion.coverURL, cornerRadius: 8)
-                    .frame(width: cardWidth, height: cardWidth * 1.5)
+                BookCoverView(url: suggestion.coverURL, width: cardWidth)
                     .scaleEffect(isPressing ? 0.93 : 1)
                     .animation(.easeInOut(duration: 0.12), value: isPressing)
 

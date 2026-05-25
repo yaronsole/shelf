@@ -59,8 +59,7 @@ struct SeedBookSearchView: View {
                     } label: {
                         HStack(spacing: 12) {
                             if let url = result.coverURL {
-                                CoverImageView(urlString: url, cornerRadius: 4)
-                                    .frame(width: 36, height: 52)
+                                BookCoverView(url: url, width: 36)
                             }
                             VStack(alignment: .leading, spacing: 2) {
                                 Text(result.title)
@@ -182,8 +181,7 @@ private struct PopularBookTile: View {
     var body: some View {
         VStack(spacing: 6) {
             ZStack(alignment: .topTrailing) {
-                CoverImageView(urlString: book.coverURL ?? "", cornerRadius: 6)
-                    .aspectRatio(2/3, contentMode: .fit)
+                BookCoverView(url: book.coverURL ?? "")
                     .scaleEffect(isPressing ? 0.93 : 1)
                     .animation(.easeInOut(duration: 0.12), value: isPressing)
 

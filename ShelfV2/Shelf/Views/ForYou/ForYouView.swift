@@ -16,6 +16,12 @@ struct ForYouView: View {
     )
     private var feed: [CachedRecommendation]
 
+    // Seed count gates the rich empty state. Below the threshold the user
+    // sees the popular-picks empty state instead of a thin "we're generating…"
+    // placeholder, so they can take action without waiting for a generation.
+    @Query private var seedBooks: [LocalSeedBook]
+    private let seedThreshold = 3
+
     @State private var vm = ForYouViewModel()
 
     // Tracks which card IDs have scrolled fully above the viewport
@@ -23,7 +29,28 @@ struct ForYouView: View {
 
     var body: some View {
         NavigationStack {
-            ZStack(alignment: .top) {
+            if seedBooks.count < seedThreshold {
+                // Below-threshold users see the rich empty state with popular picks
+                // and list shortcuts so they can build their profile immediately.
+                EmptyForYouView()
+            } else {
+                feedBody
+            }
+        }
+        .onChange(of: scenePhase) { _, phase in
+            if phase == .active {
+                vm.refreshIfNeeded(modelContext: modelContext, isForegrounded: true)
+            } else if phase == .background {
+                vm.flushPendingSeen()
+            }
+        }
+        .onAppear {
+            vm.refreshIfNeeded(modelContext: modelContext)
+        }
+    }
+
+    private var feedBody: some View {
+        ZStack(alignment: .top) {
                 ScrollViewReader { scrollProxy in
                     ScrollView {
                         LazyVStack(spacing: 16) {
@@ -82,17 +109,6 @@ struct ForYouView: View {
                     ProgressView()
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                 }
-            }
-        }
-        .onChange(of: scenePhase) { _, phase in
-            if phase == .active {
-                vm.refreshIfNeeded(modelContext: modelContext, isForegrounded: true)
-            } else if phase == .background {
-                vm.flushPendingSeen()
-            }
-        }
-        .onAppear {
-            vm.refreshIfNeeded(modelContext: modelContext)
         }
     }
 

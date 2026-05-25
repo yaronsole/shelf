@@ -27,8 +27,7 @@ struct SimilarBooksSheet: View {
                 VStack(alignment: .leading, spacing: 16) {
                     // Seed header
                     HStack(alignment: .top, spacing: 14) {
-                        CoverImageView(urlString: seed.coverURL, cornerRadius: 6)
-                            .frame(width: 60, height: 90)
+                        BookCoverView(url: seed.coverURL, width: 60)
                         VStack(alignment: .leading, spacing: 4) {
                             Text("Because you love")
                                 .font(.caption.weight(.semibold))
@@ -194,10 +193,7 @@ private struct SuggestionCard: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            CoverImageView(urlString: suggestion.coverURL, cornerRadius: 0)
-                .aspectRatio(3/4, contentMode: .fit)
-                .frame(maxWidth: .infinity)
-                .clipped()
+            BookCoverView(url: suggestion.coverURL)
 
             VStack(alignment: .leading, spacing: 10) {
                 VStack(alignment: .leading, spacing: 3) {

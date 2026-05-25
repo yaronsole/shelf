@@ -101,8 +101,7 @@ private struct SeedBookCoverView: View {
 
     var body: some View {
         Button(action: onTap) {
-            CoverImageView(urlString: book.coverURL, cornerRadius: 8)
-                .aspectRatio(2/3, contentMode: .fit)
+            BookCoverView(url: book.coverURL)
         }
         .buttonStyle(.plain)
         .contextMenu {
@@ -207,8 +206,7 @@ private struct SearchResultRow: View {
     var body: some View {
         HStack(spacing: 12) {
             if let url = book.coverURL {
-                CoverImageView(urlString: url, cornerRadius: 4)
-                    .frame(width: 36, height: 52)
+                BookCoverView(url: url, width: 36)
             }
             VStack(alignment: .leading, spacing: 2) {
                 Text(book.title)

@@ -46,8 +46,7 @@ struct ConfirmationView: View {
                 LazyVGrid(columns: columns, spacing: 8) {
                     ForEach(allBooks) { book in
                         ZStack(alignment: .topTrailing) {
-                            CoverImageView(urlString: book.coverURL ?? "", cornerRadius: 8)
-                                .aspectRatio(2/3, contentMode: .fit)
+                            BookCoverView(url: book.coverURL ?? "")
                         }
                         .contextMenu {
                             Button(role: .destructive) {

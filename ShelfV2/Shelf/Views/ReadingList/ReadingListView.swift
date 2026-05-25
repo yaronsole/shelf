@@ -72,8 +72,7 @@ private struct ReadingListRowView: View {
 
     var body: some View {
         HStack(alignment: .top, spacing: 12) {
-            CoverImageView(urlString: item.coverURL, cornerRadius: 6)
-                .frame(width: 56, height: 80)
+            BookCoverView(url: item.coverURL, width: 56)
 
             VStack(alignment: .leading, spacing: 4) {
                 Text(item.title)
