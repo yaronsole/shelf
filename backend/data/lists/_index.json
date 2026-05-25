@@ -1,0 +1,26 @@
+{
+  "lists": [
+    {
+      "slug": "oprah_book_club",
+      "title": "Oprah's Book Club",
+      "subtitle": "Since 1996",
+      "description": "Books selected by Oprah Winfrey for her book club, spanning literary fiction, memoir, and cultural milestones.",
+      "curator": "Oprah Winfrey",
+      "last_updated": "2025-12-01",
+      "color_start": "#534AB7",
+      "color_end": "#7F77DD",
+      "sort_order": 1
+    },
+    {
+      "slug": "reese_book_club",
+      "title": "Reese's Book Club",
+      "subtitle": "Hello Sunshine",
+      "description": "Reese Witherspoon's monthly picks centering women's voices — from page-turners to literary fiction.",
+      "curator": "Reese Witherspoon",
+      "last_updated": "2025-12-01",
+      "color_start": "#D67C5C",
+      "color_end": "#F2B69A",
+      "sort_order": 2
+    }
+  ]
+}

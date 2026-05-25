@@ -18,6 +18,12 @@ from google.cloud import firestore
 
 from models import (
     DebugInfoResponse,
+    ListBookResponse,
+    ListCatalogResponse,
+    ListDetailResponse,
+    ListMetadata,
+    ListReactionKind,
+    ListReactionRequest,
     ReactionKind,
     ReactionRequest,
     RecommendationResponse,
@@ -32,7 +38,9 @@ from google_books import lookup_cover, lookup_metadata
 from open_library import lookup_cover as open_library_lookup_cover
 from nyt_bestsellers import lookup_bestseller
 from nyt_history import fetch_next_pages as nyt_history_fetch_next_pages, lookup_bestseller_history
+from lists import get_list_metadata, load_catalog, load_list_books
 
+from concurrent.futures import ThreadPoolExecutor, as_completed
 import httpx
 
 # ---------------------------------------------------------------------------
@@ -441,6 +449,235 @@ def cron_nyt_backfill(
     if not expected or x_cloud_scheduler_auth != expected:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="invalid cron secret")
     return nyt_history_fetch_next_pages(db, pages=1)
+
+
+# ---------------------------------------------------------------------------
+# Curated lists (Phase 1)
+# ---------------------------------------------------------------------------
+def _resolve_list_covers(books: list[dict]) -> dict[str, str]:
+    """Resolve cover URLs for a list of books.
+
+    Uses a global Firestore cache at list_cover_cache/{book_id} so each
+    (title, author) is looked up at most once across all users. Misses
+    are fetched concurrently from Open Library (primary) then Google
+    Books (fallback) — mirrors the cover hierarchy used elsewhere."""
+    cache_col = db.collection("list_cover_cache")
+    refs = [cache_col.document(b["book_id"]) for b in books]
+    snapshots = db.get_all(refs) if refs else []
+    cached: dict[str, str] = {}
+    for snap in snapshots:
+        if snap.exists:
+            d = snap.to_dict() or {}
+            if d.get("cover_url"):
+                cached[snap.id] = d["cover_url"]
+
+    misses = [b for b in books if b["book_id"] not in cached]
+    resolved: dict[str, str] = dict(cached)
+
+    if misses:
+        def _fetch(book: dict) -> tuple[str, str]:
+            with httpx.Client(timeout=5.0) as client:
+                url = open_library_lookup_cover(book["title"], book["author"], client=client) \
+                      or lookup_cover(book["title"], book["author"], client=client)
+            return book["book_id"], url or ""
+
+        with ThreadPoolExecutor(max_workers=8) as pool:
+            futures = [pool.submit(_fetch, b) for b in misses]
+            for fut in as_completed(futures):
+                bid, url = fut.result()
+                resolved[bid] = url
+
+        # Persist cache (skip empty results so we retry next time)
+        firestore_batch = db.batch()
+        wrote_any = False
+        now = datetime.now(timezone.utc)
+        for b in misses:
+            url = resolved.get(b["book_id"], "")
+            if url:
+                firestore_batch.set(cache_col.document(b["book_id"]), {
+                    "cover_url": url,
+                    "title": b["title"],
+                    "author": b["author"],
+                    "cached_at": now,
+                })
+                wrote_any = True
+        if wrote_any:
+            firestore_batch.commit()
+
+    return resolved
+
+
+def _user_list_status_map(user_id: str, domain: str) -> dict[tuple[str, str], str]:
+    """Build a (title_lower, author_lower) → status map for the user.
+
+    Status precedence (last write wins): passed/saved from reactions,
+    then read from seeds (seeds override — a seed means the user has
+    explicitly marked the book as read)."""
+    status: dict[tuple[str, str], str] = {}
+
+    for doc in reaction_col(user_id).where("domain", "==", domain).stream():
+        d = doc.to_dict()
+        title = (d.get("title") or "").lower().strip()
+        author = (d.get("author") or "").lower().strip()
+        if not title:
+            continue
+        kind = d.get("kind", "")
+        if kind == ReactionKind.dismiss.value:
+            status[(title, author)] = "passed"
+        elif kind == ReactionKind.save.value:
+            status[(title, author)] = "saved"
+        elif kind in (ReactionKind.already_read_liked.value,
+                      ReactionKind.already_read_disliked.value):
+            status[(title, author)] = "read"
+
+    for doc in seed_col(user_id).where("domain", "==", domain).stream():
+        d = doc.to_dict()
+        title = (d.get("title") or "").lower().strip()
+        author = (d.get("author") or "").lower().strip()
+        if not title:
+            continue
+        status[(title, author)] = "read"
+
+    return status
+
+
+# ---------------------------------------------------------------------------
+# GET /v1/lists  (catalog — public, no auth)
+# ---------------------------------------------------------------------------
+@app.get("/v1/lists", response_model=ListCatalogResponse)
+def get_lists():
+    return ListCatalogResponse(
+        lists=[ListMetadata(**entry) for entry in load_catalog()]
+    )
+
+
+# ---------------------------------------------------------------------------
+# GET /v1/lists/{slug}  (metadata + books + per-user status)
+# ---------------------------------------------------------------------------
+@app.get("/v1/lists/{slug}", response_model=ListDetailResponse)
+def get_list_detail(slug: str, user_id: UserID, domain: str = "books"):
+    meta = get_list_metadata(slug)
+    if not meta:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="list not found")
+    try:
+        books = load_list_books(slug)
+    except FileNotFoundError:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="list books not found")
+
+    covers = _resolve_list_covers(books)
+    user_status = _user_list_status_map(user_id, domain)
+
+    decorated = []
+    for b in books:
+        key = (b["title"].lower().strip(), b["author"].lower().strip())
+        decorated.append(ListBookResponse(
+            book_id=b["book_id"],
+            title=b["title"],
+            author=b["author"],
+            year=b.get("year"),
+            cover_url=covers.get(b["book_id"], ""),
+            user_status=user_status.get(key),
+        ))
+
+    return ListDetailResponse(
+        slug=slug,
+        metadata=ListMetadata(**meta),
+        books=decorated,
+    )
+
+
+# ---------------------------------------------------------------------------
+# POST /v1/lists/{slug}/react  (mark book from list as read/saved/passed)
+# ---------------------------------------------------------------------------
+@app.post("/v1/lists/{slug}/react", status_code=status.HTTP_201_CREATED)
+def react_to_list_book(slug: str, body: ListReactionRequest, user_id: UserID):
+    if not get_list_metadata(slug):
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="list not found")
+
+    source = f"list:{slug}"
+    now = datetime.now(timezone.utc)
+    title_key = body.title.lower().strip()
+    author_key = body.author.lower().strip()
+
+    if body.kind == ListReactionKind.read:
+        # "Read" from a list = seed book (same weight as onboarding seeds).
+        # Idempotent on (title, author) — mirrors add_seed_book behavior.
+        for doc in seed_col(user_id).where("domain", "==", body.domain).stream():
+            d = doc.to_dict()
+            if (d.get("title", "").lower().strip() == title_key
+                    and d.get("author", "").lower().strip() == author_key):
+                return {"id": doc.id, "kind": "read"}
+        doc_id = str(uuid.uuid4())
+        seed_col(user_id).document(doc_id).set({
+            "id": doc_id,
+            "title": body.title,
+            "author": body.author,
+            "cover_url": body.cover_url,
+            "domain": body.domain,
+            "source": source,
+            "created_at": now,
+        })
+        return {"id": doc_id, "kind": "read"}
+
+    # saved → reaction kind=save, passed → reaction kind=dismiss
+    rxn_kind = (ReactionKind.save if body.kind == ListReactionKind.saved
+                else ReactionKind.dismiss)
+    doc_id = str(uuid.uuid4())
+    reaction_col(user_id).document(doc_id).set({
+        "id": doc_id,
+        "book_id": body.book_id,
+        "kind": rxn_kind.value,
+        "domain": body.domain,
+        "title": body.title,
+        "author": body.author,
+        "cover_url": body.cover_url,
+        "source": source,
+        "created_at": now,
+    })
+    return {"id": doc_id, "kind": body.kind.value}
+
+
+# ---------------------------------------------------------------------------
+# DELETE /v1/lists/{slug}/react/{book_id}  (undo a list reaction)
+# ---------------------------------------------------------------------------
+@app.delete("/v1/lists/{slug}/react/{book_id}", status_code=status.HTTP_204_NO_CONTENT)
+def unreact_to_list_book(slug: str, book_id: str, user_id: UserID, domain: str = "books"):
+    try:
+        books = load_list_books(slug)
+    except FileNotFoundError:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="list not found")
+    book = next((b for b in books if b["book_id"] == book_id), None)
+    if not book:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="book not in list")
+
+    title_key = book["title"].lower().strip()
+    author_key = book["author"].lower().strip()
+    source = f"list:{slug}"
+
+    batch = db.batch()
+    deleted_any = False
+
+    # Remove matching seed docs (only those sourced from THIS list, so we
+    # don't accidentally nuke onboarding seeds that happen to share a title)
+    for doc in seed_col(user_id).where("domain", "==", domain).stream():
+        d = doc.to_dict()
+        if (d.get("title", "").lower().strip() == title_key
+                and d.get("author", "").lower().strip() == author_key
+                and d.get("source") == source):
+            batch.delete(doc.reference)
+            deleted_any = True
+
+    # Remove matching reactions sourced from this list
+    for doc in reaction_col(user_id).where("domain", "==", domain).stream():
+        d = doc.to_dict()
+        if (d.get("title", "").lower().strip() == title_key
+                and d.get("author", "").lower().strip() == author_key
+                and d.get("source") == source):
+            batch.delete(doc.reference)
+            deleted_any = True
+
+    if deleted_any:
+        batch.commit()
 
 
 # ---------------------------------------------------------------------------

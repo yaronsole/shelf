@@ -1,7 +1,7 @@
 from __future__ import annotations
 from datetime import datetime
 from enum import StrEnum
-from typing import Optional
+from typing import Literal, Optional
 from pydantic import BaseModel, Field
 
 
@@ -10,6 +10,19 @@ class ReactionKind(StrEnum):
     dismiss = "dismiss"
     already_read_liked = "alreadyReadLiked"
     already_read_disliked = "alreadyReadDisliked"
+
+
+class ListReactionKind(StrEnum):
+    """Reactions a user can leave on a book from a curated list.
+
+    Mapping to the internal model:
+      - read  → adds a seed_book (so Claude exclusion list covers it)
+      - saved → reaction kind=save (lands in the Shelf tab)
+      - passed → reaction kind=dismiss
+    """
+    read = "read"
+    saved = "saved"
+    passed = "passed"
 
 
 # ---------------------------------------------------------------------------
@@ -92,3 +105,47 @@ class SuggestionResponse(BaseModel):
 class DebugInfoResponse(BaseModel):
     last_generation_timestamp: Optional[datetime]
     last_batch_size: Optional[int]
+
+
+# ---------------------------------------------------------------------------
+# Curated lists (Phase 1)
+# ---------------------------------------------------------------------------
+class ListMetadata(BaseModel):
+    slug: str
+    title: str
+    subtitle: str = ""
+    description: str = ""
+    curator: str = ""
+    book_count: int = 0
+    last_updated: str = ""
+    color_start: str = ""
+    color_end: str = ""
+    sort_order: int = 0
+
+
+class ListCatalogResponse(BaseModel):
+    lists: list[ListMetadata]
+
+
+class ListBookResponse(BaseModel):
+    book_id: str
+    title: str
+    author: str
+    year: Optional[int] = None
+    cover_url: str = ""
+    user_status: Optional[Literal["read", "saved", "passed"]] = None
+
+
+class ListDetailResponse(BaseModel):
+    slug: str
+    metadata: ListMetadata
+    books: list[ListBookResponse]
+
+
+class ListReactionRequest(BaseModel):
+    book_id: str
+    title: str
+    author: str
+    cover_url: str = ""
+    kind: ListReactionKind
+    domain: str = "books"
