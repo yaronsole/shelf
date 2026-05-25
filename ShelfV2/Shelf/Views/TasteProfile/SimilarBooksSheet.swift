@@ -66,7 +66,7 @@ struct SimilarBooksSheet: View {
                                 suggestion: s,
                                 onSave: { save(s) },
                                 onPass: { hide(s) },
-                                onAlreadyRead: { _ in hide(s) }
+                                onAlreadyRead: { liked in alreadyRead(s, liked: liked) }
                             )
                             .padding(.horizontal, 16)
                         }
@@ -119,20 +119,26 @@ struct SimilarBooksSheet: View {
     }
 
     private func initialLoad() async {
-        // Seed exclude with this seed itself + any books already in Reading List for this user
+        // Seed exclude with this seed itself + any books already in Reading List
+        // for this user + every suggestion previously shown for this seed across
+        // past sessions (persisted in UserDefaults) so the user gets a fresh set
+        // each time they open this sheet for the same book.
         let seedKey = Self.key(seed.title, seed.author)
         let savedKeys: [String] = (try? modelContext.fetch(FetchDescriptor<ReadingListItem>()))?
             .map { Self.key($0.title, $0.author) } ?? []
-        let initialExclude = ([seedKey] + savedKeys).reduce(into: [String]()) { acc, k in
-            if !acc.contains(k) { acc.append(k) }
+        let history = Self.loadHistory(for: seed)
+
+        var initialExclude: [String] = []
+        for k in [seedKey] + savedKeys + history where !initialExclude.contains(k) {
+            initialExclude.append(k)
         }
         excludeKeys = initialExclude
 
         let result = await fetch(count: 5)
         await MainActor.run {
-            for s in result {
-                self.excludeKeys.append(Self.key(s.title, s.author))
-            }
+            let newKeys = result.map { Self.key($0.title, $0.author) }
+            self.excludeKeys.append(contentsOf: newKeys)
+            Self.appendHistory(newKeys, for: self.seed)
             self.suggestions = result
             self.isLoading = false
         }
@@ -143,12 +149,38 @@ struct SimilarBooksSheet: View {
         await MainActor.run { self.isLoadingMore = true }
         let result = await fetch(count: 5)
         await MainActor.run {
-            for s in result {
-                self.excludeKeys.append(Self.key(s.title, s.author))
-            }
+            let newKeys = result.map { Self.key($0.title, $0.author) }
+            self.excludeKeys.append(contentsOf: newKeys)
+            Self.appendHistory(newKeys, for: self.seed)
             self.suggestions.append(contentsOf: result)
             self.isLoadingMore = false
         }
+    }
+
+    // MARK: - Suggestion history persistence
+
+    private static func historyDefaultsKey(for seed: LocalSeedBook) -> String {
+        "shelf.suggestionHistory.\(seed.title.lowercased())|\(seed.author.lowercased())"
+    }
+
+    private static let historyCap = 100  // keep cap so Claude prompt stays bounded
+
+    private static func loadHistory(for seed: LocalSeedBook) -> [String] {
+        UserDefaults.standard.stringArray(forKey: historyDefaultsKey(for: seed)) ?? []
+    }
+
+    private static func appendHistory(_ keys: [String], for seed: LocalSeedBook) {
+        let existing = loadHistory(for: seed)
+        var merged = existing
+        for k in keys where !merged.contains(k) {
+            merged.append(k)
+        }
+        // Keep only the most recent N — drop oldest so a heavy user of one seed
+        // doesn't push their prompt past Claude's exclusion bandwidth.
+        if merged.count > historyCap {
+            merged = Array(merged.suffix(historyCap))
+        }
+        UserDefaults.standard.set(merged, forKey: historyDefaultsKey(for: seed))
     }
 
     private func fetch(count: Int) async -> [SuggestionDTO] {
@@ -178,6 +210,34 @@ struct SimilarBooksSheet: View {
         withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
             hiddenIds.insert(s.id)
         }
+    }
+
+    /// "Already read" + "Loved it" → add as a seed so the book starts feeding
+    /// future personalized recs the same way an onboarding or Taste-tab-added
+    /// seed would. "Didn't like it" just hides locally (we don't have a
+    /// reaction surface for suggestions that aren't in recommendation_col).
+    private func alreadyRead(_ s: SuggestionDTO, liked: Bool) {
+        if liked {
+            let title = s.title
+            let author = s.author
+            let coverURL = s.coverURL
+            Task { @MainActor in
+                do {
+                    try await APIClient.shared.submitSeedBook(
+                        title: title, author: author, coverURL: coverURL
+                    )
+                    let local = LocalSeedBook(
+                        id: UUID().uuidString,
+                        title: title, author: author, coverURL: coverURL
+                    )
+                    modelContext.insert(local)
+                } catch {
+                    // Silent failure — log only. The card hides regardless so the user moves on.
+                    print("[SimilarBooks] failed to add liked book as seed: \(error)")
+                }
+            }
+        }
+        hide(s)
     }
 }
 
