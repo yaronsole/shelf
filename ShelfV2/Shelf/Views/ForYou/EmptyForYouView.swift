@@ -50,21 +50,17 @@ struct EmptyForYouView: View {
     private var popularPicksSection: some View {
         VStack(alignment: .leading, spacing: 10) {
             sectionLabel("POPULAR PICKS")
-            GeometryReader { geo in
-                let coverWidth = (geo.size.width - gridSpacing) / 2
-                LazyVGrid(
-                    columns: [
-                        GridItem(.flexible(), spacing: gridSpacing),
-                        GridItem(.flexible(), spacing: gridSpacing),
-                    ],
-                    spacing: gridSpacing
-                ) {
-                    ForEach(popularPicks.prefix(6)) { pick in
-                        BookCoverView(url: pick.coverURL, width: coverWidth)
-                    }
+            LazyVGrid(
+                columns: [
+                    GridItem(.flexible(), spacing: gridSpacing),
+                    GridItem(.flexible(), spacing: gridSpacing),
+                ],
+                spacing: gridSpacing
+            ) {
+                ForEach(popularPicks.prefix(6)) { pick in
+                    BookCoverView(url: pick.coverURL)
                 }
             }
-            .frame(height: gridHeight(for: 6))
         }
     }
 
@@ -104,17 +100,6 @@ struct EmptyForYouView: View {
             .font(.caption.weight(.semibold))
             .foregroundStyle(.secondary)
             .tracking(0.8)
-    }
-
-    /// 2-per-row grid → 3 rows for 6 books. Each row is coverWidth × 1.5 tall.
-    /// At iPhone 15 width (~390pt), coverWidth ≈ (390 - 32 - 12) / 2 ≈ 173 → row height ≈ 260.
-    private func gridHeight(for count: Int) -> CGFloat {
-        let rows = ceil(Double(count) / 2.0)
-        // Use a fixed estimate based on iPhone 15 default — slightly off on other devices
-        // but the grid auto-resizes its cells. The frame just needs to be tall enough
-        // for the GeometryReader-driven cells.
-        let estimatedCoverWidth: CGFloat = 170
-        return CGFloat(rows) * estimatedCoverWidth * 1.5 + CGFloat(rows - 1) * gridSpacing
     }
 
     private func loadPopularPicksIfNeeded() {
