@@ -20,7 +20,9 @@ def build_recommendations_prompt(
             return None
         return f"- {title} by {author}" if author else f"- {title}"
 
+    seed_titles_only = [s["title"] for s in seeds]
     seed_list = "\n".join(f"- {s['title']} by {s['author']}" for s in seeds)
+    because_of_options = ", ".join(f'"{t}"' for t in seed_titles_only) or "(no seeds)"
     liked_list = "\n".join(line for r in liked[:30] if (line := _fmt(r))) or "none"
     disliked_list = "\n".join(line for r in disliked[:30] if (line := _fmt(r))) or "none"
     exclude_lines = "\n".join(f"- {e}" for e in exclude_ids[:150]) or "(none)"
@@ -62,6 +64,10 @@ Respond with ONLY a JSON array. No markdown, no explanation. Each object must ha
   acclaim        (string — short publication-praise line, max 10 words. Examples:
                  "Acclaimed by The New Yorker and NYT", "A New York Times Notable Book",
                  "Praised by The Atlantic". Empty string if uncertain.)
+  because_of     (string — the SINGLE seed book title most responsible for this pick.
+                 MUST be one of these exact strings, copied verbatim: {because_of_options}.
+                 Use the empty string "" only if no seed title genuinely drove this recommendation.
+                 Do NOT invent a title that isn't in the list above.)
 """
 
 

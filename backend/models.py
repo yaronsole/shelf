@@ -84,6 +84,7 @@ class RecommendationResponse(BaseModel):
     nyt_bestseller: bool = False    # currently on a NYT list
     nyt_weeks_on_list: int | None = None
     reading_time_minutes: int | None = None  # derived from Google Books pageCount
+    because_of: Optional[str] = None  # exact title of the seed book driving this pick, validated against seeds
 
 
 class SuggestionResponse(BaseModel):
