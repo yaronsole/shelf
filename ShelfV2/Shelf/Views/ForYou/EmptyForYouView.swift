@@ -85,6 +85,9 @@ struct EmptyForYouView: View {
     private var popularPicksSection: some View {
         VStack(alignment: .leading, spacing: 10) {
             sectionLabel("POPULAR PICKS")
+            Text("Tap a cover to mark as read · Hold to save")
+                .font(.caption)
+                .foregroundStyle(.tertiary)
             LazyVGrid(
                 columns: [
                     GridItem(.flexible(), spacing: gridSpacing),
@@ -93,7 +96,13 @@ struct EmptyForYouView: View {
                 spacing: gridSpacing
             ) {
                 ForEach(popularPicks.prefix(6)) { pick in
-                    BookCoverView(url: pick.coverURL)
+                    PopularPickTile(
+                        pick: pick,
+                        isAdded: addedBookIds.contains(pick.id),
+                        isSaved: savedBookIds.contains(pick.id),
+                        onTap: { addPopularAsSeed(pick) },
+                        onLongPress: { savePopularToShelf(pick) }
+                    )
                 }
             }
         }
@@ -227,6 +236,44 @@ struct EmptyForYouView: View {
         modelContext.insert(item)
     }
 
+    // Popular-picks variants (same id space — "title|author" lowercased — so
+    // the addedBookIds/savedBookIds sets are shared with search results and
+    // the cover reflects state if the same book appears in both).
+
+    private func addPopularAsSeed(_ pick: PopularPickItem) {
+        guard !addedBookIds.contains(pick.id) else { return }
+        Haptics.light()
+        addedBookIds.insert(pick.id)
+        Task { @MainActor in
+            do {
+                try await APIClient.shared.submitSeedBook(
+                    title: pick.title, author: pick.author, coverURL: pick.coverURL
+                )
+                let local = LocalSeedBook(
+                    id: UUID().uuidString,
+                    title: pick.title, author: pick.author, coverURL: pick.coverURL
+                )
+                modelContext.insert(local)
+            } catch {
+                addedBookIds.remove(pick.id)
+            }
+        }
+    }
+
+    private func savePopularToShelf(_ pick: PopularPickItem) {
+        guard !savedBookIds.contains(pick.id) else { return }
+        Haptics.medium()
+        savedBookIds.insert(pick.id)
+        let item = ReadingListItem(
+            id: UUID().uuidString,
+            title: pick.title,
+            author: pick.author,
+            coverURL: pick.coverURL,
+            blurb: "Saved from popular picks."
+        )
+        modelContext.insert(item)
+    }
+
     private func loadPopularPicksIfNeeded() {
         guard popularPicks.isEmpty else { return }
         Task {
@@ -305,6 +352,59 @@ private struct SearchResultRow: View {
             .buttonStyle(.plain)
             .accessibilityLabel("Save to shelf")
         }
+    }
+}
+
+// MARK: - Popular Pick Tile (tap = read, long-press = save; mirrors onboarding)
+
+private struct PopularPickTile: View {
+    let pick: PopularPickItem
+    let isAdded: Bool
+    let isSaved: Bool
+    let onTap: () -> Void
+    let onLongPress: () -> Void
+
+    @State private var isPressing = false
+
+    var body: some View {
+        ZStack(alignment: .topTrailing) {
+            BookCoverView(url: pick.coverURL)
+                .overlay(
+                    Rectangle()
+                        .fill(.black)
+                        .opacity(isAdded ? 0.15 : 0)
+                        .allowsHitTesting(false)
+                )
+                .scaleEffect(isPressing ? 0.95 : 1.0)
+                .animation(.easeInOut(duration: 0.12), value: isPressing)
+
+            if isAdded {
+                Image(systemName: "checkmark.circle.fill")
+                    .font(.title3)
+                    .foregroundStyle(.white, Color(red: 0.23, green: 0.43, blue: 0.07))
+                    .background(Circle().fill(.white).padding(2))
+                    .padding(6)
+                    .transition(.scale.combined(with: .opacity))
+            } else if isSaved {
+                Image(systemName: "bookmark.fill")
+                    .font(.title3)
+                    .foregroundStyle(Color(red: 0.09, green: 0.37, blue: 0.65))
+                    .background(Circle().fill(.white).padding(2))
+                    .padding(6)
+                    .transition(.scale.combined(with: .opacity))
+            }
+        }
+        .contentShape(Rectangle())
+        .onTapGesture { onTap() }
+        .onLongPressGesture(
+            minimumDuration: 0.45,
+            pressing: { pressing in
+                withAnimation { isPressing = pressing }
+            },
+            perform: { onLongPress() }
+        )
+        .animation(.spring(response: 0.25, dampingFraction: 0.7), value: isAdded)
+        .animation(.spring(response: 0.25, dampingFraction: 0.7), value: isSaved)
     }
 }
 
