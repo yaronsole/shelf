@@ -314,12 +314,15 @@ def _generate_recommendations(user_id: str, domain: str, mark_delivered: bool = 
 
     # Validate `because_of` against the user's actual seed titles. If Claude
     # invents or distorts a title, drop the field rather than show a confusing
-    # "Because you loved <book you don't own>" line in the UI.
+    # "Because you loved <book you don't own>" line in the UI. Also defensive
+    # against Claude returning a non-string value for the field.
     seed_title_lookup = {s["title"].strip().lower(): s["title"] for s in seeds if s.get("title")}
     for b in books:
-        raw_because = (b.get("because_of") or "").strip()
-        canonical = seed_title_lookup.get(raw_because.lower())
-        b["because_of"] = canonical  # canonical seed casing, or None if no match
+        raw_because = b.get("because_of")
+        if isinstance(raw_because, str) and raw_because.strip():
+            b["because_of"] = seed_title_lookup.get(raw_because.strip().lower())
+        else:
+            b["because_of"] = None
 
     # Enrich with Google Books cover + NYT bestseller + reading time
     with httpx.Client(timeout=5.0) as client:
