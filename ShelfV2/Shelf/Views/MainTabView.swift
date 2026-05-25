@@ -3,9 +3,14 @@ import SwiftUI
 struct MainTabView: View {
     var body: some View {
         TabView {
+            ForYouView()
+                .tabItem {
+                    Label(Strings.ForYou.tabTitle, systemImage: "sparkles")
+                }
+
             DiscoverView()
                 .tabItem {
-                    Label(Strings.Discover.tabTitle, systemImage: "sparkles")
+                    Label(Strings.Discover.tabTitle, systemImage: "square.grid.2x2")
                 }
 
             ReadingListView()
@@ -16,11 +21,6 @@ struct MainTabView: View {
             TasteProfileView()
                 .tabItem {
                     Label(Strings.TasteProfile.tabTitle, systemImage: Domain.books.tabIcon)
-                }
-
-            SettingsView()
-                .tabItem {
-                    Label(Strings.Settings.tabTitle, systemImage: "gear")
                 }
         }
     }

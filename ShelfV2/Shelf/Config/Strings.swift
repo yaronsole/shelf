@@ -44,8 +44,9 @@ enum Strings {
         }
     }
 
-    enum Discover {
-        static let tabTitle = "Discover"
+    // Personalized recommendation feed (previously labelled "Discover").
+    enum ForYou {
+        static let tabTitle = "For you"
         static let comfortZoneLabel = "Outside your usual"
         static let newBatchBanner = "New recommendations available"
         static let refreshAction = "Refresh"
@@ -78,8 +79,14 @@ enum Strings {
         ]
     }
 
+    // Curated lists browser (new tab, Phase 6).
+    enum Discover {
+        static let tabTitle = "Discover"
+        static let comingSoon = "Curated lists are coming soon."
+    }
+
     enum ReadingList {
-        static let tabTitle = "Reading List"
+        static let tabTitle = "Shelf"
         static let emptyTitle = "Nothing saved yet."
         static let emptySubtitle = "Tap Save on any recommendation to add it here."
         static let showMore = "Show more"
@@ -95,19 +102,6 @@ enum Strings {
         static let removeWarning = "Removing this book may change your future recommendations"
         static let removeAction = "Remove"
         static let cancel = "Cancel"
-    }
-
-    enum Settings {
-        static let tabTitle = "Settings"
-        static let about = "About Shelf"
-        static let feedback = "Send Feedback"
-        static let privacy = "Privacy Policy"
-        static let terms = "Terms of Service"
-        static let debugSectionTitle = "Debug Info"
-        static let lastGeneration = "Last generation"
-        static let batchSize = "Last batch size"
-        static let never = "Never"
-        static let versionPrefix = "Version"
     }
 
     enum Common {

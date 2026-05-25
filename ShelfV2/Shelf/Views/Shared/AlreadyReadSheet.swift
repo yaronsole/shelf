@@ -14,7 +14,7 @@ struct AlreadyReadSheet: View {
                 .padding(.top, 12)
                 .padding(.bottom, 24)
 
-            Text(Strings.Discover.AlreadyRead.title)
+            Text(Strings.ForYou.AlreadyRead.title)
                 .font(.title3.bold())
                 .padding(.bottom, 4)
 
@@ -30,7 +30,7 @@ struct AlreadyReadSheet: View {
                     onLoved()
                     dismiss()
                 } label: {
-                    Label(Strings.Discover.AlreadyRead.lovedIt, systemImage: "heart.fill")
+                    Label(Strings.ForYou.AlreadyRead.lovedIt, systemImage: "heart.fill")
                         .frame(maxWidth: .infinity)
                 }
                 .buttonStyle(.borderedProminent)
@@ -41,7 +41,7 @@ struct AlreadyReadSheet: View {
                     onDidntLike()
                     dismiss()
                 } label: {
-                    Label(Strings.Discover.AlreadyRead.didntLike, systemImage: "hand.thumbsdown")
+                    Label(Strings.ForYou.AlreadyRead.didntLike, systemImage: "hand.thumbsdown")
                         .frame(maxWidth: .infinity)
                 }
                 .buttonStyle(.bordered)

@@ -49,7 +49,7 @@ struct BookCardView: View {
                     TagView(text: rec.genre)
                     TagView(text: rec.era)
                     if rec.isComfortZonePush {
-                        TagView(text: Strings.Discover.comfortZoneLabel, isHighlighted: true)
+                        TagView(text: Strings.ForYou.comfortZoneLabel, isHighlighted: true)
                     }
                 }
 

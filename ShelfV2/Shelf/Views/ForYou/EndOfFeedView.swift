@@ -6,7 +6,7 @@ struct EndOfFeedView: View {
     var onLoadMore: () -> Void
 
     private var pair: (witty: String, cta: String) {
-        let taglines = Strings.Discover.endOfFeedTaglines
+        let taglines = Strings.ForYou.endOfFeedTaglines
         return taglines[taglineIndex % taglines.count]
     }
 

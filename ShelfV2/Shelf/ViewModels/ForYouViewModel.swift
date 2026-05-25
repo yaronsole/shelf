@@ -2,7 +2,7 @@ import Foundation
 import SwiftData
 
 @Observable
-final class DiscoverViewModel {
+final class ForYouViewModel {
     var isLoading: Bool = false
     var errorMessage: String? = nil
     var showNewBatchBanner: Bool = false
@@ -14,7 +14,7 @@ final class DiscoverViewModel {
     // End-of-feed state
     var isLoadingMore: Bool = false
     var noMoreContent: Bool = false
-    var currentTaglineIndex: Int = Int.random(in: 0..<Strings.Discover.endOfFeedTaglines.count)
+    var currentTaglineIndex: Int = Int.random(in: 0..<Strings.ForYou.endOfFeedTaglines.count)
     private var lastTaglineIndex: Int = -1
     // Incremented after a Load-more completes — the view watches this and
     // scrolls to the top of the feed.
@@ -112,7 +112,7 @@ final class DiscoverViewModel {
             print("[Discover] fetchRecommendations failed: \(error)")
             await MainActor.run {
                 self.isLoading = false
-                self.errorMessage = Strings.Discover.networkError
+                self.errorMessage = Strings.ForYou.networkError
             }
         }
     }
@@ -201,16 +201,16 @@ final class DiscoverViewModel {
             await fetchLatestBatch(modelContext: modelContext, isForegrounded: false, force: true)
             await MainActor.run {
                 self.isLoadingMore = false
-                self.scrollToTopTick += 1   // signal DiscoverView to scroll back to the top
+                self.scrollToTopTick += 1   // signal ForYouView to scroll back to the top
             }
         }
     }
 
     private func advanceTagline() {
-        var next = Int.random(in: 0..<Strings.Discover.endOfFeedTaglines.count)
+        var next = Int.random(in: 0..<Strings.ForYou.endOfFeedTaglines.count)
         // Never show the same tagline twice in a row (DISC-12)
-        while next == lastTaglineIndex && Strings.Discover.endOfFeedTaglines.count > 1 {
-            next = Int.random(in: 0..<Strings.Discover.endOfFeedTaglines.count)
+        while next == lastTaglineIndex && Strings.ForYou.endOfFeedTaglines.count > 1 {
+            next = Int.random(in: 0..<Strings.ForYou.endOfFeedTaglines.count)
         }
         lastTaglineIndex = currentTaglineIndex
         currentTaglineIndex = next
