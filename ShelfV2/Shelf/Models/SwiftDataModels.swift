@@ -26,6 +26,9 @@ final class CachedRecommendation {
     var nytBestseller: Bool = false
     var nytWeeksOnList: Int? = nil
     var readingTimeMinutes: Int? = nil
+    // Seed book most responsible for this pick (Phase 2 attribution).
+    // Empty when Claude returned no attribution or the value didn't match a seed.
+    var becauseOf: String = ""
     // Frequency cap: incremented at launch when isSeen flips from true.
     // Eliminated (marked reacted) once viewCount >= 2.
     var viewCount: Int = 0
@@ -46,7 +49,8 @@ final class CachedRecommendation {
         acclaim: String = "",
         nytBestseller: Bool = false,
         nytWeeksOnList: Int? = nil,
-        readingTimeMinutes: Int? = nil
+        readingTimeMinutes: Int? = nil,
+        becauseOf: String = ""
     ) {
         self.id = id
         self.title = title
@@ -67,6 +71,7 @@ final class CachedRecommendation {
         self.nytBestseller = nytBestseller
         self.nytWeeksOnList = nytWeeksOnList
         self.readingTimeMinutes = readingTimeMinutes
+        self.becauseOf = becauseOf
     }
 }
 

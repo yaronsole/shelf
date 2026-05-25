@@ -22,6 +22,7 @@ struct RecommendationDTO: Decodable, Identifiable {
     let nytBestseller: Bool
     let nytWeeksOnList: Int?
     let readingTimeMinutes: Int?
+    let becauseOf: String  // Phase 2 attribution; empty when none
 
     enum CodingKeys: String, CodingKey {
         case id, title, author, blurb, genre, era, domain, awards, acclaim
@@ -32,6 +33,7 @@ struct RecommendationDTO: Decodable, Identifiable {
         case nytBestseller = "nyt_bestseller"
         case nytWeeksOnList = "nyt_weeks_on_list"
         case readingTimeMinutes = "reading_time_minutes"
+        case becauseOf = "because_of"
     }
 
     init(from decoder: Decoder) throws {
@@ -53,6 +55,7 @@ struct RecommendationDTO: Decodable, Identifiable {
         nytBestseller = (try? c.decode(Bool.self, forKey: .nytBestseller)) ?? false
         nytWeeksOnList = try? c.decodeIfPresent(Int.self, forKey: .nytWeeksOnList)
         readingTimeMinutes = try? c.decodeIfPresent(Int.self, forKey: .readingTimeMinutes)
+        becauseOf = (try? c.decodeIfPresent(String.self, forKey: .becauseOf)) ?? ""
     }
 }
 

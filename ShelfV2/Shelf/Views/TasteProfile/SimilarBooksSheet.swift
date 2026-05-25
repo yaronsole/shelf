@@ -205,12 +205,11 @@ private struct SuggestionCard: View {
                         .foregroundStyle(.secondary)
                 }
 
-                // Context row: NYT bestseller, reading time, awards
+                // Context row: NYT bestseller, reading time
                 ContextRow(
                     nytBestseller: suggestion.nytBestseller,
                     nytWeeks: suggestion.nytWeeksOnList,
-                    readingTimeMinutes: suggestion.readingTimeMinutes,
-                    awards: suggestion.awards
+                    readingTimeMinutes: suggestion.readingTimeMinutes
                 )
 
                 // Editorial context — single sparkle line with a cultural hook
@@ -220,7 +219,7 @@ private struct SuggestionCard: View {
                         .foregroundStyle(Color(red: 0.30, green: 0.20, blue: 0.55))
                 }
 
-                if !suggestion.genre.isEmpty || !suggestion.era.isEmpty {
+                if !suggestion.genre.isEmpty || !suggestion.era.isEmpty || !suggestion.awards.isEmpty {
                     HStack(spacing: 6) {
                         if !suggestion.genre.isEmpty {
                             TinyTag(text: suggestion.genre)
@@ -228,6 +227,7 @@ private struct SuggestionCard: View {
                         if !suggestion.era.isEmpty {
                             TinyTag(text: suggestion.era)
                         }
+                        ForEach(suggestion.awards, id: \.self) { AwardBadge(text: $0) }
                     }
                 }
 

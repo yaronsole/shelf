@@ -9,88 +9,93 @@ struct BookCardView: View {
     @State private var showAlreadyReadSheet = false
     @State private var isRemoving = false
 
+    // Plan-spec: hero cover width = min(screenWidth × 0.45, 180).
+    // Using UIScreen avoids a body-root GeometryReader that would collapse
+    // intrinsic-height layout inside the parent LazyVStack.
+    private var heroWidth: CGFloat {
+        min(UIScreen.main.bounds.width * 0.45, 180)
+    }
+
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            // Cover image — prominent, full width. Phase 5 will re-design this card around a centered hero.
-            BookCoverView(url: rec.coverURL)
+        VStack(spacing: 16) {
+            // 1. Hero cover, centered
+            BookCoverView(url: rec.coverURL, width: heroWidth)
+                .padding(.top, 24)
 
-            VStack(alignment: .leading, spacing: 12) {
-                // Title + Author
-                VStack(alignment: .leading, spacing: 3) {
-                    Text(rec.title)
-                        .font(.title3.bold())
-                        .fixedSize(horizontal: false, vertical: true)
-
-                    Text(rec.author)
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                }
-
-                // Context row: NYT bestseller · reading time · awards
-                ContextRow(
-                    nytBestseller: rec.nytBestseller,
-                    nytWeeks: rec.nytWeeksOnList,
-                    readingTimeMinutes: rec.readingTimeMinutes,
-                    awards: rec.awards
-                )
-
-                // Editorial context — single sparkle line with a cultural hook
-                if !rec.contextTag.isEmpty {
-                    Label(rec.contextTag, systemImage: "sparkle")
-                        .font(.caption.weight(.medium))
-                        .foregroundStyle(Color(red: 0.30, green: 0.20, blue: 0.55))
-                }
-
-                // Tags row
-                HStack(spacing: 6) {
-                    TagView(text: rec.genre)
-                    TagView(text: rec.era)
-                    if rec.isComfortZonePush {
-                        TagView(text: Strings.ForYou.comfortZoneLabel, isHighlighted: true)
-                    }
-                }
-
-                // Blurb — always fully visible, never truncated (DISC-05)
-                Text(rec.blurb)
-                    .font(.subheadline)
-                    .foregroundStyle(Color(.label))
+            // 2. Title + author + era (centered)
+            VStack(spacing: 4) {
+                Text(rec.title)
+                    .font(.title3.bold())
+                    .multilineTextAlignment(.center)
                     .fixedSize(horizontal: false, vertical: true)
-                    .lineSpacing(3)
-
-                // Action buttons (DISC-08) — primary Save, secondary Read, tertiary Pass
-                HStack(spacing: 8) {
-                    ActionButton(
-                        label: "Save",
-                        icon: "bookmark.fill",
-                        kind: .primary,
-                        action: {
-                            withAnimation(.spring(response: 0.35, dampingFraction: 0.75)) {
-                                isRemoving = true
-                            }
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { onSave() }
-                        }
-                    )
-                    ActionButton(
-                        label: "Read",
-                        icon: "checkmark",
-                        kind: .secondary,
-                        action: { showAlreadyReadSheet = true }
-                    )
-                    ActionButton(
-                        label: "Pass",
-                        icon: "xmark",
-                        kind: .tertiary,
-                        action: {
-                            withAnimation(.spring(response: 0.35, dampingFraction: 0.75)) {
-                                isRemoving = true
-                            }
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { onDismiss() }
-                        }
-                    )
+                Text(rec.author)
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                if !rec.era.isEmpty {
+                    Text(rec.era)
+                        .font(.caption)
+                        .foregroundStyle(.tertiary)
                 }
-                .padding(.top, 4)
             }
-            .padding(16)
+            .padding(.horizontal, 16)
+
+            // 3. NYT bestseller / reading time context (kept; useful signal)
+            ContextRow(
+                nytBestseller: rec.nytBestseller,
+                nytWeeks: rec.nytWeeksOnList,
+                readingTimeMinutes: rec.readingTimeMinutes
+            )
+            .padding(.horizontal, 16)
+
+            // 4. Genre + comfort-zone pills + award badges (awards styled distinctly per 5.3)
+            FlowingTags(
+                genre: rec.genre,
+                isComfortZonePush: rec.isComfortZonePush,
+                awards: rec.awards
+            )
+            .padding(.horizontal, 16)
+
+            // 5. "✦ Because you loved [seed]" — falls back to contextTag if no
+            //    attribution. Mutually exclusive so the slot stays visually quiet.
+            if !rec.becauseOf.isEmpty {
+                Label("Because you loved \(rec.becauseOf)", systemImage: "sparkle")
+                    .font(.subheadline.weight(.medium))
+                    .foregroundStyle(Color(red: 0.30, green: 0.20, blue: 0.55))
+                    .padding(.horizontal, 16)
+            } else if !rec.contextTag.isEmpty {
+                Label(rec.contextTag, systemImage: "sparkle")
+                    .font(.caption.weight(.medium))
+                    .foregroundStyle(Color(red: 0.30, green: 0.20, blue: 0.55))
+                    .padding(.horizontal, 16)
+            }
+
+            // 6. Blurb
+            Text(rec.blurb)
+                .font(.subheadline)
+                .foregroundStyle(Color(.label))
+                .multilineTextAlignment(.leading)
+                .fixedSize(horizontal: false, vertical: true)
+                .lineSpacing(3)
+                .padding(.horizontal, 16)
+
+            // 7. CTA row — Save dominant, ✓/✕ icon squares
+            CTARow(
+                onSave: {
+                    withAnimation(.spring(response: 0.35, dampingFraction: 0.75)) {
+                        isRemoving = true
+                    }
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { onSave() }
+                },
+                onAlreadyRead: { showAlreadyReadSheet = true },
+                onPass: {
+                    withAnimation(.spring(response: 0.35, dampingFraction: 0.75)) {
+                        isRemoving = true
+                    }
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { onDismiss() }
+                }
+            )
+            .padding(.horizontal, 16)
+            .padding(.bottom, 16)
         }
         .background(Color(.systemBackground))
         .clipShape(RoundedRectangle(cornerRadius: 16))
@@ -107,16 +112,15 @@ struct BookCardView: View {
     }
 }
 
-// MARK: - Context Row (NYT + reading time + awards)
+// MARK: - Context Row (NYT + reading time only — awards moved to FlowingTags)
 
 struct ContextRow: View {
     let nytBestseller: Bool
     let nytWeeks: Int?
     let readingTimeMinutes: Int?
-    let awards: [String]
 
     private var hasAnyContent: Bool {
-        nytBestseller || readingTimeMinutes != nil || !awards.isEmpty
+        nytBestseller || (readingTimeMinutes ?? 0) > 0
     }
 
     var body: some View {
@@ -128,7 +132,6 @@ struct ContextRow: View {
                 if let mins = readingTimeMinutes, mins > 0 {
                     ReadingTimeBadge(minutes: mins)
                 }
-                ForEach(awards, id: \.self) { AwardBadge(text: $0) }
                 Spacer(minLength: 0)
             }
         }
@@ -180,26 +183,36 @@ private struct ReadingTimeBadge: View {
     }
 }
 
-// MARK: - Award Badge
+// MARK: - Flowing Tags (genre + comfort-zone + awards in one row)
+
+private struct FlowingTags: View {
+    let genre: String
+    let isComfortZonePush: Bool
+    let awards: [String]
+
+    var body: some View {
+        HStack(spacing: 6) {
+            if !genre.isEmpty { TagView(text: genre) }
+            if isComfortZonePush {
+                TagView(text: Strings.ForYou.comfortZoneLabel, isHighlighted: true)
+            }
+            ForEach(awards, id: \.self) { AwardBadge(text: $0) }
+            Spacer(minLength: 0)
+        }
+    }
+}
+
+// MARK: - Award Badge (Phase 5 amber styling — visually distinct from genre tags)
 
 struct AwardBadge: View {
     let text: String
 
-    // Map known award names to short labels + colors for visual variety
-    private var icon: String { "rosette" }
-    private var tint: Color {
-        let lower = text.lowercased()
-        if lower.contains("pulitzer") { return Color(red: 0.65, green: 0.50, blue: 0.10) }
-        if lower.contains("booker") { return Color(red: 0.40, green: 0.20, blue: 0.50) }
-        if lower.contains("national book") { return Color(red: 0.20, green: 0.40, blue: 0.30) }
-        if lower.contains("hugo") || lower.contains("nebula") {
-            return Color(red: 0.20, green: 0.30, blue: 0.55)
-        }
-        return Color(red: 0.45, green: 0.30, blue: 0.10)
-    }
+    // Plan 5.3: amber background (#FAEEDA), amber-800 text (#633806), 🏆 leading.
+    private static let amberBackground = Color(red: 0xFA / 255.0, green: 0xEE / 255.0, blue: 0xDA / 255.0)
+    private static let amberText = Color(red: 0x63 / 255.0, green: 0x38 / 255.0, blue: 0x06 / 255.0)
 
     private var shortLabel: String {
-        // Strip "Prize"/"Award" suffix for compactness in the card
+        // Strip "Prize"/"Award" suffix for compactness
         text
             .replacingOccurrences(of: " Prize", with: "")
             .replacingOccurrences(of: " Award", with: "")
@@ -207,7 +220,7 @@ struct AwardBadge: View {
 
     var body: some View {
         HStack(spacing: 3) {
-            Image(systemName: icon)
+            Image(systemName: "trophy.fill")
                 .font(.caption2)
             Text(shortLabel)
                 .font(.caption2.weight(.semibold))
@@ -215,14 +228,12 @@ struct AwardBadge: View {
         }
         .padding(.horizontal, 6)
         .padding(.vertical, 3)
-        .foregroundStyle(tint)
-        .background(
-            Capsule().fill(tint.opacity(0.12))
-        )
+        .foregroundStyle(Self.amberText)
+        .background(Capsule().fill(Self.amberBackground))
     }
 }
 
-// MARK: - Tag
+// MARK: - Tag (genre / comfort-zone pill)
 
 private struct TagView: View {
     let text: String
@@ -243,56 +254,61 @@ private struct TagView: View {
     }
 }
 
-// MARK: - Action Button
+// MARK: - CTA Row (Save dominant + ✓/✕ icon squares)
 
-private enum ActionButtonKind { case primary, secondary, tertiary }
+private struct CTARow: View {
+    let onSave: () -> Void
+    let onAlreadyRead: () -> Void
+    let onPass: () -> Void
 
-private struct ActionButton: View {
-    let label: String
-    let icon: String
-    let kind: ActionButtonKind
-    let action: () -> Void
-
-    private var foreground: Color {
-        switch kind {
-        case .primary: return .white
-        case .secondary: return Color(red: 0.10, green: 0.45, blue: 0.30)
-        case .tertiary: return Color(.label)
-        }
-    }
-
-    private var background: Color {
-        switch kind {
-        case .primary: return Color(red: 0.10, green: 0.35, blue: 0.85)
-        case .secondary: return Color(red: 0.10, green: 0.45, blue: 0.30).opacity(0.12)
-        case .tertiary: return .clear
-        }
-    }
+    private let iconSquareSize: CGFloat = 38
 
     var body: some View {
-        Button(action: action) {
-            HStack(spacing: 5) {
-                Image(systemName: icon)
-                    .font(.subheadline.weight(.semibold))
-                Text(label)
-                    .font(.subheadline.weight(.semibold))
+        // Plan 5.2: Save takes ~⅔ width (fills available space via maxWidth: .infinity),
+        // ✓ and ✕ are 38pt squares so labels never wrap regardless of locale.
+        HStack(spacing: 8) {
+            Button(action: onSave) {
+                HStack(spacing: 6) {
+                    Image(systemName: "bookmark.fill")
+                        .font(.subheadline.weight(.semibold))
+                    Text("Save")
+                        .font(.subheadline.weight(.semibold))
+                }
+                .frame(maxWidth: .infinity, minHeight: iconSquareSize)
+                .background(
+                    RoundedRectangle(cornerRadius: 10)
+                        .fill(Color(red: 0.10, green: 0.35, blue: 0.85))
+                )
+                .foregroundStyle(.white)
             }
-            .frame(maxWidth: kind == .primary ? .infinity : nil)
-            .padding(.horizontal, kind == .primary ? 14 : 12)
-            .padding(.vertical, 10)
-            .background(
-                RoundedRectangle(cornerRadius: 10)
-                    .fill(background)
-                    .overlay(
+            .buttonStyle(.plain)
+            .accessibilityLabel("Save")
+
+            Button(action: onAlreadyRead) {
+                Image(systemName: "checkmark")
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(Color(red: 0.10, green: 0.45, blue: 0.30))
+                    .frame(width: iconSquareSize, height: iconSquareSize)
+                    .background(
                         RoundedRectangle(cornerRadius: 10)
-                            .strokeBorder(
-                                kind == .tertiary ? Color(.separator) : .clear,
-                                lineWidth: 1
-                            )
+                            .strokeBorder(Color(red: 0.10, green: 0.45, blue: 0.30), lineWidth: 1)
                     )
-            )
-            .foregroundStyle(foreground)
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Already read")
+
+            Button(action: onPass) {
+                Image(systemName: "xmark")
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(Color(.label))
+                    .frame(width: iconSquareSize, height: iconSquareSize)
+                    .background(
+                        RoundedRectangle(cornerRadius: 10)
+                            .strokeBorder(Color(.separator), lineWidth: 1)
+                    )
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Pass")
         }
-        .buttonStyle(.plain)
     }
 }

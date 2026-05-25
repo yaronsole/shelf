@@ -98,7 +98,8 @@ final class ForYouViewModel {
                         acclaim: dto.acclaim,
                         nytBestseller: dto.nytBestseller,
                         nytWeeksOnList: dto.nytWeeksOnList,
-                        readingTimeMinutes: dto.readingTimeMinutes
+                        readingTimeMinutes: dto.readingTimeMinutes,
+                        becauseOf: dto.becauseOf
                     )
                     modelContext.insert(rec)
                     insertedCount += 1
