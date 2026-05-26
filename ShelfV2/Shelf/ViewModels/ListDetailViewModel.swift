@@ -88,10 +88,12 @@ final class ListDetailViewModel {
     }
 
     /// Long-press → save to Shelf (or unsave if already saved).
-    func toggleSave(_ book: ListBookDTO) {
+    /// Writes both to backend AND local ReadingListItem so the Shelf tab reflects it.
+    func toggleSave(_ book: ListBookDTO, modelContext: ModelContext) {
         let current = status(for: book.bookId)
         if current == .saved {
             statusOverlay[book.bookId] = .some(nil)
+            removeMatchingLocalReadingListItem(title: book.title, author: book.author, modelContext: modelContext)
             Task {
                 do {
                     try await APIClient.shared.deleteListReaction(slug: slug, bookId: book.bookId)
@@ -101,6 +103,7 @@ final class ListDetailViewModel {
             }
         } else {
             statusOverlay[book.bookId] = .some(.saved)
+            insertLocalReadingListItemIfMissing(book: book, modelContext: modelContext)
             Task {
                 do {
                     try await APIClient.shared.reactToListBook(
@@ -115,6 +118,36 @@ final class ListDetailViewModel {
                     self.statusOverlay[book.bookId] = .some(current)
                 }
             }
+        }
+    }
+
+    private func insertLocalReadingListItemIfMissing(book: ListBookDTO, modelContext: ModelContext) {
+        let titleKey = book.title.lowercased()
+        let authorKey = book.author.lowercased()
+        let descriptor = FetchDescriptor<ReadingListItem>()
+        if let existing = try? modelContext.fetch(descriptor) {
+            let match = existing.first { item in
+                item.title.lowercased() == titleKey && item.author.lowercased() == authorKey
+            }
+            if match != nil { return }
+        }
+        let item = ReadingListItem(
+            id: UUID().uuidString,
+            title: book.title,
+            author: book.author,
+            coverURL: book.coverURL,
+            blurb: "Saved from a curated list."
+        )
+        modelContext.insert(item)
+    }
+
+    private func removeMatchingLocalReadingListItem(title: String, author: String, modelContext: ModelContext) {
+        let titleKey = title.lowercased()
+        let authorKey = author.lowercased()
+        let descriptor = FetchDescriptor<ReadingListItem>()
+        guard let existing = try? modelContext.fetch(descriptor) else { return }
+        for item in existing where item.title.lowercased() == titleKey && item.author.lowercased() == authorKey {
+            modelContext.delete(item)
         }
     }
 

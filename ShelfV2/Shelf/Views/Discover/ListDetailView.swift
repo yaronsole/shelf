@@ -38,7 +38,7 @@ struct ListDetailView: View {
                                         }
                                     },
                                     onLongPress: {
-                                        vm.toggleSave(book)
+                                        vm.toggleSave(book, modelContext: modelContext)
                                         // Only fire "added" toast when saving (not when unsaving)
                                         if vm.status(for: book.bookId) == .saved {
                                             ToastManager.shared.show(.savedToShelf)
@@ -184,33 +184,52 @@ private struct StatusBadge: View {
     }
 }
 
-// MARK: - First-run tooltip
+// MARK: - First-run tooltip (liquid-glass, long-press hint only)
 
 private struct TooltipOverlay: View {
     let onDismiss: () -> Void
 
     var body: some View {
         ZStack {
-            Color.black.opacity(0.55).ignoresSafeArea()
-            VStack(spacing: 12) {
-                Image(systemName: "hand.tap")
-                    .font(.title)
-                    .foregroundStyle(.white)
-                Text("Tap to open on Amazon · Long-press to save")
-                    .font(.headline)
-                    .foregroundStyle(.white)
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal, 24)
-                Text("Tap anywhere to dismiss")
-                    .font(.caption)
-                    .foregroundStyle(.white.opacity(0.7))
+            // Dimmed backdrop catches taps so users can dismiss anywhere
+            Color.black.opacity(0.25)
+                .ignoresSafeArea()
+                .contentShape(Rectangle())
+                .onTapGesture { onDismiss() }
+
+            // Liquid-glass card centered on screen
+            VStack(spacing: 14) {
+                Image(systemName: "hand.tap.fill")
+                    .font(.system(size: 32, weight: .regular))
+                    .foregroundStyle(Color.primary.opacity(0.9))
+
+                VStack(spacing: 6) {
+                    Text("Long-press to save")
+                        .font(.headline)
+                        .foregroundStyle(Color.primary)
+                    Text("Add a book to your shelf without leaving the list.")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center)
+                }
+
+                Text("tap anywhere to dismiss")
+                    .font(.caption2)
+                    .foregroundStyle(.tertiary)
+                    .padding(.top, 4)
             }
             .padding(.vertical, 24)
-            .padding(.horizontal, 16)
-            .background(RoundedRectangle(cornerRadius: 16).fill(.black.opacity(0.6)))
-            .padding(.horizontal, 32)
+            .padding(.horizontal, 24)
+            .background(
+                RoundedRectangle(cornerRadius: 24, style: .continuous)
+                    .fill(.ultraThinMaterial)
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 24, style: .continuous)
+                    .strokeBorder(Color.white.opacity(0.25), lineWidth: 0.5)
+            )
+            .shadow(color: .black.opacity(0.15), radius: 24, x: 0, y: 8)
+            .padding(.horizontal, 40)
         }
-        .contentShape(Rectangle())
-        .onTapGesture { onDismiss() }
     }
 }

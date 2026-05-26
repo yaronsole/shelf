@@ -16,7 +16,6 @@
 		208FE5102D5873E83CC5D38A /* SeedBookSearchView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 095B1AFF9ADFD41FA8BCAB3A /* SeedBookSearchView.swift */; };
 		24563E941C5D2BA622F7E15E /* Haptics.swift in Sources */ = {isa = PBXBuildFile; fileRef = D2BA71F2BF9DA262C515C457 /* Haptics.swift */; };
 		2583F15BB37E5FCD4D586C8B /* GoogleBooksService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 568B549835171FD61CB74C30 /* GoogleBooksService.swift */; };
-		291E11CCDD3885AB58ADA5CC /* GestureHintPopup.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9C798656C9737246D526803F /* GestureHintPopup.swift */; };
 		2EF22D7928641DD698ECFB71 /* BookDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3247094E8E8069FE3DCC0A47 /* BookDetailView.swift */; };
 		35B82371F64852731E82954C /* DiscoverView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ECFFBBF4B9D883E110AC3220 /* DiscoverView.swift */; };
 		3D79B9386AE9A64140947E86 /* OnboardingViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = E399ADEA4B17581FD9F46E2D /* OnboardingViewModel.swift */; };
@@ -82,7 +81,6 @@
 		8B4625917F8A13C224846BCE /* OnboardingCoordinatorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingCoordinatorView.swift; sourceTree = "<group>"; };
 		9768768D17B177001B1266D1 /* MainTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainTabView.swift; sourceTree = "<group>"; };
 		9BF30979540EBA36FFAD2F93 /* Strings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Strings.swift; sourceTree = "<group>"; };
-		9C798656C9737246D526803F /* GestureHintPopup.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GestureHintPopup.swift; sourceTree = "<group>"; };
 		9C921BC55E203B836870C0EA /* EndOfFeedView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EndOfFeedView.swift; sourceTree = "<group>"; };
 		AE77D3063F5D54F6636891D8 /* WelcomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WelcomeView.swift; sourceTree = "<group>"; };
 		AE93E5C8E6050B409224D7B1 /* Secrets.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Secrets.swift; sourceTree = "<group>"; };
@@ -177,7 +175,6 @@
 				0A0F51D0619ED12B7D71F19A /* BookCoverView.swift */,
 				7AD600CEEBFB621B2BC16658 /* ColorHex.swift */,
 				7645C4F2E00DD48F412E16A8 /* EmptyStateView.swift */,
-				9C798656C9737246D526803F /* GestureHintPopup.swift */,
 				D2BA71F2BF9DA262C515C457 /* Haptics.swift */,
 				1E918ADC8BC9FE46646425C8 /* ToastView.swift */,
 			);
@@ -358,7 +355,6 @@
 				F907E3C773EFBB198C50C01A /* EndOfFeedView.swift in Sources */,
 				0B42FB5AE112339715022684 /* ForYouView.swift in Sources */,
 				BC48624476533CA0A189AF09 /* ForYouViewModel.swift in Sources */,
-				291E11CCDD3885AB58ADA5CC /* GestureHintPopup.swift in Sources */,
 				2583F15BB37E5FCD4D586C8B /* GoogleBooksService.swift in Sources */,
 				24563E941C5D2BA622F7E15E /* Haptics.swift in Sources */,
 				680914F42E37A674DF00FDAC /* KeychainService.swift in Sources */,

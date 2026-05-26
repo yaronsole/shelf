@@ -1,11 +1,24 @@
 import SwiftUI
 
 struct BookCardView: View {
-    let rec: CachedRecommendation
+    let display: BookDisplay
     var onTap: () -> Void    // open detail sheet
     var onSave: () -> Void   // long press — save directly
 
     @State private var isRemoving = false
+
+    // Back-compat: accept a CachedRecommendation directly.
+    init(rec: CachedRecommendation, onTap: @escaping () -> Void, onSave: @escaping () -> Void) {
+        self.display = BookDisplay(from: rec)
+        self.onTap = onTap
+        self.onSave = onSave
+    }
+
+    init(display: BookDisplay, onTap: @escaping () -> Void, onSave: @escaping () -> Void) {
+        self.display = display
+        self.onTap = onTap
+        self.onSave = onSave
+    }
 
     private var heroWidth: CGFloat {
         min(UIScreen.main.bounds.width * 0.45, 180)
@@ -13,58 +26,52 @@ struct BookCardView: View {
 
     var body: some View {
         VStack(spacing: 16) {
-            // 1. Hero cover, centered
-            BookCoverView(url: rec.coverURL, width: heroWidth)
+            BookCoverView(url: display.coverURL, width: heroWidth)
                 .padding(.top, 24)
 
-            // 2. Title + author + era (centered)
             VStack(spacing: 4) {
-                Text(rec.title)
+                Text(display.title)
                     .font(.title3.bold())
                     .multilineTextAlignment(.center)
                     .fixedSize(horizontal: false, vertical: true)
-                Text(rec.author)
+                Text(display.author)
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
-                if !rec.era.isEmpty {
-                    Text(rec.era)
+                if !display.era.isEmpty {
+                    Text(display.era)
                         .font(.caption)
                         .foregroundStyle(.tertiary)
                 }
             }
             .padding(.horizontal, 16)
 
-            // 3. NYT bestseller / reading time context row
             ContextRow(
-                nytBestseller: rec.nytBestseller,
-                nytWeeks: rec.nytWeeksOnList,
-                readingTimeMinutes: rec.readingTimeMinutes
+                nytBestseller: display.nytBestseller,
+                nytWeeks: display.nytWeeksOnList,
+                readingTimeMinutes: display.readingTimeMinutes
             )
             .padding(.horizontal, 16)
 
-            // 4. Genre + comfort-zone pills + award badges
             FlowingTags(
-                genre: rec.genre,
-                isComfortZonePush: rec.isComfortZonePush,
-                awards: rec.awards
+                genre: display.genre,
+                isComfortZonePush: display.isComfortZonePush,
+                awards: display.awards
             )
             .padding(.horizontal, 16)
 
-            // 5. "Because you loved [seed]" / context tag
-            if !rec.becauseOf.isEmpty {
-                Label("Because you loved \(rec.becauseOf)", systemImage: "sparkle")
+            if !display.becauseOf.isEmpty {
+                Label("Because you loved \(display.becauseOf)", systemImage: "sparkle")
                     .font(.subheadline.weight(.medium))
                     .foregroundStyle(Color(red: 0.30, green: 0.20, blue: 0.55))
                     .padding(.horizontal, 16)
-            } else if !rec.contextTag.isEmpty {
-                Label(rec.contextTag, systemImage: "sparkle")
+            } else if !display.contextTag.isEmpty {
+                Label(display.contextTag, systemImage: "sparkle")
                     .font(.caption.weight(.medium))
                     .foregroundStyle(Color(red: 0.30, green: 0.20, blue: 0.55))
                     .padding(.horizontal, 16)
             }
 
-            // 6. Blurb
-            Text(rec.blurb)
+            Text(display.blurb)
                 .font(.subheadline)
                 .foregroundStyle(Color(.label))
                 .multilineTextAlignment(.leading)

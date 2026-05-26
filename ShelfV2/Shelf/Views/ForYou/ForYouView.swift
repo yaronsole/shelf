@@ -20,9 +20,9 @@ struct ForYouView: View {
     @State private var visibleIds: Set<String> = []
     @State private var selectedRec: CachedRecommendation? = nil
 
-    // Gesture hint — shown once on first For You entry
-    @AppStorage("hasSeenGestureHint_v2") private var hasSeenGestureHint = false
-    @State private var showGestureHint = false
+    // Loved-it / didn't-like sentiment sheet, shown after "Read it" in BookDetailView
+    @State private var recForSentiment: CachedRecommendation? = nil
+    @State private var showSentimentSheet = false
 
     // Daily rotation — observe completion to fire TST-8
     private var rotationService = DailyRotationService.shared
@@ -53,9 +53,6 @@ struct ForYouView: View {
         }
         .onAppear {
             vm.refreshIfNeeded(modelContext: modelContext)
-            if !hasSeenGestureHint && seedBooks.count >= seedThreshold {
-                showGestureHint = true
-            }
         }
         .onChange(of: vm.didReceiveFirstBatch) { _, received in
             if received {
@@ -73,23 +70,32 @@ struct ForYouView: View {
                     vm.dismiss(rec, modelContext: modelContext)
                     ToastManager.shared.show(.reactedPass)
                 },
-                onReadIt: {
-                    vm.markAlreadyRead(rec, liked: true, modelContext: modelContext)
-                    ToastManager.shared.show(.reactedRead)
+                onReadItRequested: {
+                    // Defer presenting the sentiment sheet so the detail sheet has time to dismiss
+                    let capturedRec = rec
+                    selectedRec = nil
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+                        recForSentiment = capturedRec
+                        showSentimentSheet = true
+                    }
                 }
             )
         }
-        .overlay {
-            if showGestureHint {
-                GestureHintPopup.forYou {
-                    withAnimation { showGestureHint = false }
-                    hasSeenGestureHint = true
-                }
-                .transition(.opacity)
-                .zIndex(100)
+        .sheet(isPresented: $showSentimentSheet) {
+            if let rec = recForSentiment {
+                AlreadyReadSheet(
+                    title: rec.title,
+                    onLoved: {
+                        vm.markAlreadyRead(rec, liked: true, modelContext: modelContext)
+                        ToastManager.shared.show(.reactedRead)
+                    },
+                    onDidntLike: {
+                        vm.markAlreadyRead(rec, liked: false, modelContext: modelContext)
+                        ToastManager.shared.show(.reactedPass)
+                    }
+                )
             }
         }
-        .animation(.easeInOut(duration: 0.25), value: showGestureHint)
     }
 
     private var feedBody: some View {

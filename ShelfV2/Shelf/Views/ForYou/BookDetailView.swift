@@ -1,78 +1,156 @@
 import SwiftUI
 
-/// Full-screen detail sheet for a recommendation.
-/// Triggered by a single tap on a For You card.
+// MARK: - BookDisplay — generic data for the detail view
+
+/// Decoupled view-model for BookDetailView so the same UI can render a
+/// CachedRecommendation, a CachedSuggestion, or a live SuggestionDTO.
+struct BookDisplay {
+    let title: String
+    let author: String
+    let coverURL: String
+    let blurb: String
+    let era: String
+    let genre: String
+    let isComfortZonePush: Bool
+    let awards: [String]
+    let contextTag: String
+    let becauseOf: String
+    let nytBestseller: Bool
+    let nytWeeksOnList: Int?
+    let readingTimeMinutes: Int?
+}
+
+extension BookDisplay {
+    init(from rec: CachedRecommendation) {
+        self.init(
+            title: rec.title, author: rec.author, coverURL: rec.coverURL,
+            blurb: rec.blurb, era: rec.era, genre: rec.genre,
+            isComfortZonePush: rec.isComfortZonePush, awards: rec.awards,
+            contextTag: rec.contextTag, becauseOf: rec.becauseOf,
+            nytBestseller: rec.nytBestseller, nytWeeksOnList: rec.nytWeeksOnList,
+            readingTimeMinutes: rec.readingTimeMinutes
+        )
+    }
+
+    init(from s: CachedSuggestion, becauseOf: String) {
+        self.init(
+            title: s.title, author: s.author, coverURL: s.coverURL,
+            blurb: s.blurb, era: s.era, genre: s.genre,
+            isComfortZonePush: false, awards: s.awards,
+            contextTag: s.contextTag, becauseOf: becauseOf,
+            nytBestseller: s.nytBestseller, nytWeeksOnList: s.nytWeeksOnList,
+            readingTimeMinutes: s.readingTimeMinutes
+        )
+    }
+
+    init(from s: SuggestionDTO, becauseOf: String) {
+        self.init(
+            title: s.title, author: s.author, coverURL: s.coverURL,
+            blurb: s.blurb, era: s.era, genre: s.genre,
+            isComfortZonePush: false, awards: s.awards,
+            contextTag: s.contextTag, becauseOf: becauseOf,
+            nytBestseller: s.nytBestseller, nytWeeksOnList: s.nytWeeksOnList,
+            readingTimeMinutes: s.readingTimeMinutes
+        )
+    }
+}
+
+// MARK: - BookDetailView
+
+/// Full-screen detail sheet for a book.
+/// Triggered by a single tap on a card in For You / SimilarBooks.
 /// Three equal-weight pill CTAs at the bottom: pass / save / read it.
 struct BookDetailView: View {
-    let rec: CachedRecommendation
+    let display: BookDisplay
     var onSave: () -> Void
     var onPass: () -> Void
-    var onReadIt: () -> Void
+    /// Called when the user taps "read it". Parent should dismiss this sheet
+    /// then present an AlreadyReadSheet so we capture loved/didn't-like.
+    var onReadItRequested: () -> Void
 
     @Environment(\.dismiss) private var dismiss
+
+    // Back-compat init that accepts CachedRecommendation directly.
+    init(
+        rec: CachedRecommendation,
+        onSave: @escaping () -> Void,
+        onPass: @escaping () -> Void,
+        onReadItRequested: @escaping () -> Void
+    ) {
+        self.display = BookDisplay(from: rec)
+        self.onSave = onSave
+        self.onPass = onPass
+        self.onReadItRequested = onReadItRequested
+    }
+
+    init(
+        display: BookDisplay,
+        onSave: @escaping () -> Void,
+        onPass: @escaping () -> Void,
+        onReadItRequested: @escaping () -> Void
+    ) {
+        self.display = display
+        self.onSave = onSave
+        self.onPass = onPass
+        self.onReadItRequested = onReadItRequested
+    }
 
     var body: some View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: 16) {
-                    // Cover
-                    BookCoverView(url: rec.coverURL, width: min(UIScreen.main.bounds.width * 0.45, 180))
+                    BookCoverView(url: display.coverURL, width: min(UIScreen.main.bounds.width * 0.45, 180))
                         .padding(.top, 24)
 
-                    // Title + author + era
                     VStack(spacing: 4) {
-                        Text(rec.title)
+                        Text(display.title)
                             .font(.title3.bold())
                             .multilineTextAlignment(.center)
-                        Text(rec.author)
+                        Text(display.author)
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
-                        if !rec.era.isEmpty {
-                            Text(rec.era)
+                        if !display.era.isEmpty {
+                            Text(display.era)
                                 .font(.caption)
                                 .foregroundStyle(.tertiary)
                         }
                     }
                     .padding(.horizontal, 16)
 
-                    // Context row (NYT + reading time)
                     ContextRow(
-                        nytBestseller: rec.nytBestseller,
-                        nytWeeks: rec.nytWeeksOnList,
-                        readingTimeMinutes: rec.readingTimeMinutes
+                        nytBestseller: display.nytBestseller,
+                        nytWeeks: display.nytWeeksOnList,
+                        readingTimeMinutes: display.readingTimeMinutes
                     )
                     .padding(.horizontal, 16)
 
-                    // Genre + comfort-zone + awards
                     FlowingTagsDetail(
-                        genre: rec.genre,
-                        isComfortZonePush: rec.isComfortZonePush,
-                        awards: rec.awards
+                        genre: display.genre,
+                        isComfortZonePush: display.isComfortZonePush,
+                        awards: display.awards
                     )
                     .padding(.horizontal, 16)
 
-                    // "Because you loved X"
-                    if !rec.becauseOf.isEmpty {
-                        Label("Because you loved \(rec.becauseOf)", systemImage: "sparkle")
+                    if !display.becauseOf.isEmpty {
+                        Label("Because you loved \(display.becauseOf)", systemImage: "sparkle")
                             .font(.subheadline.weight(.medium))
                             .foregroundStyle(Color(hexString: "4D3388"))
                             .padding(.horizontal, 16)
-                    } else if !rec.contextTag.isEmpty {
-                        Label(rec.contextTag, systemImage: "sparkle")
+                    } else if !display.contextTag.isEmpty {
+                        Label(display.contextTag, systemImage: "sparkle")
                             .font(.caption.weight(.medium))
                             .foregroundStyle(Color(hexString: "4D3388"))
                             .padding(.horizontal, 16)
                     }
 
-                    // Full blurb — no truncation per spec §8
-                    Text(rec.blurb)
+                    Text(display.blurb)
                         .font(.subheadline)
                         .foregroundStyle(Color(.label))
                         .multilineTextAlignment(.leading)
                         .fixedSize(horizontal: false, vertical: true)
                         .lineSpacing(3)
                         .padding(.horizontal, 16)
-                        .padding(.bottom, 120) // clearance for bottom pill bar
+                        .padding(.bottom, 120)
                 }
             }
             .navigationBarTitleDisplayMode(.inline)
@@ -91,11 +169,8 @@ struct BookDetailView: View {
         }
     }
 
-    // MARK: - 3-pill CTA bar (H3 layout — §8)
-
     private var ctaBar: some View {
         HStack(spacing: 6) {
-            // Pass pill
             Button {
                 Haptics.light()
                 onPass()
@@ -107,7 +182,6 @@ struct BookDetailView: View {
             }
             .buttonStyle(.plain)
 
-            // Save pill (hero — dark background)
             Button {
                 Haptics.medium()
                 onSave()
@@ -119,11 +193,9 @@ struct BookDetailView: View {
             }
             .buttonStyle(.plain)
 
-            // Read it pill
             Button {
                 Haptics.light()
-                onReadIt()
-                dismiss()
+                onReadItRequested()
             } label: {
                 PillLabel(iconName: "checkmark", iconColor: Color(hexString: "3B6D11"),
                           label: "read it", labelColor: Color(hexString: "444444"),
@@ -175,7 +247,7 @@ private struct PillLabel: View {
     }
 }
 
-// MARK: - Flowing tags (local copy for detail view — same as BookCardView)
+// MARK: - Flowing tags (local copy for detail view)
 
 private struct FlowingTagsDetail: View {
     let genre: String

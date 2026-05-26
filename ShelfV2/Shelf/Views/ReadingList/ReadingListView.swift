@@ -11,10 +11,6 @@ struct ReadingListView: View {
     @State private var itemForSentiment: ReadingListItem? = nil
     @State private var showSentimentSheet = false
 
-    // Gesture hint — first Shelf entry
-    @AppStorage("hasSeenShelfGestureHint_v2") private var hasSeenShelfGestureHint = false
-    @State private var showGestureHint = false
-
     var body: some View {
         NavigationStack {
             Group {
@@ -62,21 +58,5 @@ struct ReadingListView: View {
                 )
             }
         }
-        .onAppear {
-            if !hasSeenShelfGestureHint && !items.isEmpty {
-                showGestureHint = true
-            }
-        }
-        .overlay {
-            if showGestureHint {
-                GestureHintPopup.shelf {
-                    withAnimation { showGestureHint = false }
-                    hasSeenShelfGestureHint = true
-                }
-                .transition(.opacity)
-                .zIndex(100)
-            }
-        }
-        .animation(.easeInOut(duration: 0.25), value: showGestureHint)
     }
 }

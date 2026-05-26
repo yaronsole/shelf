@@ -1,5 +1,9 @@
 import SwiftUI
 
+/// Two-column infinite-scroll wall of Reese book-club covers used as the
+/// background of the welcome screen. Uses TimelineView so the scroll keeps
+/// running every frame instead of relying on a one-shot withAnimation call
+/// that SwiftUI can silently drop.
 struct SplashCoverScrollView: View {
     private static let urls: [String] = [
         "https://covers.openlibrary.org/b/isbn/9780735220683-M.jpg",
@@ -28,11 +32,13 @@ struct SplashCoverScrollView: View {
         "https://covers.openlibrary.org/b/isbn/9780062977502-M.jpg",
     ]
 
-    @State private var scrollOffset: CGFloat = 0
+    private let coverWidth: CGFloat = 150
+    private let coverHeight: CGFloat = 215
+    private let gap: CGFloat = 10
+    /// Pixels per second — slow, calm scroll
+    private let speed: CGFloat = 18
 
-    private let coverWidth: CGFloat = 155
-    private let coverHeight: CGFloat = 220
-    private let gap: CGFloat = 8
+    @State private var start: Date = .now
 
     private var leftURLs: [String] {
         stride(from: 0, to: Self.urls.count, by: 2).map { Self.urls[$0] }
@@ -45,20 +51,27 @@ struct SplashCoverScrollView: View {
     }
 
     var body: some View {
-        HStack(alignment: .top, spacing: gap) {
-            coverColumn(urls: leftURLs + leftURLs, extraTop: 0)
-            coverColumn(urls: rightURLs + rightURLs, extraTop: (coverHeight + gap) / 2)
-        }
-        .offset(y: scrollOffset)
-        .onAppear {
-            withAnimation(.linear(duration: 40).repeatForever(autoreverses: false)) {
-                scrollOffset = -loopHeight
+        GeometryReader { geo in
+            TimelineView(.animation) { context in
+                // Linear, modulo loopHeight → wraps cleanly with doubled content
+                let elapsed = context.date.timeIntervalSince(start)
+                let raw = CGFloat(elapsed) * speed
+                let offset = -raw.truncatingRemainder(dividingBy: loopHeight)
+
+                HStack(alignment: .top, spacing: gap) {
+                    column(urls: leftURLs + leftURLs)
+                    column(urls: rightURLs + rightURLs, extraTop: (coverHeight + gap) / 2)
+                }
+                .frame(width: geo.size.width, alignment: .center)
+                .offset(y: offset)
             }
+            .frame(width: geo.size.width, height: geo.size.height, alignment: .top)
+            .clipped()
         }
     }
 
     @ViewBuilder
-    private func coverColumn(urls: [String], extraTop: CGFloat) -> some View {
+    private func column(urls: [String], extraTop: CGFloat = 0) -> some View {
         VStack(spacing: gap) {
             ForEach(0..<urls.count, id: \.self) { i in
                 AsyncImage(url: URL(string: urls[i])) { phase in

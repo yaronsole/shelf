@@ -3,6 +3,7 @@ import SwiftData
 
 /// Bottom sheet shown when the user taps a seed book in the Taste profile.
 /// Serves from pre-computed cache when fresh (<24h); falls back to live fetch.
+/// Cards use the For You visual style — tap opens BookDetailView, long-press saves.
 struct SimilarBooksSheet: View {
     let seed: LocalSeedBook
     let modelContext: ModelContext
@@ -22,6 +23,12 @@ struct SimilarBooksSheet: View {
     @State private var liveSuggestions: [SuggestionDTO] = []
     @State private var hiddenIds: Set<String> = []
 
+    // Detail-sheet state — wired to BookDetailView (same pattern as ForYouView)
+    @State private var selectedDisplay: SuggestionDetailContext? = nil
+    // Sentiment sheet shown after "Read it" → loved-it / didn't-like-it
+    @State private var contextForSentiment: SuggestionDetailContext? = nil
+    @State private var showSentimentSheet = false
+
     private var visibleLive: [SuggestionDTO] {
         liveSuggestions.filter { !hiddenIds.contains($0.id) }
     }
@@ -32,7 +39,7 @@ struct SimilarBooksSheet: View {
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(alignment: .leading, spacing: 16) {
+                LazyVStack(spacing: 16) {
                     seedHeader
 
                     if isLoading {
@@ -56,6 +63,37 @@ struct SimilarBooksSheet: View {
         }
         .presentationDetents([.large])
         .task { await initialLoad() }
+        .sheet(item: $selectedDisplay) { ctx in
+            BookDetailView(
+                display: ctx.display,
+                onSave: { saveContext(ctx) },
+                onPass: { hiddenIds.insert(ctx.id) },
+                onReadItRequested: {
+                    let captured = ctx
+                    selectedDisplay = nil
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+                        contextForSentiment = captured
+                        showSentimentSheet = true
+                    }
+                }
+            )
+        }
+        .sheet(isPresented: $showSentimentSheet) {
+            if let ctx = contextForSentiment {
+                AlreadyReadSheet(
+                    title: ctx.display.title,
+                    onLoved: {
+                        seedFromContext(ctx)
+                        hiddenIds.insert(ctx.id)
+                        ToastManager.shared.show(.reactedRead)
+                    },
+                    onDidntLike: {
+                        hiddenIds.insert(ctx.id)
+                        ToastManager.shared.show(.reactedPass)
+                    }
+                )
+            }
+        }
     }
 
     // MARK: - Sub-views
@@ -92,52 +130,62 @@ struct SimilarBooksSheet: View {
         .padding(.top, 40)
     }
 
+    @ViewBuilder
     private var cachedContent: some View {
-        Group {
-            if visibleCached.isEmpty {
-                Text("No more suggestions for this book right now.")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                    .padding(.horizontal, 20)
-                    .padding(.top, 40)
-            } else {
-                ForEach(visibleCached) { s in
-                    CachedSuggestionCard(
-                        suggestion: s,
-                        onSave: { saveCached(s) },
-                        onPass: { hiddenIds.insert(s.id) },
-                        onAlreadyRead: { alreadyReadCached(s) }
-                    )
-                    .padding(.horizontal, 16)
-                }
+        if visibleCached.isEmpty {
+            emptyState
+        } else {
+            ForEach(visibleCached) { s in
+                let ctx = SuggestionDetailContext(
+                    id: s.id,
+                    display: BookDisplay(from: s, becauseOf: seed.title),
+                    source: .cached(s)
+                )
+                BookCardView(
+                    display: ctx.display,
+                    onTap: { selectedDisplay = ctx },
+                    onSave: {
+                        saveContext(ctx)
+                        ToastManager.shared.show(.savedToShelf)
+                    }
+                )
+                .padding(.horizontal, 16)
             }
-
-            findMoreButton { Task { await loadMoreLive() } }
         }
+        findMoreButton { Task { await loadMoreLive() } }
     }
 
+    @ViewBuilder
     private var liveContent: some View {
-        Group {
-            if visibleLive.isEmpty {
-                Text("No more suggestions for this book right now.")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                    .padding(.horizontal, 20)
-                    .padding(.top, 40)
-            } else {
-                ForEach(visibleLive) { s in
-                    SuggestionCard(
-                        suggestion: s,
-                        onSave: { saveLive(s) },
-                        onPass: { hiddenIds.insert(s.id) },
-                        onAlreadyRead: { alreadyReadLive(s) }
-                    )
-                    .padding(.horizontal, 16)
-                }
+        if visibleLive.isEmpty {
+            emptyState
+        } else {
+            ForEach(visibleLive) { s in
+                let ctx = SuggestionDetailContext(
+                    id: s.id,
+                    display: BookDisplay(from: s, becauseOf: seed.title),
+                    source: .live(s)
+                )
+                BookCardView(
+                    display: ctx.display,
+                    onTap: { selectedDisplay = ctx },
+                    onSave: {
+                        saveContext(ctx)
+                        ToastManager.shared.show(.savedToShelf)
+                    }
+                )
+                .padding(.horizontal, 16)
             }
-
-            findMoreButton { Task { await loadMoreLive() } }
         }
+        findMoreButton { Task { await loadMoreLive() } }
+    }
+
+    private var emptyState: some View {
+        Text("No more suggestions for this book right now.")
+            .font(.subheadline)
+            .foregroundStyle(.secondary)
+            .padding(.horizontal, 20)
+            .padding(.top, 40)
     }
 
     private func findMoreButton(action: @escaping () -> Void) -> some View {
@@ -162,10 +210,46 @@ struct SimilarBooksSheet: View {
         .padding(.top, 8)
     }
 
+    // MARK: - Save / seed actions
+
+    private func saveContext(_ ctx: SuggestionDetailContext) {
+        let display = ctx.display
+        let item = ReadingListItem(
+            id: ctx.id,
+            title: display.title,
+            author: display.author,
+            coverURL: display.coverURL,
+            blurb: display.blurb.isEmpty ? "Suggested because you love \(seed.title)." : display.blurb,
+            genre: display.genre,
+            era: display.era,
+            becauseOf: display.becauseOf,
+            readingTimeMinutes: display.readingTimeMinutes,
+            nytBestseller: display.nytBestseller,
+            nytWeeksOnList: display.nytWeeksOnList
+        )
+        modelContext.insert(item)
+        hiddenIds.insert(ctx.id)
+    }
+
+    /// "Loved it" → also add to seeds (same as before)
+    private func seedFromContext(_ ctx: SuggestionDetailContext) {
+        let title = ctx.display.title
+        let author = ctx.display.author
+        let coverURL = ctx.display.coverURL
+        Task { @MainActor in
+            do {
+                try await APIClient.shared.submitSeedBook(title: title, author: author, coverURL: coverURL)
+                let local = LocalSeedBook(id: UUID().uuidString, title: title, author: author, coverURL: coverURL)
+                modelContext.insert(local)
+            } catch {
+                print("[SimilarBooks] failed to seed liked book: \(error)")
+            }
+        }
+    }
+
     // MARK: - Load logic
 
     private func initialLoad() async {
-        // Serve from cache if usable — no spinner, instant display.
         if SimilarBooksCacheService.isCacheUsable(seed) {
             let cached = SimilarBooksCacheService.displaySuggestions(for: seed, sessionId: sessionId)
             await MainActor.run {
@@ -175,7 +259,6 @@ struct SimilarBooksSheet: View {
             }
             return
         }
-        // Fall back to live fetch
         await liveFetchInitial()
     }
 
@@ -220,7 +303,6 @@ struct SimilarBooksSheet: View {
             self.liveFetchExcludeKeys.append(contentsOf: newKeys)
             Self.appendHistory(newKeys, for: self.seed)
             if self.servedFromCache {
-                // Append live results below cached ones
                 self.liveSuggestions.append(contentsOf: results)
                 self.servedFromCache = false
             } else {
@@ -228,60 +310,6 @@ struct SimilarBooksSheet: View {
             }
             self.isLoadingMore = false
         }
-    }
-
-    // MARK: - Actions (cached path)
-
-    private func saveCached(_ s: CachedSuggestion) {
-        let item = ReadingListItem(
-            id: s.id, title: s.title, author: s.author, coverURL: s.coverURL,
-            blurb: s.blurb.isEmpty ? "Suggested because you love \(seed.title)." : s.blurb
-        )
-        modelContext.insert(item)
-        hiddenIds.insert(s.id)
-        ToastManager.shared.show(.savedToShelf)
-    }
-
-    private func alreadyReadCached(_ s: CachedSuggestion) {
-        let title = s.title; let author = s.author; let coverURL = s.coverURL
-        Task { @MainActor in
-            do {
-                try await APIClient.shared.submitSeedBook(title: title, author: author, coverURL: coverURL)
-                let local = LocalSeedBook(id: UUID().uuidString, title: title, author: author, coverURL: coverURL)
-                modelContext.insert(local)
-            } catch {
-                print("[SimilarBooks] failed to seed liked book: \(error)")
-            }
-        }
-        hiddenIds.insert(s.id)
-        ToastManager.shared.show(.reactedRead)
-    }
-
-    // MARK: - Actions (live path)
-
-    private func saveLive(_ s: SuggestionDTO) {
-        let item = ReadingListItem(
-            id: s.id, title: s.title, author: s.author, coverURL: s.coverURL,
-            blurb: s.blurb.isEmpty ? "Suggested because you love \(seed.title)." : s.blurb
-        )
-        modelContext.insert(item)
-        hiddenIds.insert(s.id)
-        ToastManager.shared.show(.savedToShelf)
-    }
-
-    private func alreadyReadLive(_ s: SuggestionDTO) {
-        let title = s.title; let author = s.author; let coverURL = s.coverURL
-        Task { @MainActor in
-            do {
-                try await APIClient.shared.submitSeedBook(title: title, author: author, coverURL: coverURL)
-                let local = LocalSeedBook(id: UUID().uuidString, title: title, author: author, coverURL: coverURL)
-                modelContext.insert(local)
-            } catch {
-                print("[SimilarBooks] failed to seed liked book: \(error)")
-            }
-        }
-        hiddenIds.insert(s.id)
-        ToastManager.shared.show(.reactedRead)
     }
 
     // MARK: - Fetch helper
@@ -315,185 +343,15 @@ struct SimilarBooksSheet: View {
     }
 }
 
-// MARK: - Card for cached suggestions
+// MARK: - Suggestion context (lets us route either cached or live through one sheet)
 
-private struct CachedSuggestionCard: View {
-    let suggestion: CachedSuggestion
-    let onSave: () -> Void
-    let onPass: () -> Void
-    let onAlreadyRead: () -> Void
+struct SuggestionDetailContext: Identifiable {
+    let id: String
+    let display: BookDisplay
+    let source: Source
 
-    var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            BookCoverView(url: suggestion.coverURL)
-
-            VStack(alignment: .leading, spacing: 10) {
-                VStack(alignment: .leading, spacing: 3) {
-                    Text(suggestion.title)
-                        .font(.title3.bold())
-                        .fixedSize(horizontal: false, vertical: true)
-                    Text(suggestion.author)
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                }
-
-                ContextRow(
-                    nytBestseller: suggestion.nytBestseller,
-                    nytWeeks: suggestion.nytWeeksOnList,
-                    readingTimeMinutes: suggestion.readingTimeMinutes
-                )
-
-                if !suggestion.contextTag.isEmpty {
-                    Label(suggestion.contextTag, systemImage: "sparkle")
-                        .font(.caption.weight(.medium))
-                        .foregroundStyle(Color(red: 0.30, green: 0.20, blue: 0.55))
-                }
-
-                if !suggestion.genre.isEmpty || !suggestion.era.isEmpty || !suggestion.awards.isEmpty {
-                    HStack(spacing: 6) {
-                        if !suggestion.genre.isEmpty { TinyTag(text: suggestion.genre) }
-                        if !suggestion.era.isEmpty  { TinyTag(text: suggestion.era) }
-                        ForEach(suggestion.awards, id: \.self) { AwardBadge(text: $0) }
-                    }
-                }
-
-                if !suggestion.blurb.isEmpty {
-                    Text(suggestion.blurb)
-                        .font(.subheadline)
-                        .foregroundStyle(Color(.label))
-                        .fixedSize(horizontal: false, vertical: true)
-                        .lineSpacing(2)
-                }
-
-                HStack(spacing: 8) {
-                    CardActionButton(label: "Save",     icon: "bookmark.fill", kind: .primary,    action: onSave)
-                    CardActionButton(label: "Read it",  icon: "checkmark",     kind: .secondary,  action: onAlreadyRead)
-                    CardActionButton(label: "Pass",     icon: "xmark",         kind: .tertiary,   action: onPass)
-                }
-                .padding(.top, 4)
-            }
-            .padding(14)
-        }
-        .background(Color(.systemBackground))
-        .clipShape(RoundedRectangle(cornerRadius: 14))
-        .shadow(color: .black.opacity(0.06), radius: 10, x: 0, y: 3)
-    }
-}
-
-// MARK: - Card for live SuggestionDTO (kept for fallback / load-more path)
-
-private struct SuggestionCard: View {
-    let suggestion: SuggestionDTO
-    let onSave: () -> Void
-    let onPass: () -> Void
-    let onAlreadyRead: () -> Void
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            BookCoverView(url: suggestion.coverURL)
-
-            VStack(alignment: .leading, spacing: 10) {
-                VStack(alignment: .leading, spacing: 3) {
-                    Text(suggestion.title)
-                        .font(.title3.bold())
-                        .fixedSize(horizontal: false, vertical: true)
-                    Text(suggestion.author)
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                }
-
-                ContextRow(
-                    nytBestseller: suggestion.nytBestseller,
-                    nytWeeks: suggestion.nytWeeksOnList,
-                    readingTimeMinutes: suggestion.readingTimeMinutes
-                )
-
-                if !suggestion.contextTag.isEmpty {
-                    Label(suggestion.contextTag, systemImage: "sparkle")
-                        .font(.caption.weight(.medium))
-                        .foregroundStyle(Color(red: 0.30, green: 0.20, blue: 0.55))
-                }
-
-                if !suggestion.genre.isEmpty || !suggestion.era.isEmpty || !suggestion.awards.isEmpty {
-                    HStack(spacing: 6) {
-                        if !suggestion.genre.isEmpty { TinyTag(text: suggestion.genre) }
-                        if !suggestion.era.isEmpty  { TinyTag(text: suggestion.era) }
-                        ForEach(suggestion.awards, id: \.self) { AwardBadge(text: $0) }
-                    }
-                }
-
-                if !suggestion.blurb.isEmpty {
-                    Text(suggestion.blurb)
-                        .font(.subheadline)
-                        .foregroundStyle(Color(.label))
-                        .fixedSize(horizontal: false, vertical: true)
-                        .lineSpacing(2)
-                }
-
-                HStack(spacing: 8) {
-                    CardActionButton(label: "Save",     icon: "bookmark.fill", kind: .primary,    action: onSave)
-                    CardActionButton(label: "Read it",  icon: "checkmark",     kind: .secondary,  action: onAlreadyRead)
-                    CardActionButton(label: "Pass",     icon: "xmark",         kind: .tertiary,   action: onPass)
-                }
-                .padding(.top, 4)
-            }
-            .padding(14)
-        }
-        .background(Color(.systemBackground))
-        .clipShape(RoundedRectangle(cornerRadius: 14))
-        .shadow(color: .black.opacity(0.06), radius: 10, x: 0, y: 3)
-    }
-}
-
-private struct TinyTag: View {
-    let text: String
-    var body: some View {
-        Text(text)
-            .font(.caption.weight(.medium))
-            .foregroundStyle(Color(.secondaryLabel))
-            .padding(.horizontal, 8)
-            .padding(.vertical, 4)
-            .background(Capsule().fill(Color(.secondarySystemFill)))
-    }
-}
-
-private enum CardActionKind { case primary, secondary, tertiary }
-
-private struct CardActionButton: View {
-    let label: String
-    let icon: String
-    let kind: CardActionKind
-    let action: () -> Void
-
-    private var foreground: Color {
-        switch kind {
-        case .primary: return .white
-        case .secondary: return Color(red: 0.10, green: 0.45, blue: 0.30)
-        case .tertiary: return Color(.tertiaryLabel)
-        }
-    }
-    private var background: Color {
-        switch kind {
-        case .primary: return Color(red: 0.10, green: 0.35, blue: 0.85)
-        case .secondary: return Color(red: 0.10, green: 0.45, blue: 0.30).opacity(0.12)
-        case .tertiary: return Color(.secondarySystemFill)
-        }
-    }
-
-    var body: some View {
-        Button(action: action) {
-            HStack(spacing: 5) {
-                Image(systemName: icon)
-                    .font(.subheadline.weight(.semibold))
-                Text(label)
-                    .font(.subheadline.weight(.semibold))
-            }
-            .frame(maxWidth: kind == .primary ? .infinity : nil)
-            .padding(.horizontal, kind == .primary ? 14 : 12)
-            .padding(.vertical, 10)
-            .background(RoundedRectangle(cornerRadius: 10).fill(background))
-            .foregroundStyle(foreground)
-        }
-        .buttonStyle(.plain)
+    enum Source {
+        case cached(CachedSuggestion)
+        case live(SuggestionDTO)
     }
 }
