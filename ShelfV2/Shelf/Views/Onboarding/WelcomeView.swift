@@ -10,10 +10,11 @@ struct WelcomeView: View {
             ZStack {
                 cream.ignoresSafeArea()
 
-                // Animated cover wall, top-aligned so the looping math works
+                // Animated cover wall, top-aligned so the looping math works.
+                // Held back in opacity so it reads as ambient background, not foreground content.
                 SplashCoverScrollView()
                     .frame(width: geo.size.width, height: geo.size.height)
-                    .opacity(0.95)
+                    .opacity(0.55)
 
                 // Cream gradient at the bottom only — fades covers into the CTA bar
                 VStack(spacing: 0) {

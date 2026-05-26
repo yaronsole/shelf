@@ -1,0 +1,20 @@
+{
+  "slug": "goodreads_choice_fiction",
+  "title": "Goodreads Choice: Fiction",
+  "books": [
+    { "title": "James", "author": "Percival Everett", "year": 2024, "selected_date": "2024", "isbn_13": "9780385550369" },
+    { "title": "Yellowface", "author": "R.F. Kuang", "year": 2023, "selected_date": "2023", "isbn_13": "9780063250918" },
+    { "title": "Tomorrow, and Tomorrow, and Tomorrow", "author": "Gabrielle Zevin", "year": 2022, "selected_date": "2022", "isbn_13": "9780593321201" },
+    { "title": "Beautiful World, Where Are You", "author": "Sally Rooney", "year": 2021, "selected_date": "2021", "isbn_13": "9780374602604" },
+    { "title": "The Midnight Library", "author": "Matt Haig", "year": 2020, "selected_date": "2020", "isbn_13": "9780525559474" },
+    { "title": "Normal People", "author": "Sally Rooney", "year": 2019, "selected_date": "2019", "isbn_13": "9781984822185" },
+    { "title": "Washington Black", "author": "Esi Edugyan", "year": 2018, "selected_date": "2018", "isbn_13": "9780525520412" },
+    { "title": "Lincoln in the Bardo", "author": "George Saunders", "year": 2017, "selected_date": "2017", "isbn_13": "9780812995343" },
+    { "title": "All the Light We Cannot See", "author": "Anthony Doerr", "year": 2015, "selected_date": "2015", "isbn_13": "9781501173219" },
+    { "title": "The Goldfinch", "author": "Donna Tartt", "year": 2013, "selected_date": "2013", "isbn_13": "9780316055437" },
+    { "title": "Gone Girl", "author": "Gillian Flynn", "year": 2012, "selected_date": "2012", "isbn_13": "9780307588371" },
+    { "title": "The Night Circus", "author": "Erin Morgenstern", "year": 2011, "selected_date": "2011", "isbn_13": "9780307744432" },
+    { "title": "The Girl with the Dragon Tattoo", "author": "Stieg Larsson", "year": 2010, "selected_date": "2010", "isbn_13": "9780307949486" },
+    { "title": "The Help", "author": "Kathryn Stockett", "year": 2009, "selected_date": "2009", "isbn_13": "9780425232200" }
+  ]
+}

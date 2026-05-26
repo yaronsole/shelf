@@ -5,23 +5,39 @@ import SwiftUI
 /// running every frame instead of relying on a one-shot withAnimation call
 /// that SwiftUI can silently drop.
 struct SplashCoverScrollView: View {
-    // Open Library returns whatever cover an ISBN maps to — some of the broader Reese
-    // list ISBNs were resolving to unrelated books (Enlightenment Now, Bath Haus, etc.).
-    // Trimmed to the ones visually confirmed correct in screenshots.
+    // Curated mix of popular, well-photographed book covers from our curated lists
+    // (Reese / Oprah / Obama / NYT / Booker / Pulitzer / Goodreads). All chosen for
+    // high recognizability and reliable Open Library cover matches.
     private static let urls: [String] = [
+        // Reese
         "https://covers.openlibrary.org/b/isbn/9780735220683-M.jpg", // Eleanor Oliphant
         "https://covers.openlibrary.org/b/isbn/9780735224292-M.jpg", // Little Fires Everywhere
         "https://covers.openlibrary.org/b/isbn/9780399184529-M.jpg", // The Light We Lost
         "https://covers.openlibrary.org/b/isbn/9781524798628-M.jpg", // Daisy Jones & The Six
         "https://covers.openlibrary.org/b/isbn/9780525541905-M.jpg", // Such a Fun Age
-        "https://covers.openlibrary.org/b/isbn/9780062654175-M.jpg", // The Alice Network
+        "https://covers.openlibrary.org/b/isbn/9780525559023-M.jpg", // Where the Crawdads Sing
+        // Obama / NYT / Booker / Pulitzer crossover
+        "https://covers.openlibrary.org/b/isbn/9780812995343-M.jpg", // Lincoln in the Bardo
+        "https://covers.openlibrary.org/b/isbn/9780399590504-M.jpg", // Educated
+        "https://covers.openlibrary.org/b/isbn/9781524763138-M.jpg", // Becoming
+        "https://covers.openlibrary.org/b/isbn/9780385542364-M.jpg", // The Underground Railroad
+        "https://covers.openlibrary.org/b/isbn/9780593321201-M.jpg", // Tomorrow, and Tomorrow
+        "https://covers.openlibrary.org/b/isbn/9780802162175-M.jpg", // The Covenant of Water
+        "https://covers.openlibrary.org/b/isbn/9781455563920-M.jpg", // Pachinko
+        "https://covers.openlibrary.org/b/isbn/9780525657743-M.jpg", // Crying in H Mart
+        "https://covers.openlibrary.org/b/isbn/9780525536291-M.jpg", // The Vanishing Half
+        "https://covers.openlibrary.org/b/isbn/9780374611996-M.jpg", // Intermezzo
+        "https://covers.openlibrary.org/b/isbn/9780385550369-M.jpg", // James (Percival Everett)
+        "https://covers.openlibrary.org/b/isbn/9780593472620-M.jpg", // The God of the Woods
+        "https://covers.openlibrary.org/b/isbn/9781668050200-M.jpg", // The Ministry of Time
+        "https://covers.openlibrary.org/b/isbn/9780802163783-M.jpg", // Orbital
     ]
 
-    private let coverWidth: CGFloat = 150
-    private let coverHeight: CGFloat = 215
-    private let gap: CGFloat = 10
-    /// Pixels per second — slow, calm scroll
-    private let speed: CGFloat = 18
+    private let coverWidth: CGFloat = 130
+    private let coverHeight: CGFloat = 190
+    private let gap: CGFloat = 12
+    /// Pixels per second — slow ambient scroll so it sits in the background.
+    private let speed: CGFloat = 8
 
     @State private var start: Date = .now
 

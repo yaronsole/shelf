@@ -84,26 +84,8 @@ struct ListDetailView: View {
 
     private func header(_ meta: ListMetadataDTO) -> some View {
         VStack(alignment: .leading, spacing: 6) {
-            HStack(alignment: .firstTextBaseline) {
-                Text(meta.title)
-                    .font(.title.bold())
-                Spacer()
-            }
-            HStack(spacing: 6) {
-                if !meta.curator.isEmpty {
-                    Text(meta.curator).font(.subheadline.weight(.medium))
-                    Text("·").foregroundStyle(.tertiary)
-                }
-                Text("\(meta.bookCount) books")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                if !meta.lastUpdated.isEmpty {
-                    Text("·").foregroundStyle(.tertiary)
-                    Text("Updated \(meta.lastUpdated)")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                }
-            }
+            Text(meta.title)
+                .font(.title.bold())
             if !meta.description.isEmpty {
                 Text(meta.description)
                     .font(.body)
