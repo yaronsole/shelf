@@ -8,7 +8,7 @@ enum Strings {
             static let appName = "Shelf"
             static let valueProp = "Your next favorite book is waiting."
             static let subtitle = "Tell us what you love."
-            static let cta = "Get Started"
+            static let cta = "find my next read"
         }
 
         enum SeedSearch {
