@@ -25,9 +25,6 @@ struct SimilarBooksSheet: View {
 
     // Detail-sheet state — wired to BookDetailView (same pattern as ForYouView)
     @State private var selectedDisplay: SuggestionDetailContext? = nil
-    // Sentiment sheet shown after "Read it" → loved-it / didn't-like-it
-    @State private var contextForSentiment: SuggestionDetailContext? = nil
-    @State private var showSentimentSheet = false
 
     private var visibleLive: [SuggestionDTO] {
         liveSuggestions.filter { !hiddenIds.contains($0.id) }
@@ -68,31 +65,14 @@ struct SimilarBooksSheet: View {
                 display: ctx.display,
                 onSave: { saveContext(ctx) },
                 onPass: { hiddenIds.insert(ctx.id) },
-                onReadItRequested: {
-                    let captured = ctx
-                    selectedDisplay = nil
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
-                        contextForSentiment = captured
-                        showSentimentSheet = true
+                onSentiment: { liked in
+                    if liked {
+                        seedFromContext(ctx)
                     }
+                    hiddenIds.insert(ctx.id)
+                    ToastManager.shared.show(liked ? .reactedRead : .reactedPass)
                 }
             )
-        }
-        .sheet(isPresented: $showSentimentSheet) {
-            if let ctx = contextForSentiment {
-                AlreadyReadSheet(
-                    title: ctx.display.title,
-                    onLoved: {
-                        seedFromContext(ctx)
-                        hiddenIds.insert(ctx.id)
-                        ToastManager.shared.show(.reactedRead)
-                    },
-                    onDidntLike: {
-                        hiddenIds.insert(ctx.id)
-                        ToastManager.shared.show(.reactedPass)
-                    }
-                )
-            }
         }
     }
 

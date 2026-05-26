@@ -64,35 +64,37 @@ struct BookDetailView: View {
     let display: BookDisplay
     var onSave: () -> Void
     var onPass: () -> Void
-    /// Called when the user taps "read it". Parent should dismiss this sheet
-    /// then present an AlreadyReadSheet so we capture loved/didn't-like.
-    var onReadItRequested: () -> Void
+    /// Called with the user's sentiment after they tap "read it" → "loved it" / "didn't like".
+    /// Inlined into this view so we don't have to chain a second sheet (which causes
+    /// the white-screen race when SwiftUI dismisses one sheet and presents another).
+    var onSentiment: (Bool) -> Void
 
     @Environment(\.dismiss) private var dismiss
+    @State private var inSentimentMode: Bool = false
 
     // Back-compat init that accepts CachedRecommendation directly.
     init(
         rec: CachedRecommendation,
         onSave: @escaping () -> Void,
         onPass: @escaping () -> Void,
-        onReadItRequested: @escaping () -> Void
+        onSentiment: @escaping (Bool) -> Void
     ) {
         self.display = BookDisplay(from: rec)
         self.onSave = onSave
         self.onPass = onPass
-        self.onReadItRequested = onReadItRequested
+        self.onSentiment = onSentiment
     }
 
     init(
         display: BookDisplay,
         onSave: @escaping () -> Void,
         onPass: @escaping () -> Void,
-        onReadItRequested: @escaping () -> Void
+        onSentiment: @escaping (Bool) -> Void
     ) {
         self.display = display
         self.onSave = onSave
         self.onPass = onPass
-        self.onReadItRequested = onReadItRequested
+        self.onSentiment = onSentiment
     }
 
     var body: some View {
@@ -170,6 +172,24 @@ struct BookDetailView: View {
     }
 
     private var ctaBar: some View {
+        Group {
+            if inSentimentMode {
+                sentimentBar
+            } else {
+                primaryCtaBar
+            }
+        }
+        .padding(.horizontal, 14)
+        .padding(.bottom, 24)
+        .background(
+            Rectangle()
+                .fill(.regularMaterial)
+                .ignoresSafeArea(edges: .bottom)
+        )
+        .animation(.easeInOut(duration: 0.22), value: inSentimentMode)
+    }
+
+    private var primaryCtaBar: some View {
         HStack(spacing: 6) {
             Button {
                 Haptics.light()
@@ -195,7 +215,7 @@ struct BookDetailView: View {
 
             Button {
                 Haptics.light()
-                onReadItRequested()
+                withAnimation { inSentimentMode = true }
             } label: {
                 PillLabel(iconName: "checkmark", iconColor: Color(hexString: "3B6D11"),
                           label: "read it", labelColor: Color(hexString: "444444"),
@@ -203,13 +223,56 @@ struct BookDetailView: View {
             }
             .buttonStyle(.plain)
         }
-        .padding(.horizontal, 14)
-        .padding(.bottom, 24)
-        .background(
-            Rectangle()
-                .fill(.regularMaterial)
-                .ignoresSafeArea(edges: .bottom)
-        )
+    }
+
+    /// Inlined sentiment prompt — swaps in over the same CTA bar so there's no
+    /// second sheet to chain (and no white-screen race).
+    private var sentimentBar: some View {
+        VStack(spacing: 8) {
+            Text("did you like it?")
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(Color(.label))
+
+            HStack(spacing: 8) {
+                Button {
+                    Haptics.medium()
+                    onSentiment(true)
+                    dismiss()
+                } label: {
+                    Label("loved it", systemImage: "heart.fill")
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(.white)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 11)
+                        .background(
+                            RoundedRectangle(cornerRadius: 14)
+                                .fill(Color(hexString: "D04763"))
+                        )
+                }
+                .buttonStyle(.plain)
+
+                Button {
+                    Haptics.light()
+                    onSentiment(false)
+                    dismiss()
+                } label: {
+                    Label("not for me", systemImage: "hand.thumbsdown")
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(Color(hexString: "444444"))
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 11)
+                        .background(
+                            RoundedRectangle(cornerRadius: 14)
+                                .fill(Color.white)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 14)
+                                        .strokeBorder(Color(hexString: "DDDDDD"), lineWidth: 0.5)
+                                )
+                        )
+                }
+                .buttonStyle(.plain)
+            }
+        }
     }
 }
 

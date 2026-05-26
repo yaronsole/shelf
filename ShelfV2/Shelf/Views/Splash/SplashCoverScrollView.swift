@@ -5,21 +5,16 @@ import SwiftUI
 /// running every frame instead of relying on a one-shot withAnimation call
 /// that SwiftUI can silently drop.
 struct SplashCoverScrollView: View {
-    // High-confidence Reese book-club ISBNs only. Open Library returns whatever cover
-    // it has for an ISBN; trimmed list reduces the chance of unrelated-cover surprises.
+    // Open Library returns whatever cover an ISBN maps to — some of the broader Reese
+    // list ISBNs were resolving to unrelated books (Enlightenment Now, Bath Haus, etc.).
+    // Trimmed to the ones visually confirmed correct in screenshots.
     private static let urls: [String] = [
         "https://covers.openlibrary.org/b/isbn/9780735220683-M.jpg", // Eleanor Oliphant
         "https://covers.openlibrary.org/b/isbn/9780735224292-M.jpg", // Little Fires Everywhere
         "https://covers.openlibrary.org/b/isbn/9780399184529-M.jpg", // The Light We Lost
-        "https://covers.openlibrary.org/b/isbn/9780525559023-M.jpg", // Where the Crawdads Sing
         "https://covers.openlibrary.org/b/isbn/9781524798628-M.jpg", // Daisy Jones & The Six
-        "https://covers.openlibrary.org/b/isbn/9780062654175-M.jpg", // The Alice Network
         "https://covers.openlibrary.org/b/isbn/9780525541905-M.jpg", // Such a Fun Age
-        "https://covers.openlibrary.org/b/isbn/9780525559931-M.jpg", // One Day in December
-        "https://covers.openlibrary.org/b/isbn/9780593311318-M.jpg", // Malibu Rising
-        "https://covers.openlibrary.org/b/isbn/9781250269850-M.jpg", // The Guest List
-        "https://covers.openlibrary.org/b/isbn/9780778309895-M.jpg", // The Henna Artist
-        "https://covers.openlibrary.org/b/isbn/9780399562488-M.jpg", // The Giver of Stars
+        "https://covers.openlibrary.org/b/isbn/9780062654175-M.jpg", // The Alice Network
     ]
 
     private let coverWidth: CGFloat = 150
@@ -50,7 +45,7 @@ struct SplashCoverScrollView: View {
 
                 HStack(alignment: .top, spacing: gap) {
                     column(urls: leftURLs + leftURLs)
-                    column(urls: rightURLs + rightURLs, extraTop: (coverHeight + gap) / 2)
+                    column(urls: rightURLs + rightURLs)
                 }
                 .frame(width: geo.size.width, alignment: .center)
                 .offset(y: offset)
@@ -61,7 +56,7 @@ struct SplashCoverScrollView: View {
     }
 
     @ViewBuilder
-    private func column(urls: [String], extraTop: CGFloat = 0) -> some View {
+    private func column(urls: [String]) -> some View {
         VStack(spacing: gap) {
             ForEach(0..<urls.count, id: \.self) { i in
                 AsyncImage(url: URL(string: urls[i])) { phase in
@@ -76,6 +71,5 @@ struct SplashCoverScrollView: View {
                 .clipShape(RoundedRectangle(cornerRadius: 6))
             }
         }
-        .offset(y: extraTop)
     }
 }

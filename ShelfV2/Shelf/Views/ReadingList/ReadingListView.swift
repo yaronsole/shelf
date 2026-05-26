@@ -9,7 +9,6 @@ struct ReadingListView: View {
 
     @State private var vm = ReadingListViewModel()
     @State private var itemForSentiment: ReadingListItem? = nil
-    @State private var showSentimentSheet = false
 
     var body: some View {
         NavigationStack {
@@ -28,7 +27,6 @@ struct ReadingListView: View {
                                 .swipeActions(edge: .leading, allowsFullSwipe: false) {
                                     Button {
                                         itemForSentiment = item
-                                        showSentimentSheet = true
                                     } label: {
                                         Label(Strings.ReadingList.markAsRead, systemImage: "checkmark.circle")
                                     }
@@ -48,14 +46,28 @@ struct ReadingListView: View {
                 }
             }
         }
-        .sheet(isPresented: $showSentimentSheet) {
-            if let item = itemForSentiment {
-                AlreadyReadSheet(
-                    title: item.title,
-                    onLoved: { vm.markAsRead(item, liked: true, modelContext: modelContext) },
-                    onDidntLike: { vm.markAsRead(item, liked: false, modelContext: modelContext) }
-                )
+        // Action-sheet style prompt — much more reliable than a chained sheet
+        // and renders instantly (no white-screen race).
+        .confirmationDialog(
+            "Did you love it?",
+            isPresented: Binding(
+                get: { itemForSentiment != nil },
+                set: { if !$0 { itemForSentiment = nil } }
+            ),
+            titleVisibility: .visible,
+            presenting: itemForSentiment
+        ) { item in
+            Button("Loved it") {
+                vm.markAsRead(item, liked: true, modelContext: modelContext)
+                ToastManager.shared.show(.reactedRead)
             }
+            Button("Didn't like it") {
+                vm.markAsRead(item, liked: false, modelContext: modelContext)
+                ToastManager.shared.show(.reactedPass)
+            }
+            Button("Cancel", role: .cancel) { }
+        } message: { item in
+            Text(item.title)
         }
     }
 }

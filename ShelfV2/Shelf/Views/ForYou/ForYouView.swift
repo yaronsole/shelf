@@ -20,10 +20,6 @@ struct ForYouView: View {
     @State private var visibleIds: Set<String> = []
     @State private var selectedRec: CachedRecommendation? = nil
 
-    // Loved-it / didn't-like sentiment sheet, shown after "Read it" in BookDetailView
-    @State private var recForSentiment: CachedRecommendation? = nil
-    @State private var showSentimentSheet = false
-
     // Daily rotation — observe completion to fire TST-8
     private var rotationService = DailyRotationService.shared
 
@@ -70,31 +66,11 @@ struct ForYouView: View {
                     vm.dismiss(rec, modelContext: modelContext)
                     ToastManager.shared.show(.reactedPass)
                 },
-                onReadItRequested: {
-                    // Defer presenting the sentiment sheet so the detail sheet has time to dismiss
-                    let capturedRec = rec
-                    selectedRec = nil
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
-                        recForSentiment = capturedRec
-                        showSentimentSheet = true
-                    }
+                onSentiment: { liked in
+                    vm.markAlreadyRead(rec, liked: liked, modelContext: modelContext)
+                    ToastManager.shared.show(liked ? .reactedRead : .reactedPass)
                 }
             )
-        }
-        .sheet(isPresented: $showSentimentSheet) {
-            if let rec = recForSentiment {
-                AlreadyReadSheet(
-                    title: rec.title,
-                    onLoved: {
-                        vm.markAlreadyRead(rec, liked: true, modelContext: modelContext)
-                        ToastManager.shared.show(.reactedRead)
-                    },
-                    onDidntLike: {
-                        vm.markAlreadyRead(rec, liked: false, modelContext: modelContext)
-                        ToastManager.shared.show(.reactedPass)
-                    }
-                )
-            }
         }
     }
 
