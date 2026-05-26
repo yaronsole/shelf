@@ -1,6 +1,5 @@
 import SwiftUI
 
-// Owns the OnboardingViewModel and routes between onboarding steps.
 struct OnboardingCoordinatorView: View {
     @State private var vm = OnboardingViewModel()
 
@@ -19,20 +18,6 @@ struct OnboardingCoordinatorView: View {
 
         case .seedSearch:
             SeedBookSearchView(vm: vm)
-                .transition(.asymmetric(
-                    insertion: .move(edge: .trailing),
-                    removal: .move(edge: .leading)
-                ))
-
-        case .chainDiscovery:
-            ChainDiscoveryView(vm: vm)
-                .transition(.asymmetric(
-                    insertion: .move(edge: .trailing),
-                    removal: .move(edge: .leading)
-                ))
-
-        case .confirmation:
-            ConfirmationView(vm: vm)
                 .transition(.asymmetric(
                     insertion: .move(edge: .trailing),
                     removal: .move(edge: .leading)

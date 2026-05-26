@@ -176,7 +176,13 @@ final class ForYouViewModel {
             author: rec.author,
             coverURL: rec.coverURL,
             blurb: rec.blurb,
-            domain: rec.domain
+            domain: rec.domain,
+            genre: rec.genre,
+            era: rec.era,
+            becauseOf: rec.becauseOf,
+            readingTimeMinutes: rec.readingTimeMinutes,
+            nytBestseller: rec.nytBestseller,
+            nytWeeksOnList: rec.nytWeeksOnList
         )
         modelContext.insert(item)
         removeFromFeed(rec, modelContext: modelContext)

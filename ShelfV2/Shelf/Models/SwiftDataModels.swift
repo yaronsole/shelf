@@ -86,6 +86,14 @@ final class ReadingListItem {
     var blurb: String
     var savedAt: Date
     var domain: String
+    // v2.1: rich card fields copied from CachedRecommendation at save time.
+    // Older saves that lack these fields display abbreviated cards (omit empty lines).
+    var genre: String = ""
+    var era: String = ""
+    var becauseOf: String = ""
+    var readingTimeMinutes: Int? = nil
+    var nytBestseller: Bool = false
+    var nytWeeksOnList: Int? = nil
 
     init(
         id: String,
@@ -93,7 +101,13 @@ final class ReadingListItem {
         author: String,
         coverURL: String,
         blurb: String,
-        domain: String = Domain.books.rawValue
+        domain: String = Domain.books.rawValue,
+        genre: String = "",
+        era: String = "",
+        becauseOf: String = "",
+        readingTimeMinutes: Int? = nil,
+        nytBestseller: Bool = false,
+        nytWeeksOnList: Int? = nil
     ) {
         self.id = id
         self.title = title
@@ -102,6 +116,12 @@ final class ReadingListItem {
         self.blurb = blurb
         self.savedAt = Date()
         self.domain = domain
+        self.genre = genre
+        self.era = era
+        self.becauseOf = becauseOf
+        self.readingTimeMinutes = readingTimeMinutes
+        self.nytBestseller = nytBestseller
+        self.nytWeeksOnList = nytWeeksOnList
     }
 }
 
@@ -116,6 +136,11 @@ final class LocalSeedBook {
     var coverURL: String
     var addedAt: Date
     var domain: String
+    // v2.1: pre-computed similar books cache (JSON-encoded [CachedSuggestion]).
+    // Refreshed on app foreground when >8h stale.
+    var similarBooksData: Data = Data()
+    var similarBooksUpdatedAt: Date? = nil
+    var similarBooksGenerationToken: String = ""
 
     init(
         id: String,

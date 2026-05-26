@@ -13,6 +13,12 @@ final class AppState {
     // Per-launch flags — reset each app launch (not persisted).
     var hasDoneLaunchTimePrune: Bool = false
 
+    // Set to true when a new For You batch arrives after onboarding; cleared when user taps For You.
+    var hasForYouBadge: Bool = false
+
+    // When non-nil, MainTabView selects this tab on first appear then clears it.
+    var pendingInitialTab: Int? = nil
+
     init() {
         self.hasCompletedOnboarding = UserDefaults.standard.bool(forKey: Keys.onboardingComplete)
     }

@@ -2,6 +2,8 @@ import SwiftUI
 
 struct SeedBookSearchView: View {
     @Bindable var vm: OnboardingViewModel
+    @Environment(\.modelContext) private var modelContext
+    @Environment(AppState.self) private var appState
 
     var body: some View {
         VStack(spacing: 0) {
@@ -91,7 +93,7 @@ struct SeedBookSearchView: View {
                         .font(.caption)
                         .foregroundStyle(.secondary)
 
-                    if !vm.canContinueFromSearch {
+                    if !vm.canContinue {
                         Spacer()
                         Text(Strings.Onboarding.SeedSearch.encouragement)
                             .font(.caption)
@@ -99,17 +101,24 @@ struct SeedBookSearchView: View {
                     }
                 }
 
-                Button(Strings.Onboarding.SeedSearch.continueCTA) {
-                    vm.step = .chainDiscovery
-                    vm.loadSuggestions()
+                Button {
+                    vm.submitAndFinish(modelContext: modelContext, appState: appState)
+                } label: {
+                    HStack(spacing: 8) {
+                        if vm.isSubmitting {
+                            ProgressView().controlSize(.small)
+                                .tint(Color(.systemBackground))
+                        }
+                        Text("build my shelf")
+                            .font(.headline)
+                    }
                 }
-                .font(.headline)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 14)
-                .background(vm.canContinueFromSearch ? Color(.label) : Color(.systemFill))
-                .foregroundStyle(vm.canContinueFromSearch ? Color(.systemBackground) : Color(.tertiaryLabel))
+                .background(vm.canContinue ? Color(.label) : Color(.systemFill))
+                .foregroundStyle(vm.canContinue ? Color(.systemBackground) : Color(.tertiaryLabel))
                 .clipShape(RoundedRectangle(cornerRadius: 14))
-                .disabled(!vm.canContinueFromSearch)
+                .disabled(!vm.canContinue || vm.isSubmitting)
             }
             .padding(.horizontal, 20)
             .padding(.vertical, 16)

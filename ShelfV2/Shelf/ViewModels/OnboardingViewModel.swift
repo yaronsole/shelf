@@ -4,37 +4,25 @@ import SwiftData
 enum OnboardingStep {
     case welcome
     case seedSearch
-    case chainDiscovery
-    case confirmation
 }
 
 @Observable
 final class OnboardingViewModel {
     var step: OnboardingStep = .welcome
-    // Step 1: selected = "I've read it" → goes to taste profile (seed)
     var selectedBooks: [BookSearchResult] = []
-    // Step 1: saved = "Save for later" → goes to Reading List (NOT seed)
     var savedBooks: [BookSearchResult] = []
     var searchQuery: String = ""
     var searchResults: [BookSearchResult] = []
     var isSearching: Bool = false
 
-    // Curated grid of popular books shown above the search field
     var popularBooks: [BookSearchResult] = []
     var isLoadingPopular: Bool = false
     private var hasLoadedPopular = false
 
-    // Step 2: chain discovery suggestions keyed by seed book id
-    var suggestions: [String: [SuggestionDTO]] = [:]
-    var isLoadingSuggestions: Bool = false
-    var addedSuggestions: Set<String> = []   // suggestion IDs the user marked "I've read it"
-    var savedSuggestions: Set<String> = []   // suggestion IDs the user marked "Save for later"
-
-    // Step 3: submission
     var isSubmitting: Bool = false
     var submissionError: String? = nil
 
-    var canContinueFromSearch: Bool {
+    var canContinue: Bool {
         selectedBooks.count >= 3
     }
 
@@ -44,7 +32,7 @@ final class OnboardingViewModel {
         return count < min ? "\(count) of \(min) minimum" : "\(count) selected"
     }
 
-    // MARK: - Step 1: Seed Search
+    // MARK: - Search
 
     private var searchTask: Task<Void, Never>?
 
@@ -59,7 +47,6 @@ final class OnboardingViewModel {
         searchTask = Task {
             try? await Task.sleep(for: .milliseconds(300))
             guard !Task.isCancelled else { return }
-            // Open Library: no API key, no quota. Fall back to Google Books if OL is empty.
             var results = await OpenLibraryService.shared.search(query: newQuery)
             if results.isEmpty {
                 results = (try? await GoogleBooksService.shared.search(query: newQuery)) ?? []
@@ -71,7 +58,6 @@ final class OnboardingViewModel {
         }
     }
 
-    // "I've read it" → adds to taste seeds. Mutually exclusive with Save.
     func selectBook(_ book: BookSearchResult) {
         guard !selectedBooks.contains(book) else { return }
         savedBooks.removeAll { $0.id == book.id }
@@ -86,7 +72,6 @@ final class OnboardingViewModel {
         selectedBooks.contains(book)
     }
 
-    // "Save for later" → adds to Reading List, NOT to seed taste profile.
     func toggleSaveBook(_ book: BookSearchResult) {
         if let idx = savedBooks.firstIndex(where: { $0.id == book.id }) {
             savedBooks.remove(at: idx)
@@ -111,15 +96,10 @@ final class OnboardingViewModel {
             await withTaskGroup(of: (Int, BookSearchResult?).self) { group in
                 for (index, entry) in PopularBooks.books.enumerated() {
                     group.addTask {
-                        // Open Library has FAR better cover-art quality than Google Books
-                        // for known classics. Use it as the canonical source for our
-                        // curated picks; fall back to Google Books only if it has no cover.
                         if let cover = await OpenLibraryService.shared.lookupCoverURL(title: entry.title, author: entry.author) {
-                            // Synthesize a BookSearchResult — id needs to be stable per title|author
                             let stableId = "\(entry.title)|\(entry.author)".lowercased()
                             return (index, BookSearchResult(id: stableId, title: entry.title, author: entry.author, coverURL: cover))
                         }
-                        // Fallback to Google Books lookup
                         let result = await GoogleBooksService.shared.lookup(title: entry.title, author: entry.author)
                         return (index, result)
                     }
@@ -137,93 +117,21 @@ final class OnboardingViewModel {
         }
     }
 
-    // MARK: - Step 2: Chain Discovery
-
-    func loadSuggestions() {
-        isLoadingSuggestions = true
-        let booksSnapshot = selectedBooks   // capture value copy to avoid Sendable issue
-        Task {
-            var collected: [String: [SuggestionDTO]] = [:]
-            await withTaskGroup(of: (String, [SuggestionDTO]).self) { group in
-                for book in booksSnapshot {
-                    group.addTask {
-                        let result = (try? await APIClient.shared.fetchSuggestions(for: book)) ?? []
-                        return (book.id, result)
-                    }
-                }
-                for await (bookId, results) in group {
-                    collected[bookId] = results
-                }
-            }
-            await MainActor.run {
-                self.suggestions = collected
-                self.isLoadingSuggestions = false
-            }
-        }
-    }
-
-    // "I've read it" — adds to taste profile (seed books). Mutually exclusive with Save.
-    func toggleAddToTaste(_ suggestion: SuggestionDTO) {
-        if addedSuggestions.contains(suggestion.id) {
-            addedSuggestions.remove(suggestion.id)
-        } else {
-            addedSuggestions.insert(suggestion.id)
-            savedSuggestions.remove(suggestion.id)
-        }
-    }
-
-    // "Save for later" — adds to Reading List, NOT to seed taste profile.
-    func toggleSaveForLater(_ suggestion: SuggestionDTO) {
-        if savedSuggestions.contains(suggestion.id) {
-            savedSuggestions.remove(suggestion.id)
-        } else {
-            savedSuggestions.insert(suggestion.id)
-            addedSuggestions.remove(suggestion.id)
-        }
-    }
-
-    func isSuggestionAdded(_ suggestion: SuggestionDTO) -> Bool {
-        addedSuggestions.contains(suggestion.id)
-    }
-
-    func isSuggestionSaved(_ suggestion: SuggestionDTO) -> Bool {
-        savedSuggestions.contains(suggestion.id)
-    }
-
-    // MARK: - Step 3: Submit & Transition
+    // MARK: - Submit & Transition
 
     func submitAndFinish(modelContext: ModelContext, appState: AppState) {
         isSubmitting = true
         submissionError = nil
 
-        // Books that become SEED books (taste profile): selected picks + "I've read it" suggestions
-        var seedsToSubmit: [(title: String, author: String, coverURL: String)] = selectedBooks.map {
+        let seedsToSubmit: [(title: String, author: String, coverURL: String)] = selectedBooks.map {
             (title: $0.title, author: $0.author, coverURL: $0.coverURL ?? "")
         }
-        // Books that become READING LIST items: Step 1 saves + Step 2 saves
-        var savesToSubmit: [(title: String, author: String, coverURL: String, blurb: String)] = savedBooks.map {
+        let savesToSubmit: [(title: String, author: String, coverURL: String, blurb: String)] = savedBooks.map {
             (title: $0.title, author: $0.author, coverURL: $0.coverURL ?? "",
              blurb: "Saved during onboarding.")
         }
 
-        for book in selectedBooks {
-            guard let subs = suggestions[book.id] else { continue }
-            for s in subs {
-                if addedSuggestions.contains(s.id) {
-                    seedsToSubmit.append((title: s.title, author: s.author, coverURL: s.coverURL))
-                } else if savedSuggestions.contains(s.id) {
-                    savesToSubmit.append((
-                        title: s.title, author: s.author, coverURL: s.coverURL,
-                        blurb: s.blurb.isEmpty ? "Suggested during onboarding because you love \(book.title)." : s.blurb
-                    ))
-                }
-            }
-        }
-
         Task { @MainActor in
-            print("[Onboarding] submitting \(seedsToSubmit.count) seeds, \(savesToSubmit.count) saves…")
-
-            // Seeds: send to backend + mirror to local SwiftData
             for (idx, item) in seedsToSubmit.enumerated() {
                 do {
                     try await APIClient.shared.submitSeedBook(
@@ -240,7 +148,6 @@ final class OnboardingViewModel {
                 }
             }
 
-            // Saves: insert directly into local Reading List (no backend reading-list endpoint)
             for save in savesToSubmit {
                 let item = ReadingListItem(
                     id: UUID().uuidString,
@@ -248,11 +155,12 @@ final class OnboardingViewModel {
                     coverURL: save.coverURL, blurb: save.blurb
                 )
                 modelContext.insert(item)
-                print("[Onboarding] ✓ saved to reading list: \(save.title)")
             }
 
             self.isSubmitting = false
             appState.isFirstGeneration = true
+            // Land on Discover tab (index 1) after onboarding — For You generates in the background.
+            appState.pendingInitialTab = 1
             appState.completeOnboarding()
         }
     }

@@ -1,10 +1,11 @@
 import SwiftUI
 import SwiftData
 
-/// Detail view for a curated list. 2-per-row grid of covers with tap/long-press
-/// to mark read/saved. First-run shows a one-time tooltip explaining gestures.
+/// Detail view for a curated list. 2-per-row grid of covers.
+/// Tap = open Amazon deeplink. Long press = save to Shelf.
 struct ListDetailView: View {
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.openURL) private var openURL
     @State private var vm: ListDetailViewModel
     @AppStorage("hasSeenListTooltip") private var hasSeenListTooltip = false
     @State private var showTooltip = false
@@ -29,8 +30,20 @@ struct ListDetailView: View {
                                 ListBookTile(
                                     book: book,
                                     status: vm.status(for: book.bookId),
-                                    onTap: { vm.toggleRead(book, modelContext: modelContext) },
-                                    onLongPress: { vm.toggleSave(book) }
+                                    onTap: {
+                                        if let url = AmazonLinkService.searchURL(
+                                            title: book.title, author: book.author
+                                        ) {
+                                            openURL(url)
+                                        }
+                                    },
+                                    onLongPress: {
+                                        vm.toggleSave(book)
+                                        // Only fire "added" toast when saving (not when unsaving)
+                                        if vm.status(for: book.bookId) == .saved {
+                                            ToastManager.shared.show(.savedToShelf)
+                                        }
+                                    }
                                 )
                             }
                         }
@@ -102,7 +115,7 @@ struct ListDetailView: View {
     }
 }
 
-// MARK: - Cover tile with status overlay
+// MARK: - Cover tile
 
 private struct ListBookTile: View {
     let book: ListBookDTO
@@ -110,14 +123,12 @@ private struct ListBookTile: View {
     let onTap: () -> Void
     let onLongPress: () -> Void
 
-    // Brief bounce on long-press to confirm the save gesture (1.0 → 1.05 → 1.0).
     @State private var saveBounce: Bool = false
 
     var body: some View {
         ZStack(alignment: .topTrailing) {
             BookCoverView(url: book.coverURL)
                 .overlay(
-                    // Dim slightly when marked read so the user feels it's "checked off"
                     Rectangle()
                         .fill(.black)
                         .opacity(status == .read ? 0.15 : 0)
@@ -185,7 +196,7 @@ private struct TooltipOverlay: View {
                 Image(systemName: "hand.tap")
                     .font(.title)
                     .foregroundStyle(.white)
-                Text("Tap to mark read · Long-press to save")
+                Text("Tap to open on Amazon · Long-press to save")
                     .font(.headline)
                     .foregroundStyle(.white)
                     .multilineTextAlignment(.center)

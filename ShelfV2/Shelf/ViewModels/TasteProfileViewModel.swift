@@ -76,11 +76,11 @@ final class TasteProfileViewModel {
 
     func executeRemove(modelContext: ModelContext, seedCount: Int) {
         guard let book = bookToRemove else { return }
-        // Block deletion at 2 seeds (TASTE-04)
         guard seedCount > TasteProfileViewModel.minimumSeeds else { return }
         Task {
             try? await APIClient.shared.deleteSeedBook(id: book.id)
         }
+        SimilarBooksCacheService.invalidate(seed: book)
         modelContext.delete(book)
         bookToRemove = nil
         isShowingRemoveConfirm = false

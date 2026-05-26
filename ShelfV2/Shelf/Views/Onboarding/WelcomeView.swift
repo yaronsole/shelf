@@ -3,45 +3,63 @@ import SwiftUI
 struct WelcomeView: View {
     var onGetStarted: () -> Void
 
+    private let cream = Color(hex: 0xFAF6F0)
+
     var body: some View {
-        VStack(spacing: 0) {
-            Spacer()
+        ZStack {
+            cream.ignoresSafeArea()
 
-            VStack(spacing: 24) {
-                Image(systemName: "books.vertical.fill")
-                    .font(.system(size: 72))
-                    .foregroundStyle(Color(.label))
+            SplashCoverScrollView()
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .ignoresSafeArea()
+                .clipped()
 
-                VStack(spacing: 8) {
+            // gradient overlays to fade covers into cream background
+            VStack(spacing: 0) {
+                LinearGradient(
+                    colors: [cream, cream.opacity(0)],
+                    startPoint: .top, endPoint: .bottom
+                )
+                .frame(height: 200)
+                Spacer()
+                LinearGradient(
+                    colors: [cream.opacity(0), cream],
+                    startPoint: .top, endPoint: .bottom
+                )
+                .frame(height: 320)
+            }
+            .ignoresSafeArea()
+            .allowsHitTesting(false)
+
+            VStack(spacing: 0) {
+                Spacer()
+
+                VStack(spacing: 12) {
                     Text(Strings.Onboarding.Welcome.appName)
                         .font(.system(size: 44, weight: .bold, design: .serif))
+                        .foregroundStyle(Color(hex: 0x1A1A1A))
 
                     Text(Strings.Onboarding.Welcome.valueProp)
-                        .font(.title3.weight(.medium))
+                        .font(.subheadline.weight(.medium))
+                        .foregroundStyle(Color(hex: 0x1A1A1A).opacity(0.65))
                         .multilineTextAlignment(.center)
-
-                    Text(Strings.Onboarding.Welcome.subtitle)
-                        .font(.body)
-                        .foregroundStyle(.secondary)
-                        .multilineTextAlignment(.center)
+                        .padding(.horizontal, 40)
                 }
-            }
 
-            Spacer()
+                Spacer()
 
-            Button(action: onGetStarted) {
-                Text(Strings.Onboarding.Welcome.cta)
-                    .font(.headline)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 16)
-                    .background(Color(.label))
-                    .foregroundStyle(Color(.systemBackground))
-                    .clipShape(RoundedRectangle(cornerRadius: 14))
+                Button(action: onGetStarted) {
+                    Text(Strings.Onboarding.Welcome.cta)
+                        .font(.headline)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 16)
+                        .background(Color(hex: 0x1A1A1A))
+                        .foregroundStyle(.white)
+                        .clipShape(RoundedRectangle(cornerRadius: 14))
+                }
+                .padding(.horizontal, 24)
+                .padding(.bottom, 48)
             }
-            .padding(.horizontal, 24)
-            .padding(.bottom, 48)
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(Color(.systemBackground))
     }
 }

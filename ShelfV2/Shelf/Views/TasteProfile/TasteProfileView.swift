@@ -76,16 +76,17 @@ struct TasteProfileView: View {
         .sheet(item: $bookForSuggestions) { book in
             SimilarBooksSheet(seed: book, modelContext: modelContext)
         }
-        .confirmationDialog(
-            Strings.TasteProfile.removeWarning,
-            isPresented: $vm.isShowingRemoveConfirm,
-            titleVisibility: .visible
-        ) {
-            Button(Strings.TasteProfile.removeAction, role: .destructive) {
+        .alert("remove from taste?", isPresented: $vm.isShowingRemoveConfirm) {
+            Button("remove", role: .destructive) {
                 vm.executeRemove(modelContext: modelContext, seedCount: seedBooks.count)
+                ToastManager.shared.show(.removedFromTaste)
             }
-            Button(Strings.TasteProfile.cancel, role: .cancel) {
+            Button("cancel", role: .cancel) {
                 vm.cancelRemove()
+            }
+        } message: {
+            if let book = vm.bookToRemove {
+                Text("we'll stop using \(book.title) to find books like it.")
             }
         }
     }
@@ -100,19 +101,14 @@ private struct SeedBookCoverView: View {
     let onRemove: () -> Void
 
     var body: some View {
-        Button(action: onTap) {
-            BookCoverView(url: book.coverURL)
-        }
-        .buttonStyle(.plain)
-        .contextMenu {
-            if canRemove {
-                Button(role: .destructive) {
-                    onRemove()
-                } label: {
-                    Label(Strings.TasteProfile.removeAction, systemImage: "trash")
-                }
+        BookCoverView(url: book.coverURL)
+            .contentShape(Rectangle())
+            .onTapGesture { onTap() }
+            .onLongPressGesture(minimumDuration: 0.45) {
+                guard canRemove else { return }
+                Haptics.medium()
+                onRemove()
             }
-        }
     }
 }
 

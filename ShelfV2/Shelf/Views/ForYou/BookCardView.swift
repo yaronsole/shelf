@@ -2,16 +2,11 @@ import SwiftUI
 
 struct BookCardView: View {
     let rec: CachedRecommendation
-    var onSave: () -> Void
-    var onDismiss: () -> Void
-    var onAlreadyRead: (Bool) -> Void  // true = loved it, false = didn't like it
+    var onTap: () -> Void    // open detail sheet
+    var onSave: () -> Void   // long press — save directly
 
-    @State private var showAlreadyReadSheet = false
     @State private var isRemoving = false
 
-    // Plan-spec: hero cover width = min(screenWidth × 0.45, 180).
-    // Using UIScreen avoids a body-root GeometryReader that would collapse
-    // intrinsic-height layout inside the parent LazyVStack.
     private var heroWidth: CGFloat {
         min(UIScreen.main.bounds.width * 0.45, 180)
     }
@@ -39,7 +34,7 @@ struct BookCardView: View {
             }
             .padding(.horizontal, 16)
 
-            // 3. NYT bestseller / reading time context (kept; useful signal)
+            // 3. NYT bestseller / reading time context row
             ContextRow(
                 nytBestseller: rec.nytBestseller,
                 nytWeeks: rec.nytWeeksOnList,
@@ -47,7 +42,7 @@ struct BookCardView: View {
             )
             .padding(.horizontal, 16)
 
-            // 4. Genre + comfort-zone pills + award badges (awards styled distinctly per 5.3)
+            // 4. Genre + comfort-zone pills + award badges
             FlowingTags(
                 genre: rec.genre,
                 isComfortZonePush: rec.isComfortZonePush,
@@ -55,8 +50,7 @@ struct BookCardView: View {
             )
             .padding(.horizontal, 16)
 
-            // 5. "✦ Because you loved [seed]" — falls back to contextTag if no
-            //    attribution. Mutually exclusive so the slot stays visually quiet.
+            // 5. "Because you loved [seed]" / context tag
             if !rec.becauseOf.isEmpty {
                 Label("Because you loved \(rec.becauseOf)", systemImage: "sparkle")
                     .font(.subheadline.weight(.medium))
@@ -78,46 +72,36 @@ struct BookCardView: View {
                 .lineSpacing(3)
                 .padding(.horizontal, 16)
 
-            // 7. CTA row — Save dominant, ✓/✕ icon squares
-            CTARow(
-                onSave: {
-                    Haptics.light()
-                    withAnimation(.spring(response: 0.35, dampingFraction: 0.75)) {
-                        isRemoving = true
-                    }
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { onSave() }
-                },
-                onAlreadyRead: {
-                    Haptics.light()
-                    showAlreadyReadSheet = true
-                },
-                onPass: {
-                    Haptics.light()
-                    withAnimation(.spring(response: 0.35, dampingFraction: 0.75)) {
-                        isRemoving = true
-                    }
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { onDismiss() }
-                }
-            )
-            .padding(.horizontal, 16)
-            .padding(.bottom, 16)
+            // Gesture hint label
+            Text("tap · long press")
+                .font(.caption2)
+                .foregroundStyle(Color(.tertiaryLabel))
+                .padding(.bottom, 16)
         }
         .background(Color(.systemBackground))
         .clipShape(RoundedRectangle(cornerRadius: 16))
         .shadow(color: .black.opacity(0.07), radius: 12, x: 0, y: 4)
         .opacity(isRemoving ? 0 : 1)
         .scaleEffect(isRemoving ? 0.96 : 1)
-        .sheet(isPresented: $showAlreadyReadSheet) {
-            AlreadyReadSheet(
-                title: rec.title,
-                onLoved: { onAlreadyRead(true) },
-                onDidntLike: { onAlreadyRead(false) }
-            )
+        .contentShape(Rectangle())
+        .onTapGesture {
+            onTap()
         }
+        .onLongPressGesture(minimumDuration: 0.45) {
+            Haptics.medium()
+            animateRemoval { onSave() }
+        }
+    }
+
+    private func animateRemoval(then action: @escaping () -> Void) {
+        withAnimation(.spring(response: 0.35, dampingFraction: 0.75)) {
+            isRemoving = true
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { action() }
     }
 }
 
-// MARK: - Context Row (NYT + reading time only — awards moved to FlowingTags)
+// MARK: - Context Row
 
 struct ContextRow: View {
     let nytBestseller: Bool
@@ -131,12 +115,8 @@ struct ContextRow: View {
     var body: some View {
         if hasAnyContent {
             HStack(spacing: 8) {
-                if nytBestseller {
-                    NYTBadge(weeks: nytWeeks)
-                }
-                if let mins = readingTimeMinutes, mins > 0 {
-                    ReadingTimeBadge(minutes: mins)
-                }
+                if nytBestseller { NYTBadge(weeks: nytWeeks) }
+                if let mins = readingTimeMinutes, mins > 0 { ReadingTimeBadge(minutes: mins) }
                 Spacer(minLength: 0)
             }
         }
@@ -188,7 +168,7 @@ private struct ReadingTimeBadge: View {
     }
 }
 
-// MARK: - Flowing Tags (genre + comfort-zone + awards in one row)
+// MARK: - Flowing Tags
 
 private struct FlowingTags: View {
     let genre: String
@@ -207,17 +187,15 @@ private struct FlowingTags: View {
     }
 }
 
-// MARK: - Award Badge (Phase 5 amber styling — visually distinct from genre tags)
+// MARK: - Award Badge
 
 struct AwardBadge: View {
     let text: String
 
-    // Plan 5.3: amber background (#FAEEDA), amber-800 text (#633806), 🏆 leading.
-    private static let amberBackground = Color(red: 0xFA / 255.0, green: 0xEE / 255.0, blue: 0xDA / 255.0)
-    private static let amberText = Color(red: 0x63 / 255.0, green: 0x38 / 255.0, blue: 0x06 / 255.0)
+    private static let amberBackground = Color(hex: 0xFAEEDA)
+    private static let amberText = Color(hex: 0x633806)
 
     private var shortLabel: String {
-        // Strip "Prize"/"Award" suffix for compactness
         text
             .replacingOccurrences(of: " Prize", with: "")
             .replacingOccurrences(of: " Award", with: "")
@@ -238,7 +216,7 @@ struct AwardBadge: View {
     }
 }
 
-// MARK: - Tag (genre / comfort-zone pill)
+// MARK: - Tag
 
 private struct TagView: View {
     let text: String
@@ -256,64 +234,5 @@ private struct TagView: View {
                           ? Color(.systemOrange).opacity(0.12)
                           : Color(.secondarySystemFill))
             )
-    }
-}
-
-// MARK: - CTA Row (Save dominant + ✓/✕ icon squares)
-
-private struct CTARow: View {
-    let onSave: () -> Void
-    let onAlreadyRead: () -> Void
-    let onPass: () -> Void
-
-    private let iconSquareSize: CGFloat = 38
-
-    var body: some View {
-        // Plan 5.2: Save takes ~⅔ width (fills available space via maxWidth: .infinity),
-        // ✓ and ✕ are 38pt squares so labels never wrap regardless of locale.
-        HStack(spacing: 8) {
-            Button(action: onSave) {
-                HStack(spacing: 6) {
-                    Image(systemName: "bookmark.fill")
-                        .font(.subheadline.weight(.semibold))
-                    Text("Save")
-                        .font(.subheadline.weight(.semibold))
-                }
-                .frame(maxWidth: .infinity, minHeight: iconSquareSize)
-                .background(
-                    RoundedRectangle(cornerRadius: 10)
-                        .fill(Color(red: 0.10, green: 0.35, blue: 0.85))
-                )
-                .foregroundStyle(.white)
-            }
-            .buttonStyle(.plain)
-            .accessibilityLabel("Save")
-
-            Button(action: onAlreadyRead) {
-                Image(systemName: "checkmark")
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(Color(red: 0.10, green: 0.45, blue: 0.30))
-                    .frame(width: iconSquareSize, height: iconSquareSize)
-                    .background(
-                        RoundedRectangle(cornerRadius: 10)
-                            .strokeBorder(Color(red: 0.10, green: 0.45, blue: 0.30), lineWidth: 1)
-                    )
-            }
-            .buttonStyle(.plain)
-            .accessibilityLabel("Already read")
-
-            Button(action: onPass) {
-                Image(systemName: "xmark")
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(Color(.label))
-                    .frame(width: iconSquareSize, height: iconSquareSize)
-                    .background(
-                        RoundedRectangle(cornerRadius: 10)
-                            .strokeBorder(Color(.separator), lineWidth: 1)
-                    )
-            }
-            .buttonStyle(.plain)
-            .accessibilityLabel("Pass")
-        }
     }
 }
