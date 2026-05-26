@@ -47,9 +47,35 @@ gcloud run deploy "$SERVICE_NAME" \
   --max-instances 5 \
   --timeout 60
 
-echo ""
-echo "✅  Deployed. Service URL:"
-gcloud run services describe "$SERVICE_NAME" \
+SERVICE_URL=$(gcloud run services describe "$SERVICE_NAME" \
   --project "$PROJECT_ID" \
   --region "$REGION" \
-  --format "value(status.url)"
+  --format "value(status.url)")
+
+echo ""
+echo "✅  Deployed. Service URL: $SERVICE_URL"
+
+# ── Post-deploy cover-cache warmup ───────────────────────────────────────────
+# On first request to each list endpoint, the backend resolves covers via
+# Open Library / Google Books (cached globally in Firestore). With ~40-60
+# books per list, the first request can take 30-45s. Pre-warm so users on
+# the next call see books in <2s.
+echo ""
+echo "▶ Pre-warming list cover caches (parallel)..."
+CATALOG=$(curl -s --max-time 30 "$SERVICE_URL/v1/lists" || echo '{"lists":[]}')
+SLUGS=$(echo "$CATALOG" | python3 -c "import json,sys; d=json.load(sys.stdin); print(' '.join(l['slug'] for l in d.get('lists',[])))")
+
+if [[ -n "$SLUGS" ]]; then
+  for slug in $SLUGS; do
+    (
+      RESULT=$(curl -s --max-time 120 -w "%{time_total}s" -o /dev/null \
+        "$SERVICE_URL/v1/lists/$slug" \
+        -H "Authorization: Bearer warmup-deploy")
+      echo "   $slug: $RESULT"
+    ) &
+  done
+  wait
+  echo "✅  Cover caches warmed."
+else
+  echo "⚠️  No list slugs returned — skipping warmup."
+fi
