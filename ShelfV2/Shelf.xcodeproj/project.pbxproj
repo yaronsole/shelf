@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		073A57C1B8E184ECB508D30B /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = AEE65A95AA9D516A78DF7D9D /* Assets.xcassets */; };
 		08F38D0307A9E3050F084385 /* BookCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE8EDF4A47F6F9E4178D5737 /* BookCardView.swift */; };
 		097B8B7E963010C26A7ED3D5 /* ListDetailViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = B9630CB65578DEFE58EB9108 /* ListDetailViewModel.swift */; };
 		0B42FB5AE112339715022684 /* ForYouView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 64B7D83998625BD746D39D5F /* ForYouView.swift */; };
@@ -84,6 +85,7 @@
 		9C921BC55E203B836870C0EA /* EndOfFeedView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EndOfFeedView.swift; sourceTree = "<group>"; };
 		AE77D3063F5D54F6636891D8 /* WelcomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WelcomeView.swift; sourceTree = "<group>"; };
 		AE93E5C8E6050B409224D7B1 /* Secrets.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Secrets.swift; sourceTree = "<group>"; };
+		AEE65A95AA9D516A78DF7D9D /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		B580A241E862163CFFFB9971 /* APIConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIConfig.swift; sourceTree = "<group>"; };
 		B9630CB65578DEFE58EB9108 /* ListDetailViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ListDetailViewModel.swift; sourceTree = "<group>"; };
 		C25B2FD03CF7D6C9FE348257 /* ReadingListViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReadingListViewModel.swift; sourceTree = "<group>"; };
@@ -238,6 +240,7 @@
 		7B5DEA6510D96BC5E44DD414 /* Shelf */ = {
 			isa = PBXGroup;
 			children = (
+				AEE65A95AA9D516A78DF7D9D /* Assets.xcassets */,
 				16F6DDF314F38DB0ABDA1045 /* ShelfApp.swift */,
 				261692765586D64C3A860331 /* AppState */,
 				249F49C5120BA6B086AE82C2 /* Config */,
@@ -287,6 +290,7 @@
 			buildConfigurationList = 3510F916107ECADD0A7FD9C2 /* Build configuration list for PBXNativeTarget "Shelf" */;
 			buildPhases = (
 				E647543DFA06B802A295C593 /* Sources */,
+				8A06BDA5BCF566E678D73B1D /* Resources */,
 			);
 			buildRules = (
 			);
@@ -328,6 +332,17 @@
 			);
 		};
 /* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		8A06BDA5BCF566E678D73B1D /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				073A57C1B8E184ECB508D30B /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		E647543DFA06B802A295C593 /* Sources */ = {
