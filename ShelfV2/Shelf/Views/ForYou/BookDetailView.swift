@@ -166,27 +166,18 @@ struct BookDetailView: View {
                 }
             }
             .overlay(alignment: .bottom) {
-                ctaBar
-            }
-        }
-    }
-
-    private var ctaBar: some View {
-        Group {
-            if inSentimentMode {
-                sentimentBar
-            } else {
                 primaryCtaBar
             }
+            .overlay {
+                // Centered modal overlay (no chained sheet → no white-screen race)
+                if inSentimentMode {
+                    sentimentOverlay
+                        .transition(.opacity)
+                        .zIndex(50)
+                }
+            }
+            .animation(.easeInOut(duration: 0.22), value: inSentimentMode)
         }
-        .padding(.horizontal, 14)
-        .padding(.bottom, 24)
-        .background(
-            Rectangle()
-                .fill(.regularMaterial)
-                .ignoresSafeArea(edges: .bottom)
-        )
-        .animation(.easeInOut(duration: 0.22), value: inSentimentMode)
     }
 
     private var primaryCtaBar: some View {
@@ -223,55 +214,86 @@ struct BookDetailView: View {
             }
             .buttonStyle(.plain)
         }
+        .padding(.horizontal, 14)
+        .padding(.bottom, 24)
+        .background(
+            Rectangle()
+                .fill(.regularMaterial)
+                .ignoresSafeArea(edges: .bottom)
+        )
     }
 
-    /// Inlined sentiment prompt — swaps in over the same CTA bar so there's no
-    /// second sheet to chain (and no white-screen race).
-    private var sentimentBar: some View {
-        VStack(spacing: 8) {
-            Text("did you like it?")
-                .font(.subheadline.weight(.semibold))
-                .foregroundStyle(Color(.label))
-
-            HStack(spacing: 8) {
-                Button {
-                    Haptics.medium()
-                    onSentiment(true)
-                    dismiss()
-                } label: {
-                    Label("loved it", systemImage: "heart.fill")
-                        .font(.subheadline.weight(.semibold))
-                        .foregroundStyle(.white)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 11)
-                        .background(
-                            RoundedRectangle(cornerRadius: 14)
-                                .fill(Color(hexString: "D04763"))
-                        )
+    /// Centered modal popup — rendered as an overlay (not a sheet) so it stacks
+    /// cleanly over BookDetailView without the SwiftUI sheet-on-sheet race.
+    private var sentimentOverlay: some View {
+        ZStack {
+            // Dimmed backdrop — tap to dismiss
+            Color.black.opacity(0.45)
+                .ignoresSafeArea()
+                .contentShape(Rectangle())
+                .onTapGesture {
+                    withAnimation { inSentimentMode = false }
                 }
-                .buttonStyle(.plain)
 
-                Button {
-                    Haptics.light()
-                    onSentiment(false)
-                    dismiss()
-                } label: {
-                    Label("not for me", systemImage: "hand.thumbsdown")
-                        .font(.subheadline.weight(.semibold))
-                        .foregroundStyle(Color(hexString: "444444"))
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 11)
-                        .background(
-                            RoundedRectangle(cornerRadius: 14)
-                                .fill(Color.white)
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 14)
-                                        .strokeBorder(Color(hexString: "DDDDDD"), lineWidth: 0.5)
-                                )
-                        )
+            VStack(spacing: 20) {
+                VStack(spacing: 6) {
+                    Text("did you like it?")
+                        .font(.title3.bold())
+                        .foregroundStyle(Color(.label))
+                    Text(display.title)
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center)
+                        .lineLimit(2)
                 }
-                .buttonStyle(.plain)
+
+                VStack(spacing: 10) {
+                    Button {
+                        Haptics.medium()
+                        onSentiment(true)
+                        dismiss()
+                    } label: {
+                        Label("loved it", systemImage: "heart.fill")
+                            .font(.headline)
+                            .foregroundStyle(.white)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 14)
+                            .background(
+                                RoundedRectangle(cornerRadius: 14)
+                                    .fill(Color(hexString: "D04763"))
+                            )
+                    }
+                    .buttonStyle(.plain)
+
+                    Button {
+                        Haptics.light()
+                        onSentiment(false)
+                        dismiss()
+                    } label: {
+                        Label("not for me", systemImage: "hand.thumbsdown")
+                            .font(.headline)
+                            .foregroundStyle(Color(hexString: "444444"))
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 14)
+                            .background(
+                                RoundedRectangle(cornerRadius: 14)
+                                    .fill(Color.white)
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 14)
+                                            .strokeBorder(Color(hexString: "DDDDDD"), lineWidth: 0.5)
+                                    )
+                            )
+                    }
+                    .buttonStyle(.plain)
+                }
             }
+            .padding(24)
+            .background(
+                RoundedRectangle(cornerRadius: 22, style: .continuous)
+                    .fill(Color(.systemBackground))
+            )
+            .shadow(color: .black.opacity(0.25), radius: 24, x: 0, y: 8)
+            .padding(.horizontal, 32)
         }
     }
 }
