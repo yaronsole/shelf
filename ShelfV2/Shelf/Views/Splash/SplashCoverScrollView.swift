@@ -5,31 +5,21 @@ import SwiftUI
 /// running every frame instead of relying on a one-shot withAnimation call
 /// that SwiftUI can silently drop.
 struct SplashCoverScrollView: View {
+    // High-confidence Reese book-club ISBNs only. Open Library returns whatever cover
+    // it has for an ISBN; trimmed list reduces the chance of unrelated-cover surprises.
     private static let urls: [String] = [
-        "https://covers.openlibrary.org/b/isbn/9780735220683-M.jpg",
-        "https://covers.openlibrary.org/b/isbn/9780062654175-M.jpg",
-        "https://covers.openlibrary.org/b/isbn/9780735224292-M.jpg",
-        "https://covers.openlibrary.org/b/isbn/9780399184529-M.jpg",
-        "https://covers.openlibrary.org/b/isbn/9781501137846-M.jpg",
-        "https://covers.openlibrary.org/b/isbn/9781250127358-M.jpg",
-        "https://covers.openlibrary.org/b/isbn/9781501156700-M.jpg",
-        "https://covers.openlibrary.org/b/isbn/9780525559931-M.jpg",
-        "https://covers.openlibrary.org/b/isbn/9780525559023-M.jpg",
-        "https://covers.openlibrary.org/b/isbn/9780571333011-M.jpg",
-        "https://covers.openlibrary.org/b/isbn/9781524798628-M.jpg",
-        "https://covers.openlibrary.org/b/isbn/9780062422682-M.jpg",
-        "https://covers.openlibrary.org/b/isbn/9780593099148-M.jpg",
-        "https://covers.openlibrary.org/b/isbn/9780399562488-M.jpg",
-        "https://covers.openlibrary.org/b/isbn/9780525541905-M.jpg",
-        "https://covers.openlibrary.org/b/isbn/9780778309895-M.jpg",
-        "https://covers.openlibrary.org/b/isbn/9780525536291-M.jpg",
-        "https://covers.openlibrary.org/b/isbn/9781250269850-M.jpg",
-        "https://covers.openlibrary.org/b/isbn/9781982130749-M.jpg",
-        "https://covers.openlibrary.org/b/isbn/9780593102602-M.jpg",
-        "https://covers.openlibrary.org/b/isbn/9781501171345-M.jpg",
-        "https://covers.openlibrary.org/b/isbn/9780593311318-M.jpg",
-        "https://covers.openlibrary.org/b/isbn/9781538753033-M.jpg",
-        "https://covers.openlibrary.org/b/isbn/9780062977502-M.jpg",
+        "https://covers.openlibrary.org/b/isbn/9780735220683-M.jpg", // Eleanor Oliphant
+        "https://covers.openlibrary.org/b/isbn/9780735224292-M.jpg", // Little Fires Everywhere
+        "https://covers.openlibrary.org/b/isbn/9780399184529-M.jpg", // The Light We Lost
+        "https://covers.openlibrary.org/b/isbn/9780525559023-M.jpg", // Where the Crawdads Sing
+        "https://covers.openlibrary.org/b/isbn/9781524798628-M.jpg", // Daisy Jones & The Six
+        "https://covers.openlibrary.org/b/isbn/9780062654175-M.jpg", // The Alice Network
+        "https://covers.openlibrary.org/b/isbn/9780525541905-M.jpg", // Such a Fun Age
+        "https://covers.openlibrary.org/b/isbn/9780525559931-M.jpg", // One Day in December
+        "https://covers.openlibrary.org/b/isbn/9780593311318-M.jpg", // Malibu Rising
+        "https://covers.openlibrary.org/b/isbn/9781250269850-M.jpg", // The Guest List
+        "https://covers.openlibrary.org/b/isbn/9780778309895-M.jpg", // The Henna Artist
+        "https://covers.openlibrary.org/b/isbn/9780399562488-M.jpg", // The Giver of Stars
     ]
 
     private let coverWidth: CGFloat = 150

@@ -198,6 +198,27 @@ final class ForYouViewModel {
         removeFromFeed(rec, modelContext: modelContext)
         let kind: ReactionKind = liked ? .alreadyReadLiked : .alreadyReadDisliked
         Task { try? await APIClient.shared.submitReaction(bookId: rec.id, kind: kind) }
+
+        // Loved it → also seed the book so it informs future recs and shows up in Taste
+        if liked {
+            let title = rec.title
+            let author = rec.author
+            let coverURL = rec.coverURL
+            // Skip if a local seed for this book already exists
+            let titleKey = title.lowercased()
+            let authorKey = author.lowercased()
+            let descriptor = FetchDescriptor<LocalSeedBook>()
+            let alreadySeeded = ((try? modelContext.fetch(descriptor)) ?? []).contains {
+                $0.title.lowercased() == titleKey && $0.author.lowercased() == authorKey
+            }
+            if !alreadySeeded {
+                let local = LocalSeedBook(id: UUID().uuidString, title: title, author: author, coverURL: coverURL)
+                modelContext.insert(local)
+                Task {
+                    try? await APIClient.shared.submitSeedBook(title: title, author: author, coverURL: coverURL)
+                }
+            }
+        }
     }
 
     private func removeFromFeed(_ rec: CachedRecommendation, modelContext: ModelContext) {

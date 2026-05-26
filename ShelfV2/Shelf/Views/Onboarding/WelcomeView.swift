@@ -8,51 +8,29 @@ struct WelcomeView: View {
     var body: some View {
         GeometryReader { geo in
             ZStack {
-                // 1) Base cream
                 cream.ignoresSafeArea()
 
-                // 2) Animated cover wall — pinned to the top so the looping
-                //    offset stays visible (centering ate the content before).
+                // Animated cover wall, top-aligned so the looping math works
                 SplashCoverScrollView()
                     .frame(width: geo.size.width, height: geo.size.height)
-                    .opacity(0.85)
+                    .opacity(0.95)
 
-                // 3) Cream gradients top + bottom to fade the covers into the chrome
+                // Cream gradient at the bottom only — fades covers into the CTA bar
                 VStack(spacing: 0) {
-                    LinearGradient(
-                        colors: [cream, cream.opacity(0)],
-                        startPoint: .top, endPoint: .bottom
-                    )
-                    .frame(height: 160)
                     Spacer(minLength: 0)
                     LinearGradient(
-                        colors: [cream.opacity(0), cream],
+                        colors: [cream.opacity(0), cream, cream],
                         startPoint: .top, endPoint: .bottom
                     )
-                    .frame(height: 280)
+                    .frame(height: 260)
                 }
                 .frame(width: geo.size.width, height: geo.size.height)
                 .ignoresSafeArea()
                 .allowsHitTesting(false)
 
-                // 4) Foreground content — wordmark centered, CTA at the bottom
-                VStack(spacing: 0) {
+                // CTA anchored at the bottom — no copy, just the button
+                VStack {
                     Spacer()
-
-                    VStack(spacing: 10) {
-                        Text(Strings.Onboarding.Welcome.appName)
-                            .font(.system(size: 48, weight: .bold, design: .serif))
-                            .foregroundStyle(Color(hex: 0x1A1A1A))
-
-                        Text(Strings.Onboarding.Welcome.valueProp)
-                            .font(.subheadline.weight(.medium))
-                            .foregroundStyle(Color(hex: 0x1A1A1A).opacity(0.65))
-                            .multilineTextAlignment(.center)
-                            .padding(.horizontal, 40)
-                    }
-
-                    Spacer()
-
                     Button(action: onGetStarted) {
                         Text(Strings.Onboarding.Welcome.cta)
                             .font(.headline)

@@ -24,8 +24,7 @@ struct ReadingListView: View {
                     List {
                         ForEach(items) { item in
                             ReadingListCardView(item: item)
-                                .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
-                                .listRowSeparator(.hidden)
+                                .listRowInsets(EdgeInsets(top: 10, leading: 16, bottom: 10, trailing: 16))
                                 .swipeActions(edge: .leading, allowsFullSwipe: false) {
                                     Button {
                                         itemForSentiment = item

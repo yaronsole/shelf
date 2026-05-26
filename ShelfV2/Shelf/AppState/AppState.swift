@@ -20,7 +20,23 @@ final class AppState {
     var pendingInitialTab: Int? = nil
 
     init() {
-        self.hasCompletedOnboarding = UserDefaults.standard.bool(forKey: Keys.onboardingComplete)
+        // Keychain survives app uninstall on iOS, but UserDefaults does not.
+        // If we don't see our "has launched" marker AND the user hasn't completed
+        // onboarding, treat this as a fresh install: wipe the stale anonymous
+        // token so the user gets a fresh user_id on the backend instead of
+        // inheriting the previous install's seed/reaction history.
+        //
+        // Existing users (who completed onboarding before this fix shipped) are
+        // protected by the onboardingComplete check so their identity persists.
+        let alreadyMarked = UserDefaults.standard.bool(forKey: Keys.hasLaunchedOnce)
+        let onboardingDone = UserDefaults.standard.bool(forKey: Keys.onboardingComplete)
+        if !alreadyMarked && !onboardingDone {
+            KeychainService.delete(key: .anonymousToken)
+        }
+        if !alreadyMarked {
+            UserDefaults.standard.set(true, forKey: Keys.hasLaunchedOnce)
+        }
+        self.hasCompletedOnboarding = onboardingDone
     }
 
     func completeOnboarding() {
@@ -36,5 +52,6 @@ final class AppState {
 
     private enum Keys {
         static let onboardingComplete = "com.ysole.shelf.onboardingComplete"
+        static let hasLaunchedOnce    = "com.ysole.shelf.hasLaunchedOnce"
     }
 }

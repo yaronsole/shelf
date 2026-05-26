@@ -78,12 +78,7 @@ struct BookCardView: View {
                 .fixedSize(horizontal: false, vertical: true)
                 .lineSpacing(3)
                 .padding(.horizontal, 16)
-
-            // Gesture hint label
-            Text("tap · long press")
-                .font(.caption2)
-                .foregroundStyle(Color(.tertiaryLabel))
-                .padding(.bottom, 16)
+                .padding(.bottom, 20)
         }
         .background(Color(.systemBackground))
         .clipShape(RoundedRectangle(cornerRadius: 16))
