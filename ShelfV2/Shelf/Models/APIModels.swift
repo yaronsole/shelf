@@ -243,11 +243,12 @@ struct ListBookDTO: Decodable, Identifiable {
     let year: Int?
     let coverURL: String
     let userStatus: ListUserStatus?
+    let description: String
 
     var id: String { bookId }
 
     enum CodingKeys: String, CodingKey {
-        case title, author, year
+        case title, author, year, description
         case bookId = "book_id"
         case coverURL = "cover_url"
         case userStatus = "user_status"
@@ -261,6 +262,7 @@ struct ListBookDTO: Decodable, Identifiable {
         year = try? c.decodeIfPresent(Int.self, forKey: .year)
         coverURL = (try? c.decode(String.self, forKey: .coverURL)) ?? ""
         userStatus = try? c.decodeIfPresent(ListUserStatus.self, forKey: .userStatus)
+        description = (try? c.decode(String.self, forKey: .description)) ?? ""
     }
 }
 

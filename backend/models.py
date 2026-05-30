@@ -135,6 +135,7 @@ class ListBookResponse(BaseModel):
     year: Optional[int] = None
     cover_url: str = ""
     user_status: Optional[Literal["read", "saved", "passed"]] = None
+    description: str = ""
 
 
 class ListDetailResponse(BaseModel):

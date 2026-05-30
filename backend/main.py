@@ -596,6 +596,7 @@ def get_list_detail(slug: str, user_id: UserID, domain: str = "books"):
             year=b.get("year"),
             cover_url=covers.get(b["book_id"], ""),
             user_status=user_status.get(key),
+            description=b.get("description", ""),
         ))
 
     return ListDetailResponse(
