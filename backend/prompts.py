@@ -64,7 +64,9 @@ CRITICAL: Do NOT recommend any of the following books — they have already been
 Generate exactly {count} book recommendations for domain "{domain}".
 For each book include roughly 80% books that clearly match their taste, and 20% that are a gentle stretch outside their comfort zone (set is_comfort_zone_push true for those).
 
-Aim for some natural variety across the batch — try not to make every pick the same genre or era. This is a gentle nudge, NOT a quota: do NOT force breadth that isn't reflected in this reader's taste. If their profile is genuinely narrow, honor that and stay true to it. There is no required number of genres or eras; relevance to their taste always comes first, and a coherent on-taste batch beats a scattered one.
+AUTHOR AFFINITY (a top-priority signal): First identify the authors this reader clearly loves — those recurring across their taste profile and positive signals above. Treat (a) OTHER books by those authors that they haven't already read, and (b) authors very close in voice and style, as among your STRONGEST candidates — ahead of generic genre matching. This is priority-weighted, NOT a quota: if a loved author has more eligible work, lead with it; if their backlist is thin or already shown, let the slot fall through to close-in-voice authors and other taste matches. Never invent books an author didn't write, never pad to hit a number, and never use an excluded title.
+
+Aim for some natural variety across the batch — try not to make every pick the same genre or era. This is a gentle nudge, NOT a quota: do NOT force breadth that isn't reflected in this reader's taste. If their profile is genuinely narrow, honor that and stay true to it. There is no required number of genres or eras; relevance to their taste always comes first, and a coherent on-taste batch beats a scattered one. This variety nudge applies ONLY to the non-author-driven picks — the author-affinity picks are exempt, since their genre/era similarity is the whole point.
 {recent_section}
 Before writing your answer, reason through these two steps SILENTLY — do NOT include this reasoning, any headings, or any preamble in your response:
   1. Look at the books they dislike and infer what those disliked books have in COMMON — the shared appeal, tone, tropes, or subject matter to AVOID. (If there are no dislikes, skip this step.)
@@ -144,6 +146,7 @@ Seed book: "{seed_title}" by {seed_author} (domain: {domain})
 {exclude_section}{taste_section}
 Suggest exactly {count} books that readers of this book often enjoy next.
 Choose books that are closely related in theme, style, or readership — not just the same genre.
+Prioritize by author first: if {seed_author} has OTHER notable books the reader likely hasn't read (and that aren't excluded above), lead with 1–2 of them, then branch out to closely related authors and books. If {seed_author} has no suitable other work, skip straight to adjacent authors — do NOT pad with weak filler, and never invent titles the author didn't write.
 
 Respond with ONLY a JSON array. No markdown, no explanation. Each object must have:
   title         (string)
