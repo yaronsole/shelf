@@ -217,7 +217,7 @@ struct EmptyForYouView: View {
         guard !addedBookIds.contains(book.id) else { return }
         Haptics.light()
         pendingRead = PendingRead(
-            title: book.title, author: book.author, coverURL: book.coverURL ?? ""
+            id: book.id, title: book.title, author: book.author, coverURL: book.coverURL ?? ""
         )
     }
 
@@ -243,7 +243,7 @@ struct EmptyForYouView: View {
         guard !addedBookIds.contains(pick.id) else { return }
         Haptics.light()
         pendingRead = PendingRead(
-            title: pick.title, author: pick.author, coverURL: pick.coverURL
+            id: pick.id, title: pick.title, author: pick.author, coverURL: pick.coverURL
         )
     }
 
@@ -317,13 +317,15 @@ private struct PopularPickItem: Identifiable {
 }
 
 /// A book the user tapped "mark as read" on, awaiting a loved / didn't-like
-/// choice. Shares the "title|author" lowercased id space with PopularPickItem
-/// and BookSearchResult so the addedBookIds set stays consistent across both.
+/// choice. `id` is carried from the originating row (PopularPickItem.id, which
+/// is "title|author", or BookSearchResult.id, which is an Open Library work
+/// key) so confirmRead flips the *same* cell the user tapped — search results
+/// and popular picks live in different id spaces.
 private struct PendingRead: Identifiable {
+    let id: String
     let title: String
     let author: String
     let coverURL: String
-    var id: String { "\(title)|\(author)".lowercased() }
 }
 
 // MARK: - Search Result Row
