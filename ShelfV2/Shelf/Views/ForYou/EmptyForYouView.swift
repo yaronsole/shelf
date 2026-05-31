@@ -7,7 +7,26 @@ import SwiftData
 struct EmptyForYouView: View {
     @Environment(\.modelContext) private var modelContext
 
-    @State private var popularPicks: [PopularPickItem] = []
+    /// Called when the user chooses to graduate from the seed grid to the
+    /// personalized feed (the "See my picks" affordance / prompt).
+    var onSeePicks: () -> Void
+
+    // Drives the progress framing ("<count> of 3"). Updates live as the user
+    // adds loved books from any surface; at 3 we offer to switch to the real feed.
+    @Query private var seedBooks: [LocalSeedBook]
+    private let seedThreshold = 3
+
+    // One-time "keep adding vs. see picks" prompt, shown when the user first
+    // reaches the threshold. After it's been offered we don't nag — the
+    // persistent "See my picks" button stays available in the footer.
+    @State private var showPicksPrompt = false
+    @State private var hasOfferedPicks = false
+
+    // Shared store: covers are fetched once per launch and can be warmed early
+    // (from app launch on Discover) so the grid is ready by the time For You opens.
+    // `let` (not `var`) so it stays out of the synthesized memberwise init and
+    // doesn't drop the init's access below the `onSeePicks` caller in ForYouView.
+    private let picksStore = PopularPicksStore.shared
     @State private var searchQuery: String = ""
     @State private var searchResults: [BookSearchResult] = []
     @State private var isSearching: Bool = false
@@ -57,13 +76,32 @@ struct EmptyForYouView: View {
                 onDidntLike: { confirmRead(pending, liked: false) }
             )
         }
-        .onAppear { loadPopularPicksIfNeeded() }
+        .onAppear {
+            picksStore.prefetch()
+            offerPicksIfReady()
+        }
+        .onChange(of: seedBooks.count) { _, _ in
+            offerPicksIfReady()
+        }
+        .alert("That's \(seedThreshold) books", isPresented: $showPicksPrompt) {
+            Button("Keep adding", role: .cancel) { }
+            Button("See my picks") { onSeePicks() }
+        } message: {
+            Text("Add a few more, or start seeing your personalized picks now?")
+        }
+    }
+
+    /// Offers the one-time prompt the first time the user reaches the threshold.
+    private func offerPicksIfReady() {
+        guard seedBooks.count >= seedThreshold, !hasOfferedPicks else { return }
+        hasOfferedPicks = true
+        showPicksPrompt = true
     }
 
     // MARK: - Sections
 
     private var instructionalLine: some View {
-        Text("Pick books you've loved to unlock personalized picks.")
+        Text("Add a few books you've loved and your picks start taking shape.")
             .font(.body)
             .foregroundStyle(.secondary)
             .multilineTextAlignment(.leading)
@@ -103,10 +141,11 @@ struct EmptyForYouView: View {
                 columns: [
                     GridItem(.flexible(), spacing: gridSpacing),
                     GridItem(.flexible(), spacing: gridSpacing),
+                    GridItem(.flexible(), spacing: gridSpacing),
                 ],
                 spacing: gridSpacing
             ) {
-                ForEach(popularPicks.prefix(6)) { pick in
+                ForEach(picksStore.items) { pick in
                     PopularPickTile(
                         pick: pick,
                         isAdded: addedBookIds.contains(pick.id),
@@ -171,13 +210,45 @@ struct EmptyForYouView: View {
         }
     }
 
+    @ViewBuilder
     private var footerLine: some View {
-        Text("Pick at least 3 to unlock personalized recs ✦")
-            .font(.footnote)
-            .foregroundStyle(.secondary)
+        let count = min(seedBooks.count, seedThreshold)
+        if seedBooks.count >= seedThreshold {
+            // Reached the threshold: a persistent way to graduate to the feed
+            // (the prompt offers this once; this keeps it available afterward).
+            Button {
+                Haptics.medium()
+                onSeePicks()
+            } label: {
+                Text("See my picks ✦")
+                    .font(.headline)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 16)
+                    .background(Color(hex: 0x1A1A1A))
+                    .foregroundStyle(.white)
+                    .clipShape(RoundedRectangle(cornerRadius: 14))
+            }
+            .buttonStyle(.plain)
+            .padding(.top, 8)
+        } else {
+            VStack(spacing: 10) {
+                // Three-segment progress bar that fills as loved books are added.
+                HStack(spacing: 6) {
+                    ForEach(0..<seedThreshold, id: \.self) { i in
+                        Capsule()
+                            .fill(i < count ? Color(hex: 0x1A1A1A) : Color(.secondarySystemFill))
+                            .frame(width: 28, height: 6)
+                    }
+                }
+                Text("\(count) of \(seedThreshold) added")
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+            }
             .frame(maxWidth: .infinity)
             .multilineTextAlignment(.center)
             .padding(.top, 8)
+            .animation(.easeInOut(duration: 0.25), value: count)
+        }
     }
 
     // MARK: - Helpers
@@ -279,13 +350,33 @@ struct EmptyForYouView: View {
         modelContext.insert(item)
     }
 
-    private func loadPopularPicksIfNeeded() {
-        guard popularPicks.isEmpty else { return }
+}
+
+// MARK: - Popular Picks Store (preloadable)
+
+/// Holds the popular-picks covers for the seed grid. Fetches a generous slice of
+/// the curated list once per launch; `prefetch()` is idempotent so it can be
+/// warmed early (from app launch while the user is on Discover) and again from
+/// the grid's `onAppear` without re-fetching.
+@Observable
+final class PopularPicksStore {
+    static let shared = PopularPicksStore()
+    private init() {}
+
+    private(set) var items: [PopularPickItem] = []
+    private var isLoading = false
+    private var hasLoaded = false
+
+    func prefetch() {
+        guard !hasLoaded, !isLoading else { return }
+        isLoading = true
         Task {
-            let firstSix = Array(PopularBooks.books.prefix(6))
-            var items: [PopularPickItem] = []
+            // Covers are fetched concurrently; entries whose lookup fails are
+            // dropped, so the rendered count may be slightly under 24.
+            let subset = Array(PopularBooks.books.prefix(24))
+            var loaded: [PopularPickItem] = []
             await withTaskGroup(of: (Int, PopularPickItem?).self) { group in
-                for (index, entry) in firstSix.enumerated() {
+                for (index, entry) in subset.enumerated() {
                     group.addTask {
                         if let cover = await OpenLibraryService.shared.lookupCoverURL(title: entry.title, author: entry.author) {
                             return (index, PopularPickItem(title: entry.title, author: entry.author, coverURL: cover))
@@ -300,16 +391,20 @@ struct EmptyForYouView: View {
                 for await (i, item) in group {
                     if let item { indexed.append((i, item)) }
                 }
-                items = indexed.sorted { $0.0 < $1.0 }.map { $0.1 }
+                loaded = indexed.sorted { $0.0 < $1.0 }.map { $0.1 }
             }
-            await MainActor.run { self.popularPicks = items }
+            await MainActor.run {
+                self.items = loaded
+                self.isLoading = false
+                self.hasLoaded = true
+            }
         }
     }
 }
 
 // MARK: - Data
 
-private struct PopularPickItem: Identifiable {
+struct PopularPickItem: Identifiable {
     let title: String
     let author: String
     let coverURL: String
@@ -338,8 +433,10 @@ private struct SearchResultRow: View {
     let onSave: () -> Void
 
     var body: some View {
+        // 36pt cover + subheadline/caption typography to match the Taste tab's
+        // search rows. For You keeps its trailing mark-read + save buttons.
         HStack(spacing: 12) {
-            BookCoverView(url: book.coverURL ?? "", width: 50)
+            BookCoverView(url: book.coverURL ?? "", width: 36)
             VStack(alignment: .leading, spacing: 2) {
                 Text(book.title)
                     .font(.subheadline.bold())

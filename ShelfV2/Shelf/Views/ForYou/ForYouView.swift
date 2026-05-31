@@ -25,10 +25,16 @@ struct ForYouView: View {
 
     var body: some View {
         NavigationStack {
-            if seedBooks.count < seedThreshold {
-                EmptyForYouView()
-            } else {
+            if appState.forYouFeedUnlocked && seedBooks.count >= seedThreshold {
                 feedBody
+            } else {
+                EmptyForYouView(onSeePicks: {
+                    // User chose to graduate from the grid: kick off the first
+                    // generation and switch to the personalized feed.
+                    appState.isFirstGeneration = true
+                    appState.unlockForYouFeed()
+                    vm.refreshIfNeeded(modelContext: modelContext)
+                })
             }
         }
         .onChange(of: scenePhase) { _, phase in

@@ -49,6 +49,12 @@ struct MainTabView: View {
                     ToastManager.shared.show(.firstGeneration)
                 }
             }
+            // Warm the seed-grid covers early so they're ready by the time the
+            // user opens For You. Only while still gathering seeds (the grid is
+            // shown) — unlocked/returning users never see it, so skip the work.
+            if !appState.forYouFeedUnlocked {
+                PopularPicksStore.shared.prefetch()
+            }
         }
     }
 }
