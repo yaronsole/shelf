@@ -79,6 +79,10 @@ MAX_EXCLUSION_LIST = 150  # cap to keep prompts bounded
 REC_TEMPERATURE = 0.7
 SIMILAR_TEMPERATURE = 0.4
 
+# Phase B lookback: how many of the user's most recent DELIVERED batches feed
+# the cross-session genre/era counterbalance histogram. Bounded for token cost.
+RECENT_BATCH_LOOKBACK = 3
+
 
 def get_user_id(authorization: Annotated[str | None, Header()] = None) -> str:
     if not authorization or not authorization.startswith("Bearer "):
@@ -282,9 +286,11 @@ def _generate_recommendations(user_id: str, domain: str, mark_delivered: bool = 
     # plus the seed books themselves (no need to recommend what they already love),
     # plus any reaction that carries a title/author (e.g. list-saved/passed books
     # from Phase 1 don't have a corresponding recommendation_col entry).
+    # Stream the user's full recommendation history once and reuse it for both
+    # the exclusion list and the Phase B recent-mix histogram below.
+    all_recs = [r.to_dict() for r in recommendation_col(user_id).stream()]
     exclude_set: set[str] = set()
-    for r in recommendation_col(user_id).stream():
-        d = r.to_dict()
+    for d in all_recs:
         t, a = (d.get("title") or "").strip(), (d.get("author") or "").strip()
         if t:
             exclude_set.add(f"{t} by {a}" if a else t)
@@ -314,6 +320,40 @@ def _generate_recommendations(user_id: str, domain: str, mark_delivered: bool = 
         .stream()
     ]
 
+    # Phase B: compact genre/era histogram over the last few DELIVERED batches
+    # (bounded by RECENT_BATCH_LOOKBACK). Lets the prompt apply a LIGHT bias
+    # against one genre/era dominating many consecutive feeds — without chasing
+    # variety the taste profile doesn't support. Stays None when the user has no
+    # delivered history yet, preserving first-batch behavior.
+    delivered_recs = [
+        r for r in all_recs
+        if r.get("delivered") and r.get("batch_id") and r.get("created_at")
+    ]
+    recent_mix: dict | None = None
+    if delivered_recs:
+        latest_ts: dict[str, datetime] = {}
+        for r in delivered_recs:
+            bid, ts = r["batch_id"], r["created_at"]
+            if bid not in latest_ts or ts > latest_ts[bid]:
+                latest_ts[bid] = ts
+        recent_ids = {
+            bid for bid, _ in
+            sorted(latest_ts.items(), key=lambda kv: kv[1], reverse=True)[:RECENT_BATCH_LOOKBACK]
+        }
+        genre_hist: dict[str, int] = {}
+        era_hist: dict[str, int] = {}
+        for r in delivered_recs:
+            if r["batch_id"] not in recent_ids:
+                continue
+            g = (r.get("genre") or "").strip()
+            e = (r.get("era") or "").strip()
+            if g:
+                genre_hist[g] = genre_hist.get(g, 0) + 1
+            if e:
+                era_hist[e] = era_hist.get(e, 0) + 1
+        if genre_hist or era_hist:
+            recent_mix = {"batches": len(recent_ids), "genres": genre_hist, "eras": era_hist}
+
     prompt = build_recommendations_prompt(
         seeds=seeds,
         liked=liked,
@@ -321,6 +361,7 @@ def _generate_recommendations(user_id: str, domain: str, mark_delivered: bool = 
         exclude_ids=exclude_list,
         domain=domain,
         count=10,
+        recent_mix=recent_mix,
     )
 
     message = claude.messages.create(

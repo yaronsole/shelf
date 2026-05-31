@@ -13,6 +13,7 @@ def build_recommendations_prompt(
     exclude_ids: list[str],  # actually "Title by Author" strings now — name kept for back-compat
     domain: str,
     count: int,
+    recent_mix: dict | None = None,
 ) -> str:
     def _fmt(reaction: dict) -> str | None:
         title, author = reaction.get("title", "").strip(), reaction.get("author", "").strip()
@@ -26,6 +27,23 @@ def build_recommendations_prompt(
     liked_list = "\n".join(line for r in liked[:30] if (line := _fmt(r))) or "none"
     disliked_list = "\n".join(line for r in disliked[:30] if (line := _fmt(r))) or "none"
     exclude_lines = "\n".join(f"- {e}" for e in exclude_ids[:150]) or "(none)"
+
+    # Phase B: cross-session counterbalance. Only present when the reader has a
+    # delivered history; describes what they've recently been shown so the model
+    # can lean LIGHTLY away from a genre/era that has dominated many feeds in a row.
+    recent_section = ""
+    if recent_mix:
+        g = recent_mix.get("genres") or {}
+        e = recent_mix.get("eras") or {}
+        nb = recent_mix.get("batches", 0)
+        genre_str = ", ".join(f"{k} (×{v})" for k, v in sorted(g.items(), key=lambda kv: -kv[1])) or "none"
+        era_str = ", ".join(f"{k} (×{v})" for k, v in sorted(e.items(), key=lambda kv: -kv[1])) or "none"
+        recent_section = f"""
+Across this reader's last {nb} recent batches we have ALREADY shown them:
+  Genres: {genre_str}
+  Eras: {era_str}
+If a single genre or era has dominated MANY of these recent batches, lean LIGHTLY against piling more of it on here — give them some freshness within what they already like. This is a mild anti-monotony nudge ONLY: do NOT push toward genres or eras the reader has never signaled, and do NOT override clear taste — relevance to their taste profile always wins. EXCEPTION: a pick that is another work by an author the reader clearly loves (or a very close-in-voice author) is exempt from this counterbalance — never drop a strong same-author pick just to vary genre or era.
+"""
 
     return f"""You are a literary expert generating personalized book recommendations.
 
@@ -47,7 +65,7 @@ Generate exactly {count} book recommendations for domain "{domain}".
 For each book include roughly 80% books that clearly match their taste, and 20% that are a gentle stretch outside their comfort zone (set is_comfort_zone_push true for those).
 
 Aim for some natural variety across the batch — try not to make every pick the same genre or era. This is a gentle nudge, NOT a quota: do NOT force breadth that isn't reflected in this reader's taste. If their profile is genuinely narrow, honor that and stay true to it. There is no required number of genres or eras; relevance to their taste always comes first, and a coherent on-taste batch beats a scattered one.
-
+{recent_section}
 Respond with ONLY a JSON array. No markdown, no explanation. Each object must have:
   title          (string)
   author         (string)
