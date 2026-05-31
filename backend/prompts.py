@@ -97,7 +97,15 @@ def build_suggestions_prompt(
     domain: str,
     count: int,
     exclude: list[str] | None = None,
+    liked: list[dict] | None = None,
+    disliked: list[dict] | None = None,
 ) -> str:
+    def _fmt(reaction: dict) -> str | None:
+        title, author = reaction.get("title", "").strip(), reaction.get("author", "").strip()
+        if not title:
+            return None
+        return f"- {title} by {author}" if author else f"- {title}"
+
     exclude_section = ""
     if exclude:
         exclude_section = (
@@ -105,10 +113,29 @@ def build_suggestions_prompt(
             + "\n".join(f"- {item}" for item in exclude[:50])
             + "\n"
         )
+
+    # Phase C: optional taste context. When present, suggestions stay anchored to
+    # the seed but lean toward the reader's positives and away from their dislike
+    # patterns. Absent (new users / no reactions) → original taste-blind behavior.
+    liked_lines = "\n".join(line for r in (liked or [])[:25] if (line := _fmt(r)))
+    disliked_lines = "\n".join(line for r in (disliked or [])[:25] if (line := _fmt(r)))
+    taste_section = ""
+    if liked_lines or disliked_lines:
+        taste_section = "\nThe seed book above is the PRIMARY anchor. As a secondary signal, here is this reader's broader taste:\n"
+        if liked_lines:
+            taste_section += f"Books they like:\n{liked_lines}\n"
+        if disliked_lines:
+            taste_section += f"Books they dislike:\n{disliked_lines}\n"
+        taste_section += (
+            "Stay closely related to the seed book; among options that are equally close, prefer ones that fit "
+            "this reader's positive signals and steer clear of the patterns in their dislikes. Never suggest a "
+            "book that shares the core appeal of one they disliked.\n"
+        )
+
     return f"""You are a literary expert helping a reader discover books similar to one they love.
 
 Seed book: "{seed_title}" by {seed_author} (domain: {domain})
-{exclude_section}
+{exclude_section}{taste_section}
 Suggest exactly {count} books that readers of this book often enjoy next.
 Choose books that are closely related in theme, style, or readership — not just the same genre.
 

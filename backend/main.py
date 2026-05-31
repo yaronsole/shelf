@@ -83,6 +83,10 @@ SIMILAR_TEMPERATURE = 0.4
 # the cross-session genre/era counterbalance histogram. Bounded for token cost.
 RECENT_BATCH_LOOKBACK = 3
 
+# Phase C cap: max liked/disliked reactions fed into the similar-books prompt as
+# secondary taste context. Bounded so the seed book stays the primary signal.
+SIMILAR_TASTE_CAP = 25
+
 
 def get_user_id(authorization: Annotated[str | None, Header()] = None) -> str:
     if not authorization or not authorization.startswith("Bearer "):
@@ -423,12 +427,34 @@ def _generate_recommendations(user_id: str, domain: str, mark_delivered: bool = 
 # ---------------------------------------------------------------------------
 @app.post("/v1/onboarding/suggestions", response_model=list[SuggestionResponse])
 def get_suggestions(body: SuggestionsRequest, user_id: UserID):
+    # Phase C: gather the reader's taste signals (same source as For You) so the
+    # similar-books picks can lean toward their positives and away from their
+    # dislike patterns while staying anchored to the seed book. Bounded by
+    # SIMILAR_TASTE_CAP to keep the prompt small. Empty for new users → the
+    # prompt falls back to its original taste-blind behavior.
+    liked = [
+        d.to_dict()
+        for d in reaction_col(user_id)
+        .where("kind", "in", [ReactionKind.save, ReactionKind.already_read_liked])
+        .limit(SIMILAR_TASTE_CAP)
+        .stream()
+    ]
+    disliked = [
+        d.to_dict()
+        for d in reaction_col(user_id)
+        .where("kind", "in", [ReactionKind.already_read_disliked, ReactionKind.dismiss])
+        .limit(SIMILAR_TASTE_CAP)
+        .stream()
+    ]
+
     prompt = build_suggestions_prompt(
         seed_title=body.seed_book_title,
         seed_author=body.seed_book_author,
         domain=body.domain,
         count=body.count,
         exclude=body.exclude,
+        liked=liked,
+        disliked=disliked,
     )
     message = claude.messages.create(
         model="claude-opus-4-5",
