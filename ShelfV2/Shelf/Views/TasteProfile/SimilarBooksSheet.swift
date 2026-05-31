@@ -173,7 +173,7 @@ struct SimilarBooksSheet: View {
                 } else {
                     Image(systemName: "sparkles")
                 }
-                Text(isLoadingMore ? "Finding more…" : "Find more like this")
+                Text(isLoadingMore ? "Digging up more…" : "Show me different ones")
                     .font(.subheadline.weight(.semibold))
             }
             .frame(maxWidth: .infinity)
@@ -253,16 +253,7 @@ struct SimilarBooksSheet: View {
     }
 
     private func liveFetchInitial() async {
-        let seedKey = Self.key(seed.title, seed.author)
-        let savedKeys = (try? modelContext.fetch(FetchDescriptor<ReadingListItem>()))?
-            .map { Self.key($0.title, $0.author) } ?? []
-        let history = Self.loadHistory(for: seed)
-
-        var keys: [String] = []
-        for k in [seedKey] + savedKeys + history where !keys.contains(k) {
-            keys.append(k)
-        }
-
+        let keys = baseExcludeKeys()
         let results = await fetch(exclude: keys, count: 5)
         await MainActor.run {
             let newKeys = results.map { Self.key($0.title, $0.author) }
@@ -275,27 +266,44 @@ struct SimilarBooksSheet: View {
 
     private func loadMoreLive() async {
         guard !isLoadingMore else { return }
-        await MainActor.run { self.isLoadingMore = true }
+        await MainActor.run {
+            self.isLoadingMore = true
+            // Opened from cache → liveFetchExcludeKeys is still empty; seed it from
+            // persisted history + saved so the CTA returns genuinely-new books.
+            if self.liveFetchExcludeKeys.isEmpty {
+                self.liveFetchExcludeKeys = self.baseExcludeKeys()
+            }
+        }
         let results = await fetch(exclude: liveFetchExcludeKeys, count: 5)
         await MainActor.run {
             let newKeys = results.map { Self.key($0.title, $0.author) }
             self.liveFetchExcludeKeys.append(contentsOf: newKeys)
             Self.appendHistory(newKeys, for: self.seed)
-            if self.servedFromCache {
-                self.liveSuggestions.append(contentsOf: results)
-                self.servedFromCache = false
-            } else {
-                self.liveSuggestions.append(contentsOf: results)
-            }
+            self.liveSuggestions.append(contentsOf: results)
+            self.servedFromCache = false
             self.isLoadingMore = false
         }
+    }
+
+    /// Keys we never want the backend to return: this seed, books already saved
+    /// to the Shelf, plus the per-seed suggestion history.
+    private func baseExcludeKeys() -> [String] {
+        let seedKey = Self.key(seed.title, seed.author)
+        let savedKeys = (try? modelContext.fetch(FetchDescriptor<ReadingListItem>()))?
+            .map { Self.key($0.title, $0.author) } ?? []
+        let history = Self.loadHistory(for: seed)
+        var keys: [String] = []
+        for k in [seedKey] + savedKeys + history where !keys.contains(k) { keys.append(k) }
+        return keys
     }
 
     // MARK: - Fetch helper
 
     private func fetch(exclude: [String], count: Int) async -> [SuggestionDTO] {
         let request = BookSearchResult(id: seed.id, title: seed.title, author: seed.author, coverURL: seed.coverURL)
-        return (try? await APIClient.shared.fetchSuggestions(for: request, count: count, exclude: exclude)) ?? []
+        let results = (try? await APIClient.shared.fetchSuggestions(for: request, count: count, exclude: exclude)) ?? []
+        // Cover-image regression guard: never surface cover-less books (parity with the cache write).
+        return results.filter { !$0.coverURL.isEmpty }
     }
 
     // MARK: - History persistence
