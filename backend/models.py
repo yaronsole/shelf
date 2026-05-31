@@ -39,6 +39,15 @@ class ReactionRequest(BaseModel):
     book_id: str
     kind: ReactionKind
     domain: str = "books"
+    # Optional taste-context, sent by surfaces that act on books with no
+    # recommendation_col entry (popular-picks grid, search, Discover detail).
+    # When present, add_reaction persists these so the reaction carries a
+    # title/author — which is what makes a "didn't like" register as a negative
+    # signal AND land in the recommendation exclusion list. Backwards-compatible:
+    # existing callers omit them and behaviour is unchanged.
+    title: str = ""
+    author: str = ""
+    cover_url: str = ""
 
 
 class SeenBooksRequest(BaseModel):

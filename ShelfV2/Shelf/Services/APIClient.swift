@@ -67,9 +67,19 @@ final class APIClient {
 
     // MARK: - Reactions
 
-    func submitReaction(bookId: String, kind: ReactionKind, domain: Domain = .books) async throws {
+    func submitReaction(
+        bookId: String,
+        kind: ReactionKind,
+        title: String? = nil,
+        author: String? = nil,
+        coverURL: String? = nil,
+        domain: Domain = .books
+    ) async throws {
         let url = APIConfig.baseURL.appendingPathComponent(APIConfig.Endpoints.reactions)
-        let body = ReactionRequest(bookId: bookId, kind: kind, domain: domain.rawValue)
+        let body = ReactionRequest(
+            bookId: bookId, kind: kind, domain: domain.rawValue,
+            title: title, author: author, coverURL: coverURL
+        )
         try await post(url: url, body: body)
     }
 

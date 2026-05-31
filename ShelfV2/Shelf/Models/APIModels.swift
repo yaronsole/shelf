@@ -99,10 +99,28 @@ struct ReactionRequest: Encodable {
     let bookId: String
     let kind: ReactionKind
     let domain: String
+    // Optional taste-context for books with no server-side recommendation
+    // entry (popular grid, search, Discover). Omitted from JSON when nil
+    // (synthesized Encodable uses encodeIfPresent for Optionals), so the
+    // request stays byte-identical for existing callers.
+    let title: String?
+    let author: String?
+    let coverURL: String?
+
+    init(bookId: String, kind: ReactionKind, domain: String,
+         title: String? = nil, author: String? = nil, coverURL: String? = nil) {
+        self.bookId = bookId
+        self.kind = kind
+        self.domain = domain
+        self.title = title
+        self.author = author
+        self.coverURL = coverURL
+    }
 
     enum CodingKeys: String, CodingKey {
-        case kind, domain
+        case kind, domain, title, author
         case bookId = "book_id"
+        case coverURL = "cover_url"
     }
 }
 

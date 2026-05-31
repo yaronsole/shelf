@@ -17,6 +17,10 @@ struct EmptyForYouView: View {
     // re-created.
     @State private var addedBookIds: Set<String> = []
     @State private var savedBookIds: Set<String> = []
+    // Book awaiting a loved / didn't-like choice. Presenting the sheet is what a
+    // "mark as read" tap now does; the actual seed/reaction write happens only
+    // after the user picks a sentiment (see confirmRead).
+    @State private var pendingRead: PendingRead? = nil
 
     private let horizontalPadding: CGFloat = 16
     private let gridSpacing: CGFloat = 12
@@ -45,6 +49,13 @@ struct EmptyForYouView: View {
         }
         .navigationDestination(for: String.self) { slug in
             ListDetailView(slug: slug)
+        }
+        .sheet(item: $pendingRead) { pending in
+            AlreadyReadSheet(
+                title: pending.title,
+                onLoved: { confirmRead(pending, liked: true) },
+                onDidntLike: { confirmRead(pending, liked: false) }
+            )
         }
         .onAppear { loadPopularPicksIfNeeded() }
     }
@@ -200,26 +211,14 @@ struct EmptyForYouView: View {
         }
     }
 
+    // "Mark as read" now asks for sentiment first: loved books become seeds,
+    // disliked books register a negative reaction only (see SeedWriter).
     private func addAsSeed(_ book: BookSearchResult) {
         guard !addedBookIds.contains(book.id) else { return }
         Haptics.light()
-        addedBookIds.insert(book.id)
-        let coverURL = book.coverURL ?? ""
-        Task { @MainActor in
-            do {
-                try await APIClient.shared.submitSeedBook(
-                    title: book.title, author: book.author, coverURL: coverURL
-                )
-                let local = LocalSeedBook(
-                    id: UUID().uuidString,
-                    title: book.title, author: book.author, coverURL: coverURL
-                )
-                modelContext.insert(local)
-            } catch {
-                // Roll back UI feedback so user can retry
-                addedBookIds.remove(book.id)
-            }
-        }
+        pendingRead = PendingRead(
+            title: book.title, author: book.author, coverURL: book.coverURL ?? ""
+        )
     }
 
     private func saveToShelf(_ book: BookSearchResult) {
@@ -243,20 +242,26 @@ struct EmptyForYouView: View {
     private func addPopularAsSeed(_ pick: PopularPickItem) {
         guard !addedBookIds.contains(pick.id) else { return }
         Haptics.light()
-        addedBookIds.insert(pick.id)
+        pendingRead = PendingRead(
+            title: pick.title, author: pick.author, coverURL: pick.coverURL
+        )
+    }
+
+    /// Commits the user's loved / didn't-like choice for a pending book.
+    /// Optimistically flips the cover to its "read" state, then delegates the
+    /// seed + reaction writes to SeedWriter; rolls the cover back on failure.
+    private func confirmRead(_ pending: PendingRead, liked: Bool) {
+        guard !addedBookIds.contains(pending.id) else { return }
+        addedBookIds.insert(pending.id)
         Task { @MainActor in
-            do {
-                try await APIClient.shared.submitSeedBook(
-                    title: pick.title, author: pick.author, coverURL: pick.coverURL
-                )
-                let local = LocalSeedBook(
-                    id: UUID().uuidString,
-                    title: pick.title, author: pick.author, coverURL: pick.coverURL
-                )
-                modelContext.insert(local)
-            } catch {
-                addedBookIds.remove(pick.id)
-            }
+            let ok = await SeedWriter.recordAlreadyRead(
+                title: pending.title,
+                author: pending.author,
+                coverURL: pending.coverURL,
+                liked: liked,
+                modelContext: modelContext
+            )
+            if !ok { addedBookIds.remove(pending.id) }
         }
     }
 
@@ -305,6 +310,16 @@ struct EmptyForYouView: View {
 // MARK: - Data
 
 private struct PopularPickItem: Identifiable {
+    let title: String
+    let author: String
+    let coverURL: String
+    var id: String { "\(title)|\(author)".lowercased() }
+}
+
+/// A book the user tapped "mark as read" on, awaiting a loved / didn't-like
+/// choice. Shares the "title|author" lowercased id space with PopularPickItem
+/// and BookSearchResult so the addedBookIds set stays consistent across both.
+private struct PendingRead: Identifiable {
     let title: String
     let author: String
     let coverURL: String

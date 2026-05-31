@@ -191,12 +191,17 @@ def add_reaction(body: ReactionRequest, user_id: UserID):
     book_doc = recommendation_col(user_id).document(body.book_id).get()
     book = book_doc.to_dict() if book_doc.exists else {}
 
+    # Prefer the canonical title/author from the recommendation we generated;
+    # fall back to the values the client sent (seed/list/search surfaces have no
+    # recommendation_col entry). Without this fallback, those reactions store an
+    # empty title and get dropped from both the exclusion list and the
+    # negative-signal list at generation time.
     reaction_col(user_id).document(doc_id).set({
         **body.model_dump(),
         "id": doc_id,
         "created_at": datetime.now(timezone.utc),
-        "title": book.get("title", ""),
-        "author": book.get("author", ""),
+        "title": book.get("title") or body.title or "",
+        "author": book.get("author") or body.author or "",
     })
     return {"id": doc_id}
 
