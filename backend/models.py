@@ -115,6 +115,11 @@ class SuggestionResponse(BaseModel):
 class DebugInfoResponse(BaseModel):
     last_generation_timestamp: Optional[datetime]
     last_batch_size: Optional[int]
+    # Phase 0: diversity measurability — populated from the most recent batch
+    genre_distribution: Optional[dict[str, int]] = None   # genre → count
+    era_distribution: Optional[dict[str, int]] = None     # era → count
+    comfort_push_count: Optional[int] = None              # # of is_comfort_zone_push=True in batch
+    batch_id: Optional[str] = None                        # UUID of the most recent batch
 
 
 # ---------------------------------------------------------------------------

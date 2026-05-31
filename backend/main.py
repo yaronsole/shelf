@@ -412,9 +412,40 @@ def debug_info(user_id: UserID):
     if not doc.exists:
         return DebugInfoResponse(last_generation_timestamp=None, last_batch_size=None)
     data = doc.to_dict()
+
+    # Phase 0: compute diversity metrics for the most recent batch.
+    # Find the batch_id of the newest batch by scanning recommendation_col and
+    # picking the doc with the latest created_at, then grouping the rest.
+    genre_dist: dict[str, int] = {}
+    era_dist: dict[str, int] = {}
+    comfort_push_count = 0
+    latest_batch_id: str | None = None
+
+    all_recs = [r.to_dict() for r in recommendation_col(user_id).stream()]
+    if all_recs:
+        # Determine the most recent batch_id (by max created_at among docs that have one)
+        batched = [r for r in all_recs if r.get("batch_id") and r.get("created_at")]
+        if batched:
+            # created_at may be a datetime or a Firestore Timestamp — both support comparison
+            latest_batch_id = max(batched, key=lambda r: r["created_at"])["batch_id"]
+            batch_recs = [r for r in batched if r["batch_id"] == latest_batch_id]
+            for r in batch_recs:
+                genre = (r.get("genre") or "").strip()
+                era = (r.get("era") or "").strip()
+                if genre:
+                    genre_dist[genre] = genre_dist.get(genre, 0) + 1
+                if era:
+                    era_dist[era] = era_dist.get(era, 0) + 1
+                if r.get("is_comfort_zone_push"):
+                    comfort_push_count += 1
+
     return DebugInfoResponse(
         last_generation_timestamp=data.get("last_generation_timestamp"),
         last_batch_size=data.get("last_batch_size"),
+        genre_distribution=genre_dist or None,
+        era_distribution=era_dist or None,
+        comfort_push_count=comfort_push_count if latest_batch_id else None,
+        batch_id=latest_batch_id,
     )
 
 
