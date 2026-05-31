@@ -87,6 +87,35 @@ final class ListDetailViewModel {
         }
     }
 
+    /// Detail-sheet "Read it" → record an already-read action via SeedWriter and
+    /// optimistically show the `.read` badge.
+    ///
+    /// This deliberately routes through `SeedWriter.recordAlreadyRead` rather than
+    /// the list `.read` react endpoint, because:
+    ///   • `SeedWriter` is the single source of truth for "books you've read", and
+    ///     it can express sentiment (loved → seed; disliked → reaction only).
+    ///   • Going through `reactToListBook(kind: .read)` here would double-seed the
+    ///     same book in the shared "title|author" id space (it has no concept of a
+    ///     dislike), so we keep all already-read writes in one place.
+    /// We still set the local `.read` overlay so the cover shows the green check.
+    func markRead(_ book: ListBookDTO, liked: Bool, modelContext: ModelContext) {
+        let current = status(for: book.bookId)
+        statusOverlay[book.bookId] = .some(.read)
+        Task {
+            let ok = await SeedWriter.recordAlreadyRead(
+                title: book.title,
+                author: book.author,
+                coverURL: book.coverURL,
+                liked: liked,
+                modelContext: modelContext
+            )
+            if !ok {
+                // Roll back optimistic UI if the writes failed.
+                self.statusOverlay[book.bookId] = .some(current)
+            }
+        }
+    }
+
     /// Long-press → save to Shelf (or unsave if already saved).
     /// Writes both to backend AND local ReadingListItem so the Shelf tab reflects it.
     func toggleSave(_ book: ListBookDTO, modelContext: ModelContext) {
