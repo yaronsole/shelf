@@ -2,64 +2,418 @@
   "slug": "nyt_notable_2024",
   "title": "NYT Notable Books 2024",
   "books": [
-    { "title": "All Fours", "author": "Miranda July", "year": 2024, "isbn_13": "9780593714621" },
-    { "title": "Beautyland", "author": "Marie-Helene Bertino", "year": 2024, "isbn_13": "9780374608491" },
-    { "title": "Black River", "author": "Nilanjana Roy", "year": 2024, "isbn_13": "9780063319875" },
-    { "title": "The Book of Love", "author": "Kelly Link", "year": 2024, "isbn_13": "9780525657095" },
-    { "title": "The Bright Sword", "author": "Lev Grossman", "year": 2024, "isbn_13": "9780593357255" },
-    { "title": "Colored Television", "author": "Danzy Senna", "year": 2024, "isbn_13": "9780593296905" },
-    { "title": "Creation Lake", "author": "Rachel Kushner", "year": 2024, "isbn_13": "9781668046678" },
-    { "title": "Dead in Long Beach, California", "author": "Venita Blackburn", "year": 2024, "isbn_13": "9780374600549" },
-    { "title": "The Empusium", "author": "Olga Tokarczuk", "year": 2024, "isbn_13": "9780593537718" },
-    { "title": "The Familiar", "author": "Leigh Bardugo", "year": 2024, "isbn_13": "9781250182425" },
-    { "title": "Funny Story", "author": "Emily Henry", "year": 2024, "isbn_13": "9780593441282" },
-    { "title": "Ghostroots", "author": "Pemi Aguda", "year": 2024, "isbn_13": "9780063291539" },
-    { "title": "The God of the Woods", "author": "Liz Moore", "year": 2024, "isbn_13": "9780593472620" },
-    { "title": "Good Material", "author": "Dolly Alderton", "year": 2024, "isbn_13": "9780593548936" },
-    { "title": "Great Expectations", "author": "Vinson Cunningham", "year": 2024, "isbn_13": "9780593537756" },
-    { "title": "Headshot", "author": "Rita Bullwinkel", "year": 2024, "isbn_13": "9780593538920" },
-    { "title": "The Hunter", "author": "Tana French", "year": 2024, "isbn_13": "9780593654491" },
-    { "title": "Intermezzo", "author": "Sally Rooney", "year": 2024, "isbn_13": "9780374611996" },
-    { "title": "James", "author": "Percival Everett", "year": 2024, "isbn_13": "9780385550369" },
-    { "title": "Long Island Compromise", "author": "Taffy Brodesser-Akner", "year": 2024, "isbn_13": "9780593493755" },
-    { "title": "Martyr!", "author": "Kaveh Akbar", "year": 2024, "isbn_13": "9781984823939" },
-    { "title": "The Mighty Red", "author": "Louise Erdrich", "year": 2024, "isbn_13": "9781250319340" },
-    { "title": "The Mysterious Case of the Alperton Angels", "author": "Janice Hallett", "year": 2024, "isbn_13": "9781250290700" },
-    { "title": "Our Evenings", "author": "Alan Hollinghurst", "year": 2024, "isbn_13": "9780374608439" },
-    { "title": "The Pairing", "author": "Casey McQuiston", "year": 2024, "isbn_13": "9781250623782" },
-    { "title": "Piglet", "author": "Lottie Hazell", "year": 2024, "isbn_13": "9780593537787" },
-    { "title": "Praiseworthy", "author": "Alexis Wright", "year": 2024, "isbn_13": "9781646221400" },
-    { "title": "The Safekeep", "author": "Yael van der Wouden", "year": 2024, "isbn_13": "9780593832233" },
-    { "title": "Shark Heart", "author": "Emily Habeck", "year": 2024, "isbn_13": "9781982196356" },
-    { "title": "Shy", "author": "Max Porter", "year": 2024, "isbn_13": "9781644453070" },
-    { "title": "Small Rain", "author": "Garth Greenwell", "year": 2024, "isbn_13": "9780374601560" },
-    { "title": "The Vulnerables", "author": "Sigrid Nunez", "year": 2024, "isbn_13": "9780593538951" },
-    { "title": "What Does It Feel Like?", "author": "Sophie Kinsella", "year": 2024, "isbn_13": "9780593868041" },
-    { "title": "Whale Fall", "author": "Elizabeth O'Connor", "year": 2024, "isbn_13": "9781250357755" },
-    { "title": "The Women", "author": "Kristin Hannah", "year": 2024, "isbn_13": "9781250178633" },
-    { "title": "Orbital", "author": "Samantha Harvey", "year": 2024, "isbn_13": "9780802163783" },
-    { "title": "The Coin", "author": "Yasmin Zaher", "year": 2024, "isbn_13": "9780593700617" },
-    { "title": "Bluff", "author": "Danez Smith", "year": 2024, "isbn_13": "9781644452837" },
-    { "title": "Godwin", "author": "Joseph O'Neill", "year": 2024, "isbn_13": "9780593714850" },
-    { "title": "The Ministry of Time", "author": "Kaliane Bradley", "year": 2024, "isbn_13": "9781668050200" },
-    { "title": "The Practice, the Horizon, and the Chain", "author": "Sofia Samatar", "year": 2024, "isbn_13": "9781638930914" },
-    { "title": "The Anxious Generation", "author": "Jonathan Haidt", "year": 2024, "isbn_13": "9780593655030" },
-    { "title": "Challenger", "author": "Adam Higginbotham", "year": 2024, "isbn_13": "9781501141737" },
-    { "title": "Cue the Sun!", "author": "Emily Nussbaum", "year": 2024, "isbn_13": "9780399590337" },
-    { "title": "Chop Fry Watch Learn", "author": "Michelle T. King", "year": 2024, "isbn_13": "9780393868371" },
-    { "title": "Circle of Hope", "author": "Eliza Griswold", "year": 2024, "isbn_13": "9780374129101" },
-    { "title": "Everyone Who Is Gone Is Here", "author": "Jonathan Blitzer", "year": 2024, "isbn_13": "9781594206122" },
-    { "title": "Grief Is for People", "author": "Sloane Crosley", "year": 2024, "isbn_13": "9780374611347" },
-    { "title": "The Demon of Unrest", "author": "Erik Larson", "year": 2024, "isbn_13": "9780385350648" },
-    { "title": "In Thrall", "author": "Jane Delury", "year": 2024, "isbn_13": "9780385549325" },
-    { "title": "John Lewis", "author": "David Greenberg", "year": 2024, "isbn_13": "9780399590771" },
-    { "title": "Reagan", "author": "Max Boot", "year": 2024, "isbn_13": "9781631493515" },
-    { "title": "Right Back Where We Started From", "author": "Arlie Russell Hochschild", "year": 2024, "isbn_13": "9781620977477" },
-    { "title": "The Serviceberry", "author": "Robin Wall Kimmerer", "year": 2024, "isbn_13": "9781982175702" },
-    { "title": "Stolen: Surviving St. Michael's", "author": "Jesse Thistle", "year": 2024, "isbn_13": "9781982178314" },
-    { "title": "The Wide Wide Sea", "author": "Hampton Sides", "year": 2024, "isbn_13": "9780385549325" },
-    { "title": "Nexus", "author": "Yuval Noah Harari", "year": 2024, "isbn_13": "9780593734216" },
-    { "title": "Poverty, by America", "author": "Matthew Desmond", "year": 2023, "isbn_13": "9780593239919" },
-    { "title": "There's Always This Year", "author": "Hanif Abdurraqib", "year": 2024, "isbn_13": "9780593317969" }
+    {
+      "title": "All Fours",
+      "author": "Miranda July",
+      "year": 2024,
+      "isbn_13": "9780593714621",
+      "description": "A 45-year-old artist leaves for a cross-country drive, bails after 30 minutes, holes up in a motel, and proceeds to blow up her entire understanding of desire, marriage, and what she actually wants. July writes about female midlife sexuality with a specificity and weird humor that feels genuinely new—less crisis, more reckoning."
+    },
+    {
+      "title": "Beautyland",
+      "author": "Marie-Helene Bertino",
+      "year": 2024,
+      "isbn_13": "9780374608491",
+      "description": "A woman who believes she's an alien sent to observe humans faxes reports back to her home planet about TV, malls, friendships, and the weird specifics of Earth life. Bertino uses this oddball premise to get at something real about feeling like you're watching life from the outside while desperately wanting to belong."
+    },
+    {
+      "title": "Black River",
+      "author": "Nilanjana Roy",
+      "year": 2024,
+      "isbn_13": "9780063319875",
+      "description": "A child's death in a small Indian village triggers an investigation where the real tension isn't whodunit—it's whether the underfunded local cop can solve the case before religious mob violence takes over. Roy uses the murder mystery structure to explore how quickly communal suspicion can overwhelm a community."
+    },
+    {
+      "title": "The Book of Love",
+      "author": "Kelly Link",
+      "year": 2024,
+      "isbn_13": "9780525657095",
+      "description": ""
+    },
+    {
+      "title": "The Bright Sword",
+      "author": "Lev Grossman",
+      "year": 2024,
+      "isbn_13": "9780593357255",
+      "description": "Grossman picks up the Arthurian legend right after Arthur dies, following the B-list knights left behind — the fool, the outsider, the woman who buried Merlin — as they try to rebuild something from the wreckage. It's got all the quests and swordfights you'd expect, but Grossman's real interest is in flawed people grappling with a world that's lost its center."
+    },
+    {
+      "title": "Colored Television",
+      "author": "Danzy Senna",
+      "year": 2024,
+      "isbn_13": "9780593296905",
+      "description": "A novelist stuck house-sitting in the LA hills abandons her sprawling \"mulatto War and Peace\" manuscript for a shot at TV money, pitching what she and a streaming producer call \"the Jackie Robinson of biracial comedies.\" Senna skewers the entertainment industry's hunger for marketable identity while making you genuinely like her desperate, self-aware protagonist."
+    },
+    {
+      "title": "Creation Lake",
+      "author": "Rachel Kushner",
+      "year": 2024,
+      "isbn_13": "9781668046678",
+      "description": "Kushner drops you into the head of a ruthless American operative infiltrating French anarchists, and the pleasure is watching her cold manipulations slowly get complicated by a cave-obsessed philosopher whose ideas about prehistoric humans start messing with her certainty. It's spy novel mechanics filtered through Kushner's brain — funny, cynical, genuinely strange in its detours about Neanderthals and radical politics."
+    },
+    {
+      "title": "Dead in Long Beach, California",
+      "author": "Venita Blackburn",
+      "year": 2024,
+      "isbn_13": "9780374600549",
+      "description": "After her brother's suicide, Coral starts texting people back from his phone, pretending he's still alive — a lie that spirals as her grief intersects with the dystopian novel she wrote. Blackburn narrates the whole thing through future machines watching humanity, which sounds gimmicky but actually works to capture how absurd and brutal losing someone this way feels."
+    },
+    {
+      "title": "The Empusium",
+      "author": "Olga Tokarczuk",
+      "year": 2024,
+      "isbn_13": "9780593537718",
+      "description": "A tuberculosis sanitarium in 1913 Silesia where convalescing men drink hallucinogenic liqueur and debate whether women are inferior — until something in the surrounding hills starts picking them off. Tokarczuk is doing a riff on *The Magic Mountain* but steering it toward folk horror, and she's clearly having fun watching these pompous intellectuals become prey."
+    },
+    {
+      "title": "The Familiar",
+      "author": "Leigh Bardugo",
+      "year": 2024,
+      "isbn_13": "9781250182425",
+      "description": "Luzia is a scullion in 1500s Madrid hiding her Jewish ancestry and her knack for small magics—until her mistress pushes her into a deadly competition for the Spanish court's favor, with Inquisition pyres as the backdrop. Bardugo pairs her with a bitter immortal familiar and leans hard into the tension between ambition and survival when being discovered means death."
+    },
+    {
+      "title": "Funny Story",
+      "author": "Emily Henry",
+      "year": 2024,
+      "isbn_13": "9780593441282",
+      "description": "Two people dumped for each other become reluctant roommates and start a fake social media relationship to make their exes jealous — you know exactly where this is going, but Henry's sharp banter and the specific humiliation of being left for someone's \"childhood best friend\" make the formula feel earned."
+    },
+    {
+      "title": "Ghostroots",
+      "author": "Pemi Aguda",
+      "year": 2024,
+      "isbn_13": "9780063291539",
+      "description": "Aguda's Lagos-set stories use the supernatural to dig at specific, uncomfortable pressures — mothers who can't escape their own mothers' faces, fathers convinced their sons are ruining their lives, a disease picking off boys on a single street. It's less horror than a sharp look at how family expectations and gender roles haunt people in ways that feel almost literal."
+    },
+    {
+      "title": "The God of the Woods",
+      "author": "Liz Moore",
+      "year": 2024,
+      "isbn_13": "9780593472620",
+      "description": "A thirteen-year-old vanishes from her family's Adirondack summer camp in 1975—the second Van Laar kid to disappear in fourteen years—and Moore uses the search to excavate the ugly class dynamics between the wealthy family and the locals who depend on them for work. It's got that slow-burn, multi-perspective structure that rewards patience, jumping between timelines to piece together what this family has been hiding."
+    },
+    {
+      "title": "Good Material",
+      "author": "Dolly Alderton",
+      "year": 2024,
+      "isbn_13": "9780593548936",
+      "description": "Andy, a floundering stand-up comic, gets dumped and spirals into that obsessive post-breakup mode where you replay everything trying to pinpoint exactly where it went wrong. Alderton writes the messiness of heartbreak with real humor, and the structure—eventually giving you Jen's perspective too—keeps it from being just another mopey guy novel."
+    },
+    {
+      "title": "Great Expectations",
+      "author": "Vinson Cunningham",
+      "year": 2024,
+      "isbn_13": "9780593537756",
+      "description": "A young Black man joins a historic presidential campaign (yes, that one) and finds himself caught between political idealism and personal reckoning — with fatherhood, faith, and what it actually means to believe in something. Cunningham writes from inside the machine with a skeptic's eye and a convert's memory."
+    },
+    {
+      "title": "Headshot",
+      "author": "Rita Bullwinkel",
+      "year": 2024,
+      "isbn_13": "9780593538920",
+      "description": "Eight teenage girls compete at a boxing tournament in Reno, and Bullwinkel uses each match to flash forward and backward through their lives — the community pool drowning, the suffocating parents, the hunger to be undeniably good at something. It's less about who wins than what fighting reveals: the weird intimacy of trying to hurt someone, the way bodies remember everything."
+    },
+    {
+      "title": "The Hunter",
+      "author": "Tana French",
+      "year": 2024,
+      "isbn_13": "9780593654491",
+      "description": "Cal Hooper, the retired Chicago cop who settled in rural Ireland in *The Searcher*, returns here when Trey's deadbeat father shows up with a gold-hunting scheme and an English investor. French does her usual slow-burn thing—the tension isn't really about whether there's gold, but about watching Trey's hard-won stability crack as she weighs the cost of revenge against everything Cal and Lena have tried to build for her."
+    },
+    {
+      "title": "Intermezzo",
+      "author": "Sally Rooney",
+      "year": 2024,
+      "isbn_13": "9780374611996",
+      "description": "Two brothers in Dublin — one a polished lawyer juggling two relationships, the other an awkward chess player falling for an older woman — circle each other after their father's death, unable to connect. Rooney's most structurally ambitious book, using fragmented prose to get at how grief makes intimacy feel both necessary and impossible."
+    },
+    {
+      "title": "James",
+      "author": "Percival Everett",
+      "year": 2024,
+      "isbn_13": "9780385550369",
+      "description": "Everett retells *Huckleberry Finn* from Jim's perspective, and the central conceit is sharp: Jim and other enslaved people speak in dialect around white folks as a survival mask, switching to eloquent inner lives when alone. It's funnier and angrier than you'd expect, with Everett taking real swings at Twain's original while building something genuinely its own."
+    },
+    {
+      "title": "Long Island Compromise",
+      "author": "Taffy Brodesser-Akner",
+      "year": 2024,
+      "isbn_13": "9780593493755",
+      "description": "Follows three adult siblings still warped by their father's 1980 kidnapping, each numbing their inherited anxiety in different ways—chronic fear, Hollywood excess, performative rebellion—until they learn the family money that both endangered and protected them is nearly gone. Brodesser-Akner is interested in how trauma becomes family inheritance and how wealth both insulates and distorts, and she's funny about it even when she's being ruthless."
+    },
+    {
+      "title": "Martyr!",
+      "author": "Kaveh Akbar",
+      "year": 2024,
+      "isbn_13": "9781984823939",
+      "description": "A sober Iranian-American poet, haunted by his mother's death when her plane was shot down over the Persian Gulf, tracks down a dying painter in Brooklyn who might have known her. Akbar writes about addiction, displacement, and the seductive pull of martyrdom with the sharp eye of a poet who's lived some of this himself."
+    },
+    {
+      "title": "The Mighty Red",
+      "author": "Louise Erdrich",
+      "year": 2024,
+      "isbn_13": "9781250319340",
+      "description": "Erdrich drops you into the Red River Valley around a tangled wedding—a reluctant farm heir, his goth fiancée who can't decide what she wants, and her sweet, lovelorn best friend who plans to steal her. Meanwhile, the bride's mom drives trucks at night, listening to conspiracy radio and seeing angels. It's messy small-town life with the 2008 crash looming and the land itself feeling ancient and fragile underneath everything."
+    },
+    {
+      "title": "The Mysterious Case of the Alperton Angels",
+      "author": "Janice Hallett",
+      "year": 2024,
+      "isbn_13": "9781250290700",
+      "description": "Another epistolary puzzle from Hallett—this time a true-crime writer races a rival to track down the now-adult \"Antichrist baby\" from a cult case, piecing together what really happened through texts, emails, and interview transcripts. The format works well for the competing-investigators tension, though the twist-upon-twist finale asks a lot of your credulity."
+    },
+    {
+      "title": "Our Evenings",
+      "author": "Alan Hollinghurst",
+      "year": 2024,
+      "isbn_13": "9780374608439",
+      "description": "Hollinghurst traces sixty years through Dave Win, a mixed-race scholarship boy navigating elite English institutions, queer desire, and a middling acting career, always shadowed by the brutal rich kid whose family sponsored his education. It's slow and interior in the way Hollinghurst always is—less plot than accumulation, watching how class and race quietly shape what's possible for a life."
+    },
+    {
+      "title": "The Pairing",
+      "author": "Casey McQuiston",
+      "year": 2024,
+      "isbn_13": "9781250623782",
+      "description": "Kit and Theo, bisexual exes who split mid-flight to Europe four years ago, accidentally book the same food-and-wine tour and cope by competing to see who can hook up with more people across France, Spain, and Italy. McQuiston leans hard into the chaos—pastry school sex gods, sommelier aspirations, and the obvious denial that maybe they're not actually over each other."
+    },
+    {
+      "title": "Piglet",
+      "author": "Lottie Hazell",
+      "year": 2024,
+      "isbn_13": "9780593537787",
+      "description": "A debut that uses food and cooking as the lens for a woman unraveling in the days before her wedding, after her fiancé confesses something that threatens to expose the careful life she's built. Hazell is sharp on the particular pressures around women's bodies, appetites, and the performance of domestic perfection."
+    },
+    {
+      "title": "Praiseworthy",
+      "author": "Alexis Wright",
+      "year": 2024,
+      "isbn_13": "9781646221400",
+      "description": "In a haze-choked Australian outback town, Wright assembles a cast of desperate visionaries—a man convinced donkeys will solve climate change, his wife plotting repatriation to China, sons named Aboriginal Sovereignty and Tommyhawk tearing themselves apart over identity and power. It's maximalist, hallucinatory, and furious, pushing allegory until it cracks open into something like prophecy about ecological and colonial collapse."
+    },
+    {
+      "title": "The Safekeep",
+      "author": "Yael van der Wouden",
+      "year": 2024,
+      "isbn_13": "9780593832233",
+      "description": "A tightly wound woman in 1950s Netherlands guards her dead mother's house like a fortress until her brother's girlfriend moves in and systematically dismantles her composure — and her certainties about the home itself. Van der Wouden builds the erotic tension and historical reckoning in tandem, both reaching a conclusion that reframes everything that came before."
+    },
+    {
+      "title": "Shark Heart",
+      "author": "Emily Habeck",
+      "year": 2024,
+      "isbn_13": "9781982196356",
+      "description": "A newlywed learns his body is slowly transforming into a great white shark, and the novel follows both his reckoning with this fate and his wife's excavation of her own buried past—childhood on an Oklahoma houseboat, an ex-girlfriend, a mother who had her at fifteen. It's genuinely strange literary fiction that uses its impossible premise to dig into grief, bodily autonomy, and what it means to stay with someone who's becoming unrecognizable."
+    },
+    {
+      "title": "Shy",
+      "author": "Max Porter",
+      "year": 2024,
+      "isbn_13": "9781644453070",
+      "description": "A teenage boy escapes a juvenile detention center in 1990s England, wandering the dark countryside with a Walkman and a head full of voices—his mother, teachers, people he's hurt. Porter does his fractured prose-poem thing, this time channeling adolescent rage and guilt into something that reads more like a breakdown set to music than a traditional novel."
+    },
+    {
+      "title": "Small Rain",
+      "author": "Garth Greenwell",
+      "year": 2024,
+      "isbn_13": "9780374601560",
+      "description": "A poet lands in the ICU and Greenwell uses the forced stillness of a hospital bed to do what he does best — turn inward with ruthless precision, examining how a body's crisis reshapes a mind that's spent years avoiding it. It's meditative and interior in the way his other work is, but here the stakes are visceral, the vulnerability literal."
+    },
+    {
+      "title": "The Vulnerables",
+      "author": "Sigrid Nunez",
+      "year": 2024,
+      "isbn_13": "9780593538951",
+      "description": "Nunez does her thing again — essayistic, digressive, deceptively casual — this time circling around a pandemic-era housesitting gig with someone else's parrot and an aimless twenty-something who keeps showing up. It's less a novel than a series of sharp observations about loneliness, generational disconnect, and why we bother caring for creatures (human or otherwise) who can't fully understand us."
+    },
+    {
+      "title": "What Does It Feel Like?",
+      "author": "Sophie Kinsella",
+      "year": 2024,
+      "isbn_13": "9780593868041",
+      "description": "Kinsella draws directly from her own brain tumor diagnosis here, writing brief vignettes about a novelist relearning to walk and talk after surgery while figuring out how to tell her kids what's happening. It's short, deliberately fragmented to mirror memory loss, and trades her usual rom-com mode for something rawer — though still laced with her characteristic warmth."
+    },
+    {
+      "title": "Whale Fall",
+      "author": "Elizabeth O'Connor",
+      "year": 2024,
+      "isbn_13": "9781250357755",
+      "description": "A young woman on a tiny Welsh island in 1938 sees her chance at escape when English researchers arrive to study her community—but getting close to them means watching outsiders turn her home into a curiosity. O'Connor captures that specific tension of wanting out while resenting anyone who confirms your reasons for leaving."
+    },
+    {
+      "title": "The Women",
+      "author": "Kristin Hannah",
+      "year": 2024,
+      "isbn_13": "9781250178633",
+      "description": "A young nurse ships off to Vietnam in 1965 and gets the full experience — the gore, the camaraderie with other military women, the adrenaline — only to return home and find America wants to pretend she was never there. Hannah digs into the specific erasure of female Vietnam vets, following Frankie through the war and the longer battle of trying to rejoin a country that won't acknowledge what she did."
+    },
+    {
+      "title": "Orbital",
+      "author": "Samantha Harvey",
+      "year": 2024,
+      "isbn_13": "9780802163783",
+      "description": "Harvey puts you inside a space station for one full day—16 orbits, 16 sunrises—watching six astronauts from different countries float through routines, meals, and glimpses of the lives they left below. It's quiet and meditative, more interested in the strange intimacy of seeing Earth from above than in plot, and it works if you're in the mood for something slow and contemplative."
+    },
+    {
+      "title": "The Coin",
+      "author": "Yasmin Zaher",
+      "year": 2024,
+      "isbn_13": "9780593700617",
+      "description": "A wealthy Palestinian teacher in NYC slowly comes undone while obsessing over hygiene rituals, running a Birkin bag resale scheme with a homeless grifter, and crossing lines with her middle school students. Zaher writes displacement as something that lives in the body—messy, darkly funny, and refusing to make sense of itself."
+    },
+    {
+      "title": "Bluff",
+      "author": "Danez Smith",
+      "year": 2024,
+      "isbn_13": "9781644452837",
+      "description": "Smith writes through 2020 Minneapolis — COVID, George Floyd, their own neighborhood — with formal restlessness, breaking poems into collage and new shapes when standard forms can't hold what happened. There's a long piece tracing the Rondo neighborhood before the interstate gutted it, and throughout, Smith keeps asking what poetry's actually supposed to do when your city is on fire."
+    },
+    {
+      "title": "Godwin",
+      "author": "Joseph O'Neill",
+      "year": 2024,
+      "isbn_13": "9780593714850",
+      "description": "A technical writer gets dragged by his half-brother into a scheme to find a teenage African soccer player who might be the next Messi, and the whole thing becomes a vehicle for O'Neill to pick apart colonialism, global capitalism, and the soccer industry's exploitation machinery. It's got his signature cerebral prose and dual narrators, but the real subject is how Western money keeps finding new ways to extract value from African talent."
+    },
+    {
+      "title": "The Ministry of Time",
+      "author": "Kaliane Bradley",
+      "year": 2024,
+      "isbn_13": "9781668050200",
+      "description": "A government worker gets assigned to babysit a Victorian Arctic explorer yanked from 1847 into the near future, and their increasingly complicated roommate situation becomes a surprisingly sharp look at empire, displacement, and the ethics of treating people as data points. It's genuinely funny about the culture shock stuff (Spotify, washing machines, calves on display) while building toward something thornier about power and who gets to decide what history means."
+    },
+    {
+      "title": "The Practice, the Horizon, and the Chain",
+      "author": "Sofia Samatar",
+      "year": 2024,
+      "isbn_13": "9781638930914",
+      "description": "Samatar follows a boy pulled from forced labor in a mining ship's depths to its university, and the burned-out professor descended from workers like him who becomes his reluctant mentor. It's a quiet, lyrical novella about how institutions absorb and exhaust the people trying to change them from within — less action-adventure than meditation on what reform costs and whether escape is even possible."
+    },
+    {
+      "title": "The Anxious Generation",
+      "author": "Jonathan Haidt",
+      "year": 2024,
+      "isbn_13": "9780593655030",
+      "description": "Haidt makes a data-heavy case that smartphones and social media are behind the post-2010 spike in teen anxiety and depression, tracing how we traded \"play-based childhood\" for a phone-based one. He's methodical about the mechanisms — sleep loss, social comparison, addiction — and offers concrete policy fixes, though you'll have to decide if you buy the causation argument."
+    },
+    {
+      "title": "Challenger",
+      "author": "Adam Higginbotham",
+      "year": 2024,
+      "isbn_13": "9781501141737",
+      "description": "Higginbotham reconstructs the Challenger disaster with the same obsessive archival digging he brought to Chernobyl, tracking each crew member and the engineers who saw catastrophe coming but couldn't stop the countdown. It's less about the explosion than the years of bureaucratic corner-cutting and ignored warnings that made it inevitable."
+    },
+    {
+      "title": "Cue the Sun!",
+      "author": "Emily Nussbaum",
+      "year": 2024,
+      "isbn_13": "9780399590337",
+      "description": "Emily Nussbaum traces reality TV from its radio-era roots through Survivor and The Apprentice, interviewing the producers, editors, and on-screen subjects who built the genre. She's genuinely interested in the craft — editing tricks like the Frankenbite, the ethical messes, the moments of real feeling that slip through — and writes about it all without either condescension or false celebration."
+    },
+    {
+      "title": "Chop Fry Watch Learn",
+      "author": "Michelle T. King",
+      "year": 2024,
+      "isbn_13": "9780393868371",
+      "description": "Fu Pei-mei arrived in Taiwan in 1949 barely knowing how to cook, then spent four decades teaching Chinese home cooking through TV shows and cookbooks that ended up in kitchens across the diaspora. Michelle King uses Fu's life to trace how postwar forces — working women, new appliances, mass media, Cold War politics — shaped what \"Chinese food\" even means, mixing family memoir with the kind of culinary history that actually explains why your mom's copy of that cookbook is falling apart."
+    },
+    {
+      "title": "Circle of Hope",
+      "author": "Eliza Griswold",
+      "year": 2024,
+      "isbn_13": "9780374129101",
+      "description": "Griswold embeds herself for years inside a Philadelphia church that tried to do Christianity differently — communal, justice-focused, anti-hierarchical — and then watches it crack apart over race, power, and generational conflict. It's less about faith than about what happens when any tight-knit community built on ideals has to confront its own blind spots."
+    },
+    {
+      "title": "Everyone Who Is Gone Is Here",
+      "author": "Jonathan Blitzer",
+      "year": 2024,
+      "isbn_13": "9781594206122",
+      "description": "Blitzer tracks the immigration crisis through decades of actual people — migrants from Central America, bureaucrats, activists, politicians — showing how U.S. policy failures and corruption in both countries created the mess at the border. It's dense reporting that connects the human stories to the political machinery, useful if you want to understand how we got here rather than just argue about it."
+    },
+    {
+      "title": "Grief Is for People",
+      "author": "Sloane Crosley",
+      "year": 2024,
+      "isbn_13": "9780374611347",
+      "description": "Crosley's close friend Russell dies by suicide, and a month before that, her apartment gets burglarized — she braids these two losses together, examining what it means to have things (and people) taken from you. It's genuinely funny in that Crosley way, more interested in poking at grief's absurdities than offering tidy wisdom."
+    },
+    {
+      "title": "The Demon of Unrest",
+      "author": "Erik Larson",
+      "year": 2024,
+      "isbn_13": "9780385350648",
+      "description": "Larson zeros in on the five months between Lincoln's election and Fort Sumter, tracking the miscommunications, ego clashes, and slow-motion disaster that made war inevitable. He builds tension through figures like Sumter's conflicted commander and a bloodthirsty secessionist agitator, turning familiar history into something that reads like a thriller about institutional failure."
+    },
+    {
+      "title": "In Thrall",
+      "author": "Jane Delury",
+      "year": 2024,
+      "isbn_13": "9780385549325",
+      "description": ""
+    },
+    {
+      "title": "John Lewis",
+      "author": "David Greenberg",
+      "year": 2024,
+      "isbn_13": "9780399590771",
+      "description": "Greenberg's exhaustive biography tracks Lewis from Freedom Rider to congressman, drawing on 275 interviews and newly released FBI files to show how the young SNCC chairman who survived Bloody Sunday became a fixture in Democratic leadership for three decades. It's particularly strong on the less-told middle chapters — his voter registration work and Atlanta political rise — though at this length it sometimes reads more like a monument than a portrait."
+    },
+    {
+      "title": "Reagan",
+      "author": "Max Boot",
+      "year": 2024,
+      "isbn_13": "9781631493515",
+      "description": "Boot spent years digging through newly released documents and interviewing over a hundred people in Reagan's orbit to write what reads as the most thorough, unvarnished look at the 40th president yet. He gives Reagan credit for ending the Cold War and reviving national confidence while documenting his failures on AIDS, civil rights, and economic inequality — treating him as neither saint nor villain but as a genuine paradox worth understanding."
+    },
+    {
+      "title": "Right Back Where We Started From",
+      "author": "Arlie Russell Hochschild",
+      "year": 2024,
+      "isbn_13": "9781620977477",
+      "description": ""
+    },
+    {
+      "title": "The Serviceberry",
+      "author": "Robin Wall Kimmerer",
+      "year": 2024,
+      "isbn_13": "9781982175702",
+      "description": "Kimmerer uses the serviceberry tree — which freely gives its fruit to birds who then spread its seeds — as a lens for rethinking our obsession with scarcity and accumulation. It's a slim, meditative essay that extends the gift-economy ideas from *Braiding Sweetgrass*, arguing that real wealth comes from reciprocal relationships rather than hoarding."
+    },
+    {
+      "title": "Stolen: Surviving St. Michael's",
+      "author": "Jesse Thistle",
+      "year": 2024,
+      "isbn_13": "9781982178314",
+      "description": ""
+    },
+    {
+      "title": "The Wide Wide Sea",
+      "author": "Hampton Sides",
+      "year": 2024,
+      "isbn_13": "9780385549325",
+      "description": "Cook's third voyage is the one where everything goes wrong — the legendary navigator returns to sea exhausted and increasingly erratic, carrying secret imperial orders that clash with his scientific ideals, and Sides traces how the man who'd built his reputation on careful diplomacy ends up dead on a Hawaiian beach. It's meticulous history that reads like a thriller, particularly sharp on how Cook's deterioration mirrored the darker side of European expansion."
+    },
+    {
+      "title": "Nexus",
+      "author": "Yuval Noah Harari",
+      "year": 2024,
+      "isbn_13": "9780593734216",
+      "description": "Harari zooms out to examine how information networks—from ancient myths to modern bureaucracies to AI—have shaped human societies, and why we keep using them to shoot ourselves in the foot. It's his attempt to explain why a species smart enough to split atoms is also dumb enough to spread disinformation and wreck its own planet, with the AI question looming over everything."
+    },
+    {
+      "title": "Poverty, by America",
+      "author": "Matthew Desmond",
+      "year": 2023,
+      "isbn_13": "9780593239919",
+      "description": "Desmond's follow-up to *Evicted* flips the poverty conversation: instead of examining poor people, he examines everyone else and how we actively benefit from keeping them poor — through tax breaks, wage suppression, and hoarding opportunity in wealthy enclaves. It's a short, punchy indictment that names middle-class complicity directly and pushes for \"poverty abolitionism\" as the response."
+    },
+    {
+      "title": "There's Always This Year",
+      "author": "Hanif Abdurraqib",
+      "year": 2024,
+      "isbn_13": "9780593317969",
+      "description": "Abdurraqib uses Ohio basketball — the LeBron years, playground legends who didn't make it, his father's single jump shot — as a way into questions about who gets to succeed and who gets forgotten. It's memoir and cultural essay braided together, more interested in what the game reveals about home and expectation than in the sport itself."
+    }
   ]
 }

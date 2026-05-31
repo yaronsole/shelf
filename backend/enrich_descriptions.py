@@ -43,8 +43,9 @@ that friend voice: concrete, opinionated, specific. No sweeping adjectives like 
 "breathtaking", "powerful", or "compelling". No phrases like "a tale of" or "a story about".
 Just say what the book actually does and why a reader might care.
 
-CRITICAL RULE: If the raw description field is empty, return an empty string exactly ("").
-Never invent or hallucinate details when you have no source description. Return "" only.\
+CRITICAL RULE: If the raw description is empty or clearly describes a DIFFERENT book than the
+title/author I gave you, respond with nothing at all — a completely empty response, no quotes,
+no punctuation, no apology. Never invent or hallucinate details when you have no usable source.\
 """
 
 # ---------------------------------------------------------------------------
@@ -55,28 +56,87 @@ Never invent or hallucinate details when you have no source description. Return 
 _GB_BASE = "https://www.googleapis.com/books/v1/volumes"
 _GB_KEY = os.environ.get("GOOGLE_BOOKS_API_KEY", "")
 
+_MIN_DESC_LEN = 80
+
+
+def _norm(s: str) -> str:
+    return "".join(ch for ch in (s or "").lower() if ch.isalnum())
+
+
+def _title_matches(expected_title: str, volume_title: str) -> bool:
+    """True if a Google/OL volume title plausibly refers to the requested book.
+
+    The list data carries unreliable ISBNs (~36% resolve to a different book),
+    so we never trust a description unless the returned title actually matches.
+    Allow subtitles ("Title: A Novel") by accepting prefix containment.
+    """
+    e, v = _norm(expected_title), _norm(volume_title)
+    if not e or not v:
+        return False
+    return e == v or v.startswith(e) or e.startswith(v)
+
+
+def _author_matches(expected_author: str, volume_authors: list[str]) -> bool:
+    """Loose author check: any surname token overlap. Permissive because
+    Google/OL author strings vary (initials, order, translators)."""
+    if not volume_authors:
+        return True  # can't disqualify on missing author data
+    exp = _norm(expected_author)
+    if not exp:
+        return True
+    for a in volume_authors:
+        na = _norm(a)
+        if na and (na in exp or exp in na):
+            return True
+    # Surname fallback: last whitespace-delimited token of expected author
+    surname = _norm(expected_author.split()[-1]) if expected_author.split() else ""
+    if surname and any(surname in _norm(a) for a in volume_authors):
+        return True
+    return False
+
+
+def _best_description_from_items(items: list[dict], title: str, author: str) -> str:
+    """Pick the longest description among volumes whose title (and, when present,
+    author) match the requested book. Returns "" if none qualify."""
+    best = ""
+    for item in items:
+        info = item.get("volumeInfo", {}) or {}
+        desc = (info.get("description", "") or "").strip()
+        if len(desc) < _MIN_DESC_LEN:
+            continue
+        if not _title_matches(title, info.get("title", "")):
+            continue
+        if not _author_matches(author, info.get("authors", []) or []):
+            continue
+        if len(desc) > len(best):
+            best = desc
+    return best
+
 
 def _fetch_google_description(title: str, author: str, isbn: str | None, client: httpx.Client) -> str:
     if not _GB_KEY:
         return ""
-    queries = []
+    # Title+author queries first — the list ISBNs are unreliable, so a raw
+    # isbn: lookup often returns a different book. ISBN is only a last resort
+    # and still gets title-validated by _best_description_from_items.
+    queries = [
+        f'intitle:"{title}" inauthor:{author}',
+        f"{title} {author}",
+    ]
     if isbn:
         queries.append(f"isbn:{isbn}")
-    queries.append(f'intitle:"{title}" inauthor:{author}')
-    queries.append(f"{title} {author}")
 
     for q in queries:
-        params = {"q": q, "maxResults": "5", "printType": "books", "langRestrict": "en", "key": _GB_KEY}
+        params = {"q": q, "maxResults": "10", "printType": "books", "langRestrict": "en", "key": _GB_KEY}
         url = f"{_GB_BASE}?{urllib.parse.urlencode(params)}"
         try:
             resp = client.get(url, timeout=8.0)
             if resp.status_code != 200:
                 continue
             items = resp.json().get("items") or []
-            for item in items:
-                desc = (item.get("volumeInfo", {}) or {}).get("description", "") or ""
-                if len(desc) > 80:
-                    return desc
+            desc = _best_description_from_items(items, title, author)
+            if desc:
+                return desc
         except Exception as exc:
             log.debug("google_books description error for %r: %s", title, exc)
     return ""
@@ -94,13 +154,18 @@ def _fetch_ol_description(title: str, author: str, client: httpx.Client) -> str:
     try:
         params = {
             "title": title, "author": author,
-            "limit": "3", "fields": "key,title,author_name,description",
+            "limit": "5", "fields": "key,title,author_name,description",
         }
         url = f"{_OL_SEARCH}?{urllib.parse.urlencode(params)}"
         resp = client.get(url, timeout=8.0, headers={"User-Agent": "ShelfApp/2.0"})
         if resp.status_code != 200:
             return ""
         for doc in (resp.json().get("docs") or []):
+            # Validate the search hit before spending a work-detail request.
+            if not _title_matches(title, doc.get("title", "")):
+                continue
+            if not _author_matches(author, doc.get("author_name", []) or []):
+                continue
             work_key = doc.get("key", "")
             if not work_key:
                 continue
@@ -114,7 +179,7 @@ def _fetch_ol_description(title: str, author: str, client: httpx.Client) -> str:
             raw = work_resp.json().get("description") or ""
             if isinstance(raw, dict):
                 raw = raw.get("value", "")
-            if len(raw) > 80:
+            if len(raw) > _MIN_DESC_LEN:
                 return raw
     except Exception as exc:
         log.debug("open_library description error for %r: %s", title, exc)
@@ -135,10 +200,19 @@ def _rewrite_with_claude(title: str, author: str, raw: str, client: anthropic.An
         system=SYSTEM_PROMPT,
         messages=[{"role": "user", "content": prompt}],
     )
-    result = (message.content[0].text or "").strip()
-    # Guard: if the model returned something suspiciously short with no source,
-    # honour the contract and return "".
-    if not raw.strip() or result.lower() in {"", "n/a", "none"}:
+    # Claude returns an EMPTY content list when it obeys the CRITICAL RULE
+    # (no usable source / wrong book) — treat that as an empty blurb, never an
+    # error. Otherwise message.content[0] raises IndexError and the caller
+    # leaves any stale value in place.
+    if not message.content:
+        return ""
+    result = (getattr(message.content[0], "text", "") or "").strip()
+    # If the model wrapped its whole answer in quotes, unwrap once.
+    if len(result) >= 2 and result[0] == result[-1] and result[0] in {'"', "'"}:
+        result = result[1:-1].strip()
+    # Collapse "empty" sentinels — including the literal "" the model emits when
+    # told to "return an empty string" — to a true empty string.
+    if result.lower() in {"", "n/a", "none"}:
         return ""
     return result
 
@@ -150,16 +224,21 @@ def _rewrite_with_claude(title: str, author: str, raw: str, client: anthropic.An
 def main() -> None:
     parser = argparse.ArgumentParser(description="Enrich list-book descriptions with friend-voice blurbs.")
     parser.add_argument("--force", action="store_true", help="Re-enrich already-filled descriptions.")
+    parser.add_argument("--only", default="", help="Restrict to one list by file stem, e.g. reese_book_club.")
     args = parser.parse_args()
 
     api_key = os.environ.get("ANTHROPIC_API_KEY", "")
     if not api_key:
         sys.exit("ANTHROPIC_API_KEY env var is not set.")
 
-    anthropic_client = anthropic.Anthropic(api_key=api_key)
+    # Explicit timeout + retries: without these a single wedged socket can hang
+    # the entire run indefinitely (observed: a stuck Messages POST blocking ~1.5h).
+    anthropic_client = anthropic.Anthropic(api_key=api_key, timeout=30.0, max_retries=2)
     http_client = httpx.Client(timeout=10.0)
 
     list_files = sorted(f for f in LISTS_DIR.glob("*.json") if f.name != "_index.json")
+    if args.only:
+        list_files = [f for f in list_files if f.stem == args.only]
     if not list_files:
         sys.exit(f"No list JSON files found in {LISTS_DIR}")
 

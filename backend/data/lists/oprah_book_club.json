@@ -1,65 +1,365 @@
 {
   "slug": "oprah_book_club",
   "books": [
-    { "title": "The Deep End of the Ocean", "author": "Jacquelyn Mitchard", "year": 1996 },
-    { "title": "Song of Solomon", "author": "Toni Morrison", "year": 1977 },
-    { "title": "The Book of Ruth", "author": "Jane Hamilton", "year": 1988 },
-    { "title": "She's Come Undone", "author": "Wally Lamb", "year": 1992 },
-    { "title": "Stones from the River", "author": "Ursula Hegi", "year": 1994 },
-    { "title": "The Heart of a Woman", "author": "Maya Angelou", "year": 1981 },
-    { "title": "A Lesson Before Dying", "author": "Ernest J. Gaines", "year": 1993 },
-    { "title": "Ellen Foster", "author": "Kaye Gibbons", "year": 1987 },
-    { "title": "Paradise", "author": "Toni Morrison", "year": 1997 },
-    { "title": "Black and Blue", "author": "Anna Quindlen", "year": 1998 },
-    { "title": "Breath, Eyes, Memory", "author": "Edwidge Danticat", "year": 1994 },
-    { "title": "I Know This Much Is True", "author": "Wally Lamb", "year": 1998 },
-    { "title": "Where the Heart Is", "author": "Billie Letts", "year": 1995 },
-    { "title": "Midwives", "author": "Chris Bohjalian", "year": 1997 },
-    { "title": "White Oleander", "author": "Janet Fitch", "year": 1999 },
-    { "title": "Tara Road", "author": "Maeve Binchy", "year": 1998 },
-    { "title": "A Map of the World", "author": "Jane Hamilton", "year": 1994 },
-    { "title": "Daughter of Fortune", "author": "Isabel Allende", "year": 1999 },
-    { "title": "The Bluest Eye", "author": "Toni Morrison", "year": 1970 },
-    { "title": "While I Was Gone", "author": "Sue Miller", "year": 1999 },
-    { "title": "The Poisonwood Bible", "author": "Barbara Kingsolver", "year": 1998 },
-    { "title": "House of Sand and Fog", "author": "Andre Dubus III", "year": 1999 },
-    { "title": "We Were the Mulvaneys", "author": "Joyce Carol Oates", "year": 1996 },
-    { "title": "Cane River", "author": "Lalita Tademy", "year": 2001 },
-    { "title": "The Corrections", "author": "Jonathan Franzen", "year": 2001 },
-    { "title": "A Fine Balance", "author": "Rohinton Mistry", "year": 1995 },
-    { "title": "Sula", "author": "Toni Morrison", "year": 1973 },
-    { "title": "East of Eden", "author": "John Steinbeck", "year": 1952 },
-    { "title": "Anna Karenina", "author": "Leo Tolstoy", "year": 1877 },
-    { "title": "The Heart Is a Lonely Hunter", "author": "Carson McCullers", "year": 1940 },
-    { "title": "One Hundred Years of Solitude", "author": "Gabriel García Márquez", "year": 1967 },
-    { "title": "Light in August", "author": "William Faulkner", "year": 1932 },
-    { "title": "As I Lay Dying", "author": "William Faulkner", "year": 1930 },
-    { "title": "The Sound and the Fury", "author": "William Faulkner", "year": 1929 },
-    { "title": "The Good Earth", "author": "Pearl S. Buck", "year": 1931 },
-    { "title": "Night", "author": "Elie Wiesel", "year": 1958 },
-    { "title": "Love in the Time of Cholera", "author": "Gabriel García Márquez", "year": 1985 },
-    { "title": "The Road", "author": "Cormac McCarthy", "year": 2006 },
-    { "title": "Middlesex", "author": "Jeffrey Eugenides", "year": 2002 },
-    { "title": "The Pillars of the Earth", "author": "Ken Follett", "year": 1989 },
-    { "title": "A New Earth", "author": "Eckhart Tolle", "year": 2005 },
-    { "title": "The Story of Edgar Sawtelle", "author": "David Wroblewski", "year": 2008 },
-    { "title": "Say You're One of Them", "author": "Uwem Akpan", "year": 2008 },
-    { "title": "Wild", "author": "Cheryl Strayed", "year": 2012 },
-    { "title": "The Twelve Tribes of Hattie", "author": "Ayana Mathis", "year": 2012 },
-    { "title": "The Invention of Wings", "author": "Sue Monk Kidd", "year": 2014 },
-    { "title": "Ruby", "author": "Cynthia Bond", "year": 2014 },
-    { "title": "The Underground Railroad", "author": "Colson Whitehead", "year": 2016 },
-    { "title": "Behold the Dreamers", "author": "Imbolo Mbue", "year": 2016 },
-    { "title": "An American Marriage", "author": "Tayari Jones", "year": 2018 },
-    { "title": "Becoming", "author": "Michelle Obama", "year": 2018 },
-    { "title": "The Water Dancer", "author": "Ta-Nehisi Coates", "year": 2019 },
-    { "title": "Olive, Again", "author": "Elizabeth Strout", "year": 2019 },
-    { "title": "Hidden Valley Road", "author": "Robert Kolker", "year": 2020 },
-    { "title": "Caste", "author": "Isabel Wilkerson", "year": 2020 },
-    { "title": "The Sweetness of Water", "author": "Nathan Harris", "year": 2021 },
-    { "title": "Bewilderment", "author": "Richard Powers", "year": 2021 },
-    { "title": "Demon Copperhead", "author": "Barbara Kingsolver", "year": 2022 },
-    { "title": "The Heaven & Earth Grocery Store", "author": "James McBride", "year": 2023 },
-    { "title": "Wellness", "author": "Nathan Hill", "year": 2023 }
+    {
+      "title": "The Deep End of the Ocean",
+      "author": "Jacquelyn Mitchard",
+      "year": 1996,
+      "description": "A family's youngest son vanishes at a hotel reunion, then resurfaces years later living blocks away—Mitchard tracks the unbearable logistics of what happens next, how a marriage buckles under grief, and the impossible question of whether you can reclaim a child who doesn't remember you."
+    },
+    {
+      "title": "Song of Solomon",
+      "author": "Toni Morrison",
+      "year": 1977,
+      "description": "Follows Milkman Dead from his Michigan childhood through a journey south to uncover his family's buried history, mixing folklore, flight mythology, and a cast of characters with names like Guitar and Pilate. Morrison builds a Black American epic that's dense with symbolism but grounded in specifics — property disputes, insurance policies, a green sack of bones."
+    },
+    {
+      "title": "The Book of Ruth",
+      "author": "Jane Hamilton",
+      "year": 1988,
+      "description": "Ruth narrates her own unraveling in small-town Illinois—a dead-end marriage, a mother who can't stand her, and the slow accumulation of choices that land her somewhere she never meant to be. Hamilton writes poverty and family dysfunction with uncomfortable precision."
+    },
+    {
+      "title": "She's Come Undone",
+      "author": "Wally Lamb",
+      "year": 1992,
+      "description": "Dolores Price narrates her own disasters from age thirteen onward — her father's abandonment, assault, psychiatric breakdown, and years of eating herself into isolation — with a dark, self-lacerating humor that keeps this from becoming misery tourism. Lamb writes her voice so specifically (the Mallomars, the TV obsession, the cutting observations) that you're genuinely rooting for her to figure out how to live."
+    },
+    {
+      "title": "Stones from the River",
+      "author": "Ursula Hegi",
+      "year": 1994,
+      "description": "Trudi Montag, a dwarf in a small German town, watches her neighbors through decades that include the Nazi rise — who collaborates, who hides Jews in cellars, who pretends not to see. Hegi uses Trudi's outsider status to strip away the mythology around \"ordinary Germans\" and show the specific, daily choices that made complicity possible."
+    },
+    {
+      "title": "The Heart of a Woman",
+      "author": "Maya Angelou",
+      "year": 1981,
+      "description": "Angelou lands in late-1950s Harlem, joins the Writers Guild, coordinates for MLK's Southern Christian Leadership Conference, and falls for a South African activist — all while trying to parent a teenage son who's pushing back hard. This fourth memoir covers her pivot from performer to writer and organizer, with Billie Holiday, Malcolm X, and the whole civil rights moment swirling around her."
+    },
+    {
+      "title": "A Lesson Before Dying",
+      "author": "Ernest J. Gaines",
+      "year": 1993,
+      "description": "A Black schoolteacher in 1940s Louisiana is asked to visit a wrongly convicted man awaiting execution — not to save him, but to help him die with dignity in a system designed to strip it away. Gaines writes with restraint about what it costs to maintain humanity under Jim Crow, and the strange intimacy that develops between two men who have nothing in common except being Black in the rural South."
+    },
+    {
+      "title": "Ellen Foster",
+      "author": "Kaye Gibbons",
+      "year": 1987,
+      "description": "Ellen Foster narrates her own rough childhood in rural North Carolina — abusive father, dying mother, a string of reluctant relatives — with the dark humor and matter-of-fact toughness of a kid who's learned to take care of herself. Gibbons nails that specific voice of a smart eleven-year-old processing things she shouldn't have to understand yet."
+    },
+    {
+      "title": "Paradise",
+      "author": "Toni Morrison",
+      "year": 1997,
+      "description": "Morrison opens with a massacre and spends the rest of the novel making you understand how an all-black Oklahoma town founded on righteousness and survival could turn its fury on a group of outcast women living seventeen miles away. It's her most structurally demanding book, braiding multiple timelines and voices, but the payoff is a brutal examination of how communities built on purity always need someone to destroy."
+    },
+    {
+      "title": "Black and Blue",
+      "author": "Anna Quindlen",
+      "year": 1998,
+      "description": "Quindlen tracks a woman fleeing her abusive cop husband, building real tension around the practical nightmare of disappearing—new name, new city, constant vigilance—while her son struggles to understand why they left his father behind. It's less about the violence itself than the suffocating aftermath, the way trauma follows you even when you've technically escaped."
+    },
+    {
+      "title": "Breath, Eyes, Memory",
+      "author": "Edwidge Danticat",
+      "year": 1994,
+      "description": "Sophie leaves Haiti at twelve to join a mother she barely knows in New York, only to uncover family secrets about sexuality, trauma, and the brutal \"testing\" rituals Haitian mothers perform on daughters. Danticat writes about inherited shame and the long work of healing without flinching—this is the book that made her reputation."
+    },
+    {
+      "title": "I Know This Much Is True",
+      "author": "Wally Lamb",
+      "year": 1998,
+      "description": "Dominick spends his life tethered to his schizophrenic twin Thomas, honoring a deathbed promise to their mother that slowly consumes him. Lamb digs into how caretaking can become its own prison, cycling through family secrets and generational damage across 900 pages that earn their length."
+    },
+    {
+      "title": "Where the Heart Is",
+      "author": "Billie Letts",
+      "year": 1995,
+      "description": "A pregnant seventeen-year-old gets dumped at an Oklahoma Walmart and secretly lives there while building an unlikely family among the town's oddballs — a proselytizing old woman, a lonely librarian, a recovering alcoholic photographer. Letts writes small-town Oklahoma with real affection and without condescension, and Novalee's scrappy reinvention feels earned rather than sentimental."
+    },
+    {
+      "title": "Midwives",
+      "author": "Chris Bohjalian",
+      "year": 1997,
+      "description": "A Vermont midwife performs an emergency C-section on a mother she believes has already died — then faces a trial that puts the entire practice of home birth on the stand. Bohjalian builds the tension through the midwife's teenage daughter's journal entries, making you feel both the medical horror and the family fracturing under public scrutiny."
+    },
+    {
+      "title": "White Oleander",
+      "author": "Janet Fitch",
+      "year": 1999,
+      "description": "Astrid's poet mother poisons a lover and goes to prison, leaving her to pinball through LA foster homes — a meth-dealing stripper, a born-again actress, a lonely alcoholic. Fitch writes California like it's a fever dream, all white light and oleander, and the book is really about how a teenage girl assembles a self when her mother was both her whole world and a kind of poison too."
+    },
+    {
+      "title": "Tara Road",
+      "author": "Maeve Binchy",
+      "year": 1998,
+      "description": "Two women swap lives across the Atlantic—one fleeing a crumbling Dublin marriage, the other escaping grief in Connecticut—and both end up finding clarity in someone else's kitchen. Binchy makes the fantasy of starting over in a stranger's house feel cozy rather than creepy, with her usual knack for domestic detail."
+    },
+    {
+      "title": "A Map of the World",
+      "author": "Jane Hamilton",
+      "year": 1994,
+      "description": "A Wisconsin farm wife's life unravels in two devastating stages: first a neighbor's toddler drowns in her pond, then she's falsely accused of molesting a student at the school where she works. Hamilton gets inside the head of a woman watching her community turn against her, and alternates with her husband's perspective as he tries to hold their dairy farm and family together while she's in jail awaiting trial."
+    },
+    {
+      "title": "Daughter of Fortune",
+      "author": "Isabel Allende",
+      "year": 1999,
+      "description": "Eliza Sommers stows away on a ship from Chile to Gold Rush San Francisco chasing a lover who's already disappearing from her life — and what she actually finds is a friendship with a Chinese doctor and a self she didn't know she was looking for. Allende does the historical chaos well, but it's really about a woman outgrowing the reason she left home."
+    },
+    {
+      "title": "The Bluest Eye",
+      "author": "Toni Morrison",
+      "year": 1970,
+      "description": "Eleven-year-old Pecola Breedlove prays for blue eyes, believing whiteness is the only path to being seen and loved in 1940s Ohio. Morrison's debut is unsparing about how that internalized hatred gets planted in a child—and what it costs her."
+    },
+    {
+      "title": "While I Was Gone",
+      "author": "Sue Miller",
+      "year": 1999,
+      "description": "Jo's got the good life in Vermont—vet practice, solid marriage, grown kids—but she's bored in that quiet, midlife way. When an old housemate from her communal living days resurfaces, she gets pulled back toward a murder that scattered everyone decades ago, and the pull feels more alive than anything in her careful present."
+    },
+    {
+      "title": "The Poisonwood Bible",
+      "author": "Barbara Kingsolver",
+      "year": 1998,
+      "description": "A Baptist missionary drags his wife and four daughters to the Belgian Congo in 1959, right as the country erupts into independence and political chaos. Each woman narrates her own version of events as their father's rigid evangelical certainty collides with a place that refuses to be converted—the family's unraveling becomes inseparable from the Congo's violent decolonization."
+    },
+    {
+      "title": "House of Sand and Fog",
+      "author": "Andre Dubus III",
+      "year": 1999,
+      "description": "A former Iranian colonel buys a foreclosed house at auction to rebuild his family's standing; the woman who lost it to bureaucratic error wants it back. Dubus locks these two into an escalating property dispute that exposes how little safety net exists when proud, desperate people collide over the same small piece of American ground."
+    },
+    {
+      "title": "We Were the Mulvaneys",
+      "author": "Joyce Carol Oates",
+      "year": 1996,
+      "description": "Oates traces a prosperous upstate New York farm family across two decades after a secret violation tears them apart, following each member through their separate exiles. It's warmer than her usual darkness — more interested in how families eventually find their way back to each other than in the initial wound."
+    },
+    {
+      "title": "Cane River",
+      "author": "Lalita Tademy",
+      "year": 2001,
+      "description": "Tademy traced her own family tree back to a Creole plantation in Louisiana and turned the records into a novel following four generations of women from slavery through Jim Crow. It's meticulous genealogical research given emotional weight — you're watching real people navigate the specific indignities and small victories of each era, from a grandmother who secures land ownership to a daughter fighting for her children's inheritance."
+    },
+    {
+      "title": "The Corrections",
+      "author": "Jonathan Franzen",
+      "year": 2001,
+      "description": "Franzen dismantles a Midwestern family where the patriarch is slipping into dementia while his three adult children spiral through their own carefully detailed messes—a depressed banker, a disgraced academic, a chef in a doomed affair. It's long and occasionally exhausting in the way that families are, but brutally precise about the specific ways parents and children disappoint each other."
+    },
+    {
+      "title": "A Fine Balance",
+      "author": "Rohinton Mistry",
+      "year": 1995,
+      "description": "Four strangers in 1970s India — two tailors, a student, and a widow — get tangled up during Indira Gandhi's Emergency, and Mistry slowly tightens the screws until you're genuinely dreading what comes next. It's long and brutal and occasionally funny, the kind of book that makes you angry at systems and governments while also being impossibly tender about ordinary people trying to get by."
+    },
+    {
+      "title": "Sula",
+      "author": "Toni Morrison",
+      "year": 1973,
+      "description": "Two Black girls in 1920s Ohio share everything until adulthood splits them—one stays and marries, one leaves and comes back dangerous. Morrison tracks how a small town turns a free woman into a witch, and what female friendship can and can't survive."
+    },
+    {
+      "title": "East of Eden",
+      "author": "John Steinbeck",
+      "year": 1952,
+      "description": "Steinbeck retells Cain and Abel through two families in California's Salinas Valley, tracking inherited sin and whether people can escape the cruelty passed down to them. It's long and deliberately biblical, with some of his most memorable characters wrestling with whether goodness is a choice or a birthright."
+    },
+    {
+      "title": "Anna Karenina",
+      "author": "Leo Tolstoy",
+      "year": 1877,
+      "description": "Tolstoy builds an entire world around a Moscow bureaucrat who glides through life on charm and connections, then uses that world to trap Anna in an affair that society will never forgive. It's 800 pages of drawing rooms, train stations, and farming debates, but the real subject is how differently men and women pay for the same sins."
+    },
+    {
+      "title": "The Heart Is a Lonely Hunter",
+      "author": "Carson McCullers",
+      "year": 1940,
+      "description": "A deaf-mute named Singer becomes the unwitting confessor for a handful of lonely people in a Georgia mill town — a teenage girl hungry for music, a bitter labor organizer, a Black doctor fighting his own community's indifference. McCullers wrote this at 23, and it's unnervingly good at showing how people project meaning onto someone who can't talk back."
+    },
+    {
+      "title": "One Hundred Years of Solitude",
+      "author": "Gabriel García Márquez",
+      "year": 1967,
+      "description": "García Márquez tracks seven generations of the Buendía family in a Colombian village where the miraculous and the mundane blur together—ghosts linger, a man ascends to heaven while hanging laundry, civil wars drag on for decades. It's dense and looping, with names that repeat and time that folds back on itself, but the payoff is watching how one family's obsessions and mistakes echo across a century."
+    },
+    {
+      "title": "Light in August",
+      "author": "William Faulkner",
+      "year": 1932,
+      "description": "Faulkner braids two stories in 1930s Mississippi: a pregnant woman walking across the state to find the man who abandoned her, and a violent drifter tormented by uncertainty about his racial identity who's been sleeping with an aging abolitionist's daughter. It's Faulkner at his most structurally ambitious, jumping between timelines and consciousnesses to build toward an act of brutal violence."
+    },
+    {
+      "title": "As I Lay Dying",
+      "author": "William Faulkner",
+      "year": 1930,
+      "description": "Faulkner cycles through 15 narrators as a backwoods Mississippi family hauls their mother's rotting corpse across flooded rivers and burning barns to bury her in her hometown — each voice revealing how grief, selfishness, and obligation tangle together in people who can barely stand each other."
+    },
+    {
+      "title": "The Sound and the Fury",
+      "author": "William Faulkner",
+      "year": 1929,
+      "description": "Faulkner fractures a dying Southern family across four narrators—including a man with an intellectual disability whose memories blur past and present—and dares you to piece together what happened to their sister Caddy. It's genuinely difficult in the early going (think Joyce's *Ulysses* but Mississippi), but the payoff is watching how one woman's choices ripple differently through each brother's damaged consciousness."
+    },
+    {
+      "title": "The Good Earth",
+      "author": "Pearl S. Buck",
+      "year": 1931,
+      "description": "Buck traces a Chinese peasant's whole arc—from newlywed farmer to wealthy landowner—across decades of famine, flood, and family fracture. It's patient and accumulative, showing how Wang Lung's bond to his land sustains him while prosperity slowly corrupts what matters."
+    },
+    {
+      "title": "Night",
+      "author": "Elie Wiesel",
+      "year": 1958,
+      "description": "Wiesel's memoir of surviving Auschwitz as a teenager is devastating precisely because of how spare it is — short, direct sentences about watching his father die, losing his faith, becoming a number. It's the book that made Holocaust testimony something you couldn't look away from."
+    },
+    {
+      "title": "Love in the Time of Cholera",
+      "author": "Gabriel García Márquez",
+      "year": 1985,
+      "description": "Florentino Ariza spends fifty years nursing his obsession with Fermina Daza while she's married to someone else—García Márquez uses this absurdly patient devotion to explore whether lifelong romantic fixation is beautiful or just another form of self-delusion. It's funny, sad, and genuinely unsettling about what we call love."
+    },
+    {
+      "title": "The Road",
+      "author": "Cormac McCarthy",
+      "year": 2006,
+      "description": "A father and son push a shopping cart through ash-covered America after an unspecified catastrophe, scavenging canned food and hiding from roving cannibals. McCarthy strips his prose down to near-biblical minimalism — no quotation marks, barely any punctuation — to match the emptiness of the world, and somehow wrings tenderness from absolute bleakness."
+    },
+    {
+      "title": "Middlesex",
+      "author": "Jeffrey Eugenides",
+      "year": 2002,
+      "description": "Cal Stephanides narrates their own life — born with an intersex condition that goes undetected until adolescence — while tracing the genetic mutation back through three generations of a Greek-American family, from a village near Mount Olympus through Detroit's boom and bust. Eugenides uses the family saga structure to explore how bodies, identities, and secrets get inherited, and he pulls it off with real wit."
+    },
+    {
+      "title": "The Pillars of the Earth",
+      "author": "Ken Follett",
+      "year": 1989,
+      "description": "A sprawling 12th-century saga that follows monks, builders, and nobles through decades of political scheming and backbreaking labor as they construct a cathedral in feudal England. Follett treats medieval architecture like a thriller—there's romance, betrayal, and a surprising amount of tension around stonework."
+    },
+    {
+      "title": "A New Earth",
+      "author": "Eckhart Tolle",
+      "year": 2005,
+      "description": "Tolle's follow-up to The Power of Now zeros in on the ego as the source of most human misery — the constant mental chatter, the need to be right, the identification with roles and possessions. It's essentially a practical guide to noticing when your mind is running the show and stepping back from it, though some readers find his style either revelatory or frustratingly abstract."
+    },
+    {
+      "title": "The Story of Edgar Sawtelle",
+      "author": "David Wroblewski",
+      "year": 2008,
+      "description": "A mute boy growing up on his family's Wisconsin dog-breeding farm loses his father under suspicious circumstances, watches his uncle move in on his mother, and eventually runs off into the wilderness with three dogs. It's basically Hamlet reimagined in rural America, with the Danish prince replaced by a kid who communicates through sign language and shares an almost telepathic bond with his dogs."
+    },
+    {
+      "title": "Say You're One of Them",
+      "author": "Uwem Akpan",
+      "year": 2008,
+      "description": "Five stories told through children's eyes across Kenya, Rwanda, Nigeria, Benin, and Ethiopia — kids navigating tribal violence, crushing poverty, family betrayals, and impossible choices with a clear-eyed matter-of-factness that hits harder than any melodrama. Akpan, a Jesuit priest from Nigeria, writes child narrators who understand more than they should have to, and the effect is devastating without ever feeling manipulative."
+    },
+    {
+      "title": "Wild",
+      "author": "Cheryl Strayed",
+      "year": 2012,
+      "description": "Strayed hikes the Pacific Crest Trail solo at 26 with zero backpacking experience, hauling a pack so heavy she names it \"Monster,\" working through grief over her mother's death and the wreckage of her early twenties. She's frank about her own bad decisions and the physical brutality of the trail — lost toenails, ill-fitting boots, running out of money — which makes the gradual rebuilding feel earned rather than tidy."
+    },
+    {
+      "title": "The Twelve Tribes of Hattie",
+      "author": "Ayana Mathis",
+      "year": 2012,
+      "description": "Hattie flees Georgia at fifteen, lands in Philadelphia, loses her first twins to poverty, then raises nine more kids with fierce practicality and almost no warmth — each chapter follows a different child as they reckon with what that upbringing made of them. Mathis writes the Great Migration through one family's accumulated damage and stubbornness, and it hits harder for staying so close to the bone."
+    },
+    {
+      "title": "The Invention of Wings",
+      "author": "Sue Monk Kidd",
+      "year": 2014,
+      "description": "Based on real abolitionists Sarah and Angelina Grimké, this follows Sarah from age eleven — when she's given an enslaved girl named Handful as a \"gift\" — through both women's paths toward freedom over thirty-five years in antebellum Charleston. Kidd alternates their voices to trace how Sarah eventually becomes a pioneer in abolition and women's rights while Handful navigates resistance and survival within the household."
+    },
+    {
+      "title": "Ruby",
+      "author": "Cynthia Bond",
+      "year": 2014,
+      "description": "Ephram has loved Ruby since childhood in their small East Texas town, but she fled to 1950s Greenwich Village to escape horrors that still cling to her when a telegram drags her back. Bond writes with heat and grit about the violence Ruby survived and the community complicit in it, while Ephram risks everything familiar to stand with her against a town that wants her broken."
+    },
+    {
+      "title": "The Underground Railroad",
+      "author": "Colson Whitehead",
+      "year": 2016,
+      "description": "Whitehead makes the Underground Railroad literal — actual trains running through tunnels beneath the South — and uses that conceit to send an escaped slave named Cora through different states that each represent a distinct horror of American racism. It's part adventure, part allegory, with a relentless slave catcher pursuing her the whole way."
+    },
+    {
+      "title": "Behold the Dreamers",
+      "author": "Imbolo Mbue",
+      "year": 2016,
+      "description": "A Cameroonian couple lands what seems like the golden ticket—he's driving for a Lehman Brothers exec, she's working in the Hamptons—right before the 2008 crash brings everything down. Mbue uses the collision of these two families to examine who actually gets to keep dreaming in America and what compromises corrode a marriage when survival's on the line."
+    },
+    {
+      "title": "An American Marriage",
+      "author": "Tayari Jones",
+      "year": 2018,
+      "description": "Roy and Celestial are newlyweds in Atlanta when he's wrongfully convicted and sentenced to twelve years—and the novel tracks what actually happens to a marriage when one person is locked up and the other has to keep living. Jones writes all three points of the triangle (including Andre, the best friend who's always been there) with uncomfortable honesty about how love can just... run out, even when no one's the villain."
+    },
+    {
+      "title": "Becoming",
+      "author": "Michelle Obama",
+      "year": 2018,
+      "description": "This is a guided journal/workbook companion to the memoir, not the memoir itself — it's a beautifully designed blank book with prompts and quotes to help you reflect on your own life story. If you want Michelle Obama's actual autobiography, you need the original *Becoming* memoir, not this fill-in-yourself version."
+    },
+    {
+      "title": "The Water Dancer",
+      "author": "Ta-Nehisi Coates",
+      "year": 2019,
+      "description": "Coates imagines a young enslaved man whose trauma manifests as a supernatural power—he can transport people through memory, which the Underground Railroad recruits him to weaponize. It's less interested in escape-narrative tension than in exploring what slavery did to Black families and memory itself, told in prose that's deliberate and often beautiful."
+    },
+    {
+      "title": "Olive, Again",
+      "author": "Elizabeth Strout",
+      "year": 2019,
+      "description": "Strout returns to her cantankerous, sharp-tongued Olive Kitteridge in small-town Maine, following her through aging, grief, and reluctant connection across linked stories. Olive remains prickly and difficult, but Strout lets her soften just enough to show how someone so hard on others can still stumble toward grace."
+    },
+    {
+      "title": "Hidden Valley Road",
+      "author": "Robert Kolker",
+      "year": 2020,
+      "description": "Twelve kids in one Colorado family, six of them eventually diagnosed with schizophrenia — Kolker traces how the Galvins' DNA became crucial to decades of research while also showing what it was actually like inside that house, the violence and secrets alongside the science. It's both a family story with real human weight and a history of how our understanding of schizophrenia lurched forward through trial and error."
+    },
+    {
+      "title": "Caste",
+      "author": "Isabel Wilkerson",
+      "year": 2020,
+      "description": "Wilkerson argues that American racism functions less like prejudice and more like India's caste system — a rigid, inherited ranking that sorts people at birth and shapes everything from health outcomes to who gets to feel comfortable where. She draws uncomfortable parallels between Jim Crow laws and Nazi Germany's racial codes (the Nazis actually studied American segregation), building her case through specific stories rather than abstraction."
+    },
+    {
+      "title": "The Sweetness of Water",
+      "author": "Nathan Harris",
+      "year": 2021,
+      "description": "Set in Georgia during Reconstruction, this follows two newly freed brothers working a white couple's farm while saving to find their mother, alongside a doomed romance between two Confederate soldiers that ignites violence across their small town. Harris is interested in how grief and secrecy shape unlikely alliances — the farmer mourning his dead son, the brothers mourning their stolen family, the soldiers hiding who they are."
+    },
+    {
+      "title": "Bewilderment",
+      "author": "Richard Powers",
+      "year": 2021,
+      "description": "A grieving astrobiologist tries to keep his emotionally volatile nine-year-old son off medication by enrolling him in an experimental treatment that uses recorded patterns of the boy's dead mother's brain. Powers sets this intimate father-son story against climate collapse and extinction, asking what we owe kids we're bringing into a world we've wrecked."
+    },
+    {
+      "title": "Demon Copperhead",
+      "author": "Barbara Kingsolver",
+      "year": 2022,
+      "description": "Kingsolver retells David Copperfield in modern Appalachia, following a foster kid navigating meth country, pill mills, and a child welfare system that keeps failing him. It's angry and specific about how poverty and the opioid crisis actually work, told in Demon's own wry, defiant voice."
+    },
+    {
+      "title": "The Heaven & Earth Grocery Store",
+      "author": "James McBride",
+      "year": 2023,
+      "description": "McBride weaves together a 1930s Pennsylvania neighborhood where Black and Jewish families live side by side, building to the mystery of a skeleton found in a well decades later. It's really about the small acts of conspiracy and protection between marginalized people — hiding a deaf boy from state institutionalization, integrating a theater — and how those choices echo forward."
+    },
+    {
+      "title": "Wellness",
+      "author": "Nathan Hill",
+      "year": 2023,
+      "description": "Jack and Elizabeth meet in '90s Chicago as young artists, then the book jumps twenty years to find them struggling through marriage, parenting, aging bodies, and all the ridiculous wellness trends people use to avoid their actual problems. Hill's doing something sneaky here — using the comedy of detox diets and polyamory propositions to get at real questions about whether the person you married is still the person you're married to."
+    }
   ]
 }

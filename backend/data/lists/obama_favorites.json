@@ -2,45 +2,285 @@
   "slug": "obama_favorites",
   "title": "Obama's Favorite Books",
   "books": [
-    { "title": "James", "author": "Percival Everett", "year": 2024, "isbn_13": "9780385550369" },
-    { "title": "Intermezzo", "author": "Sally Rooney", "year": 2024, "isbn_13": "9780374611996" },
-    { "title": "Orbital", "author": "Samantha Harvey", "year": 2024, "isbn_13": "9780802163783" },
-    { "title": "The Women", "author": "Kristin Hannah", "year": 2024, "isbn_13": "9781250178633" },
-    { "title": "The Anxious Generation", "author": "Jonathan Haidt", "year": 2024, "isbn_13": "9780593655030" },
-    { "title": "All Fours", "author": "Miranda July", "year": 2024, "isbn_13": "9780593714621" },
-    { "title": "Headshot", "author": "Rita Bullwinkel", "year": 2024, "isbn_13": "9780593538920" },
-    { "title": "The God of the Woods", "author": "Liz Moore", "year": 2024, "isbn_13": "9780593472620" },
-    { "title": "There's Always This Year", "author": "Hanif Abdurraqib", "year": 2024, "isbn_13": "9780593317969" },
-    { "title": "Everyone Who Is Gone Is Here", "author": "Jonathan Blitzer", "year": 2024, "isbn_13": "9781594206122" },
-    { "title": "Reading Genesis", "author": "Marilynne Robinson", "year": 2024, "isbn_13": "9780374610685" },
-    { "title": "The Ministry of Time", "author": "Kaliane Bradley", "year": 2024, "isbn_13": "9781668050200" },
-    { "title": "Beautiful Days", "author": "Zach Williams", "year": 2024, "isbn_13": "9780593538128" },
-    { "title": "Help Wanted", "author": "Adelle Waldman", "year": 2024, "isbn_13": "9780393867879" },
-    { "title": "Memory Piece", "author": "Grace Chia Hui Ko", "year": 2024, "isbn_13": "9781250885098" },
-    { "title": "Of Boys and Men", "author": "Richard V. Reeves", "year": 2022, "isbn_13": "9780815739371" },
-    { "title": "The Covenant of Water", "author": "Abraham Verghese", "year": 2023, "isbn_13": "9780802162175" },
-    { "title": "Tomorrow, and Tomorrow, and Tomorrow", "author": "Gabrielle Zevin", "year": 2022, "isbn_13": "9780593321201" },
-    { "title": "Poverty, by America", "author": "Matthew Desmond", "year": 2023, "isbn_13": "9780593239919" },
-    { "title": "A Little Devil in America", "author": "Hanif Abdurraqib", "year": 2021, "isbn_13": "9781984820297" },
-    { "title": "The Removed", "author": "Brandon Hobson", "year": 2021, "isbn_13": "9780062997142" },
-    { "title": "Crying in H Mart", "author": "Michelle Zauner", "year": 2021, "isbn_13": "9780525657743" },
-    { "title": "Four Hundred Souls", "author": "Ibram X. Kendi", "year": 2021, "isbn_13": "9780593133248" },
-    { "title": "A Promised Land", "author": "Barack Obama", "year": 2020, "isbn_13": "9781524763169" },
-    { "title": "The Warmth of Other Suns", "author": "Isabel Wilkerson", "year": 2010, "isbn_13": "9780679444329" },
-    { "title": "Caste", "author": "Isabel Wilkerson", "year": 2020, "isbn_13": "9780593230251" },
-    { "title": "How to Be an Antiracist", "author": "Ibram X. Kendi", "year": 2019, "isbn_13": "9780525509288" },
-    { "title": "The Vanishing Half", "author": "Brit Bennett", "year": 2020, "isbn_13": "9780525536291" },
-    { "title": "Deacon King Kong", "author": "James McBride", "year": 2020, "isbn_13": "9780735216723" },
-    { "title": "The Nickel Boys", "author": "Colson Whitehead", "year": 2019, "isbn_13": "9780385537070" },
-    { "title": "The Water Dancer", "author": "Ta-Nehisi Coates", "year": 2019, "isbn_13": "9780399590597" },
-    { "title": "Say Nothing", "author": "Patrick Radden Keefe", "year": 2019, "isbn_13": "9780307279286" },
-    { "title": "Educated", "author": "Tara Westover", "year": 2018, "isbn_13": "9780399590504" },
-    { "title": "The Great Alone", "author": "Kristin Hannah", "year": 2018, "isbn_13": "9780312577230" },
-    { "title": "Becoming", "author": "Michelle Obama", "year": 2018, "isbn_13": "9781524763138" },
-    { "title": "Pachinko", "author": "Min Jin Lee", "year": 2017, "isbn_13": "9781455563920" },
-    { "title": "Lincoln in the Bardo", "author": "George Saunders", "year": 2017, "isbn_13": "9780812995343" },
-    { "title": "Evicted", "author": "Matthew Desmond", "year": 2016, "isbn_13": "9780553447439" },
-    { "title": "The Underground Railroad", "author": "Colson Whitehead", "year": 2016, "isbn_13": "9780385542364" },
-    { "title": "Between the World and Me", "author": "Ta-Nehisi Coates", "year": 2015, "isbn_13": "9780812993547" }
+    {
+      "title": "James",
+      "author": "Percival Everett",
+      "year": 2024,
+      "isbn_13": "9780385550369",
+      "description": "Everett retells Huckleberry Finn from Jim's perspective, revealing the intelligence and strategy behind his survival — he's been code-switching around white people his entire life. It's both genuinely funny and brutal about what enslaved people had to perform just to stay alive."
+    },
+    {
+      "title": "Intermezzo",
+      "author": "Sally Rooney",
+      "year": 2024,
+      "isbn_13": "9780374611996",
+      "description": "Two brothers in Dublin — one a successful lawyer juggling two relationships, the other an awkward chess player who falls for an older woman — circle each other in grief after their father's death. Rooney's most structurally ambitious book, moving between their perspectives to show how differently the same family can shape people."
+    },
+    {
+      "title": "Orbital",
+      "author": "Samantha Harvey",
+      "year": 2024,
+      "isbn_13": "9780802163783",
+      "description": "Six astronauts orbit Earth for 24 hours, experiencing sixteen sunrises while floating through mundane routines—rehydrating meals, exercising to prevent muscle loss, video-calling home. Harvey uses the tight confines and cosmic perspective to slow everything down into something meditative, more poem than plot."
+    },
+    {
+      "title": "The Women",
+      "author": "Kristin Hannah",
+      "year": 2024,
+      "isbn_13": "9781250178633",
+      "description": "Follows a young Army nurse through Vietnam and the brutal aftermath of coming home to an America that didn't want to acknowledge women served at all. Hannah does her usual thing — you'll cry, guaranteed — but the real hook is how she captures the specific isolation of these women: too traumatized for civilian life, too invisible for veteran support."
+    },
+    {
+      "title": "The Anxious Generation",
+      "author": "Jonathan Haidt",
+      "year": 2024,
+      "isbn_13": "9780593655030",
+      "description": "Haidt argues that smartphones and social media, not just helicopter parenting or academic pressure, are the primary drivers of the teen mental health crisis that started around 2012. He's got the data to back it up, and he's refreshingly direct about what parents and schools should actually do — delay smartphones, ban phones in schools, more unsupervised play — even if you'll argue with some of his conclusions."
+    },
+    {
+      "title": "All Fours",
+      "author": "Miranda July",
+      "year": 2024,
+      "isbn_13": "9780593714621",
+      "description": "A semi-famous artist leaves for a cross-country drive, exits the freeway thirty minutes later, checks into a motel, and blows up her whole life from there. July writes midlife female desire and restlessness with her signature deadpan weirdness — it's genuinely funny and uncomfortably intimate about what happens when a woman stops performing contentment."
+    },
+    {
+      "title": "Headshot",
+      "author": "Rita Bullwinkel",
+      "year": 2024,
+      "isbn_13": "9780593538920",
+      "description": "Eight teenage girls compete in a boxing tournament in Reno, and Bullwinkel uses each fight to tunnel into their pasts and futures—what brought them here, what they're running from, what violence and ambition feel like in their bodies. It's structurally inventive, almost hypnotic in how it moves through time, and genuinely captures that obsessive drive to be good at something physical."
+    },
+    {
+      "title": "The God of the Woods",
+      "author": "Liz Moore",
+      "year": 2024,
+      "isbn_13": "9780593472620",
+      "description": "A thirteen-year-old girl vanishes from an Adirondack summer camp in 1975, and the search pulls apart the wealthy family that owns the camp—especially since her brother disappeared the same way fourteen years earlier. Moore juggles multiple timelines and a big cast to excavate class tensions and old secrets; it reads like a meaty miniseries where every episode ends on a cliffhanger."
+    },
+    {
+      "title": "There's Always This Year",
+      "author": "Hanif Abdurraqib",
+      "year": 2024,
+      "isbn_13": "9780593317969",
+      "description": "Abdurraqib uses Ohio basketball—LeBron's rise, his father's single jump shot, the kids who didn't make it—as a way into questions about who gets to succeed and who gets left behind. It's memoir threaded through sports history, written with the associative leaps of poetry."
+    },
+    {
+      "title": "Everyone Who Is Gone Is Here",
+      "author": "Jonathan Blitzer",
+      "year": 2024,
+      "isbn_13": "9781594206122",
+      "description": "Blitzer spent years reporting on Central American migration for The New Yorker, and here he braids together the full picture: the gang violence and political collapse pushing people north from El Salvador, Guatemala, and Honduras alongside the decades of bungled American policy that's made the border what it is. It's dense with individual stories — migrants, activists, bureaucrats — and genuinely clarifies how we got here rather than just lamenting that we did."
+    },
+    {
+      "title": "Reading Genesis",
+      "author": "Marilynne Robinson",
+      "year": 2024,
+      "isbn_13": "9780374610685",
+      "description": "Robinson brings her novelist's eye to Genesis, reading it as literature rather than getting bogged down in scholarly debates about its textual origins or fundamentalist arguments about literal truth. She traces themes across the book with the same careful attention she gives her fiction, though you should know going in this is a deeply devotional work — she's interested in covenant and divine faithfulness, not skeptical distance."
+    },
+    {
+      "title": "The Ministry of Time",
+      "author": "Kaliane Bradley",
+      "year": 2024,
+      "isbn_13": "9781668050200",
+      "description": "A government worker in near-future Britain gets assigned to babysit a Victorian Arctic explorer yanked from his doomed expedition via time travel, and what starts as awkward roommate comedy—a man who died in 1847 encountering Spotify and exposed calves—turns into a genuine romance tangled up in workplace espionage. It's doing a lot of things at once (spy thriller, love story, colonialism critique) and mostly pulls it off with real wit."
+    },
+    {
+      "title": "Beautiful Days",
+      "author": "Zach Williams",
+      "year": 2024,
+      "isbn_13": "9780593538128",
+      "description": "Williams writes ten stories that feel like fever dreams about parenthood and mortality—a couple aging rapidly while their toddler stays frozen, an office worker dodging violence amid conspiracy theories, a tour guide encountering something inhuman. The collection keeps finding the creeping dread buried in ordinary domestic life."
+    },
+    {
+      "title": "Help Wanted",
+      "author": "Adelle Waldman",
+      "year": 2024,
+      "isbn_13": "9780393867879",
+      "description": "Waldman embeds herself in the 4 a.m. shift at a big-box store where the overnight stock crew barely scrapes by on limited hours, then watches them scheme together when a management position opens up. It's a workplace comedy that takes its characters' precarity seriously — funny about the petty dynamics and deadpan about how little margin these jobs actually leave."
+    },
+    {
+      "title": "Memory Piece",
+      "author": "Grace Chia Hui Ko",
+      "year": 2024,
+      "isbn_13": "9781250885098",
+      "description": ""
+    },
+    {
+      "title": "Of Boys and Men",
+      "author": "Richard V. Reeves",
+      "year": 2022,
+      "isbn_13": "9780815739371",
+      "description": "Reeves makes a straightforward case that boys and men are falling behind in schools and workplaces, then actually proposes fixes — like redshirting boys a year in school — rather than just hand-wringing. He's trying to carve out space to talk about male struggles without sliding into culture-war grievance, which makes this useful even if you don't buy every solution."
+    },
+    {
+      "title": "The Covenant of Water",
+      "author": "Abraham Verghese",
+      "year": 2023,
+      "isbn_13": "9780802162175",
+      "description": "A sprawling Kerala family saga where someone drowns in every generation — Verghese uses this curse to trace three generations of marriages, medical discoveries, and colonial-era India from 1900 to 1977. It's long and deliberately paced, with the same medical-realist texture as *Cutting for Stone*, so if you loved that one, this delivers more of it at even greater length."
+    },
+    {
+      "title": "Tomorrow, and Tomorrow, and Tomorrow",
+      "author": "Gabrielle Zevin",
+      "year": 2022,
+      "isbn_13": "9780593321201",
+      "description": "Two game designers who were childhood friends keep circling each other for decades — collaborating, falling out, reuniting — while building video games together. Zevin tracks how creative partnership can be as consuming and complicated as romance, with all the jealousy and codependence that entails."
+    },
+    {
+      "title": "Poverty, by America",
+      "author": "Matthew Desmond",
+      "year": 2023,
+      "isbn_13": "9780593239919",
+      "description": "Desmond's follow-up to *Evicted* flips the poverty conversation: instead of asking why poor people are poor, he asks how the rest of us actively benefit from keeping them that way—through wage suppression, housing exploitation, and a welfare state that funnels more to the comfortable than the struggling. It's a short, pointed indictment designed to make middle-class readers uncomfortable about their own complicity."
+    },
+    {
+      "title": "A Little Devil in America",
+      "author": "Hanif Abdurraqib",
+      "year": 2021,
+      "isbn_13": "9781984820297",
+      "description": "Abdurraqib writes essays about Black performance—Merry Clayton's twenty-seven seconds on \"Gimme Shelter,\" a game of spades, Josephine Baker's speech at the March on Washington—and finds in each moment layers of grief, joy, and American history tangled together. It's criticism that reads like memory, personal and precise."
+    },
+    {
+      "title": "The Removed",
+      "author": "Brandon Hobson",
+      "year": 2021,
+      "isbn_13": "9780062997142",
+      "description": "A Cherokee family still fragmented fifteen years after their son was shot by police slowly finds the boundary between daily life and the spirit world thinning as they approach their annual bonfire gathering. Hobson weaves in a foster child who mysteriously helps a man with Alzheimer's, a daughter's obsessive attachment to a stranger, and a son's journey through the Darkening Land after a suicide attempt—the mythic elements feel earned rather than decorative."
+    },
+    {
+      "title": "Crying in H Mart",
+      "author": "Michelle Zauner",
+      "year": 2021,
+      "isbn_13": "9780525657743",
+      "description": "Zauner traces her Korean identity through food — the specific dishes her mother made, the aisles of H Mart, the meals they shared in Seoul — and how that connection sharpened into focus only as her mother was dying of cancer. It's a grief memoir that earns its reputation, grounded in the sensory details of kimchi jjigae and tteokbokki rather than abstraction."
+    },
+    {
+      "title": "Four Hundred Souls",
+      "author": "Ibram X. Kendi",
+      "year": 2021,
+      "isbn_13": "9780593133248",
+      "description": "Ninety writers each take a five-year slice of Black American history from 1619 to now, mixing essays, poetry, and personal pieces — it's less a unified narrative than a deliberately fragmented chorus that resists any single story. Kendi and Blain use the anthology format to make a point about the diversity within Black experience, though the quality varies writer to writer."
+    },
+    {
+      "title": "A Promised Land",
+      "author": "Barack Obama",
+      "year": 2020,
+      "isbn_13": "9781524763169",
+      "description": "Obama's first-term memoir actually earns its 700 pages — he's genuinely reflective about the gap between campaign idealism and governing reality, from the financial crisis scramble to the Afghanistan troop surge debates. Best when he's honest about the loneliness of the job and the toll on his family, though he can slip into lawyer-careful mode when the material gets politically sensitive."
+    },
+    {
+      "title": "The Warmth of Other Suns",
+      "author": "Isabel Wilkerson",
+      "year": 2010,
+      "isbn_13": "9780679444329",
+      "description": "Wilkerson tracks the Great Migration through three people who left the Jim Crow South between 1937 and 1953 — a sharecropper's wife headed to Chicago, a Florida man bound for Harlem, a surgeon driving to California — and reconstructs their journeys in granular detail. It's narrative history that reads like a novel, built on years of interviews and research into the six million Black Americans who remade the country by leaving it."
+    },
+    {
+      "title": "Caste",
+      "author": "Isabel Wilkerson",
+      "year": 2020,
+      "isbn_13": "9780593230251",
+      "description": "Wilkerson argues that America operates on a caste system as rigid as India's or Nazi Germany's, and she builds the case through unexpected historical connections — like how Nazi officials studied Jim Crow laws as a model. It's dense with research but lands hardest in the small human moments, the everyday humiliations that reveal how deeply these hierarchies run."
+    },
+    {
+      "title": "How to Be an Antiracist",
+      "author": "Ibram X. Kendi",
+      "year": 2019,
+      "isbn_13": "9780525509288",
+      "description": "Kendi blends memoir with argument, tracing his own evolution from absorbing racist ideas to actively opposing them. He's less interested in defining who's racist than in examining policies and their effects—useful if you want a framework for thinking about systems rather than just individual attitudes."
+    },
+    {
+      "title": "The Vanishing Half",
+      "author": "Brit Bennett",
+      "year": 2020,
+      "isbn_13": "9780525536291",
+      "description": "Twin sisters from a small Louisiana town split at sixteen — one returns to raise her Black daughter there, while the other passes for white in Los Angeles, her husband oblivious to her past. Bennett traces both families across decades, showing how the choice to pass ripples through generations and how identity becomes something you perform, inherit, or flee."
+    },
+    {
+      "title": "Deacon King Kong",
+      "author": "James McBride",
+      "year": 2020,
+      "isbn_13": "9780735216723",
+      "description": "McBride turns a housing project shooting into a sprawling, funny ensemble piece about 1969 Brooklyn — church ladies, mobsters, cops, and the cranky old deacon who pulled the trigger all bumping into each other's lives. It's got the shaggy, big-hearted chaos of a neighborhood where everyone's in everyone else's business."
+    },
+    {
+      "title": "The Nickel Boys",
+      "author": "Colson Whitehead",
+      "year": 2019,
+      "isbn_13": "9780385537070",
+      "description": "Two Black teenagers in 1960s Florida end up at a brutal reform school where one keeps his idealism and the other knows survival means keeping your head down. Based on a real institution that operated for over a century, it's a gut-punch about what happens when those two approaches to injustice collide."
+    },
+    {
+      "title": "The Water Dancer",
+      "author": "Ta-Nehisi Coates",
+      "year": 2019,
+      "isbn_13": "9780399590597",
+      "description": "Coates gives his protagonist Hiram a supernatural memory power—he can transport people through water by channeling intense recollection—and uses it to literalize what slavery tried to destroy: the bonds between mothers and children, the persistence of family across forced separation. The fantasy element works because it's rooted in something real, and the prose has that controlled intensity Coates brings to everything."
+    },
+    {
+      "title": "Say Nothing",
+      "author": "Patrick Radden Keefe",
+      "year": 2019,
+      "isbn_13": "9780307279286",
+      "description": "Keefe reconstructs the 1972 abduction of Jean McConville—a Belfast widow dragged from her home by the IRA and \"disappeared\"—and uses it to unspool the whole brutal machinery of the Troubles: the bombers, the informers, the British spy games, and the peace that left everyone wondering if their violence meant anything. It's meticulous reporting that reads like a thriller, particularly in how it circles around Gerry Adams and the lies people tell themselves about war."
+    },
+    {
+      "title": "Educated",
+      "author": "Tara Westover",
+      "year": 2018,
+      "isbn_13": "9780399590504",
+      "description": "Tara Westover grew up in a survivalist Mormon family in Idaho — no school, no doctors, a father stockpiling for doomsday and a brother who beat her while everyone looked away. She taught herself enough to get into college at 17, eventually landing at Cambridge, but the real story is the brutal cost of choosing education over family loyalty."
+    },
+    {
+      "title": "The Great Alone",
+      "author": "Kristin Hannah",
+      "year": 2018,
+      "isbn_13": "9780312577230",
+      "description": "A damaged Vietnam vet drags his family to the Alaska wilderness in the 1970s, where the brutal isolation amplifies his volatility and forces his teenage daughter to figure out survival—both in the wild and in a home that's become its own kind of danger."
+    },
+    {
+      "title": "Becoming",
+      "author": "Michelle Obama",
+      "year": 2018,
+      "isbn_13": "9781524763138",
+      "description": "Michelle Obama's companion journal to her memoir, filled with prompts about family history, goals, and self-reflection — essentially a guided workbook for processing your own story alongside hers."
+    },
+    {
+      "title": "Pachinko",
+      "author": "Min Jin Lee",
+      "year": 2017,
+      "isbn_13": "9781455563920",
+      "description": "A Korean woman's impulsive choice to marry a stranger and flee to Japan in the 1930s ripples through four generations of her family, each one navigating what it means to be permanently foreign. Lee traces how the children and grandchildren of immigrants inherit both resilience and shame, building their lives around pachinko parlors and other trades that mainstream society won't touch."
+    },
+    {
+      "title": "Lincoln in the Bardo",
+      "author": "George Saunders",
+      "year": 2017,
+      "isbn_13": "9780812995343",
+      "description": "Saunders builds his novel from dozens of ghost voices trapped in the cemetery where Lincoln's young son Willie has just been buried — spirits who bicker, lie to themselves, and can't let go. It's formally weird (constructed almost entirely from overlapping monologues and historical fragments) but lands as genuinely funny and heartbroken, especially when Lincoln himself shows up to hold his dead boy one more time."
+    },
+    {
+      "title": "Evicted",
+      "author": "Matthew Desmond",
+      "year": 2016,
+      "isbn_13": "9780553447439",
+      "description": "Desmond embeds with eight Milwaukee families facing eviction and landlords profiting from them, documenting the grinding machinery of how people lose housing and how hard it is to recover. The granular reporting — court dates, moving trucks, motel rooms — makes visible a crisis most Americans never witness up close."
+    },
+    {
+      "title": "The Underground Railroad",
+      "author": "Colson Whitehead",
+      "year": 2016,
+      "isbn_13": "9780385542364",
+      "description": "Whitehead makes the Underground Railroad literal — actual tracks and tunnels beneath the South — and uses that conceit to send Cora through different states that each represent a distinct nightmare version of American racism. It's a chase novel with a relentless slave catcher on her heels, but each stop feels like visiting a different historical horror show."
+    },
+    {
+      "title": "Between the World and Me",
+      "author": "Ta-Nehisi Coates",
+      "year": 2015,
+      "isbn_13": "9780812993547",
+      "description": "Coates writes directly to his teenage son about what it means to live in a Black body in America — drawing on his own journey from the streets of Baltimore to Howard University to watching friends die. It's less a memoir than a reckoning with how American prosperity was built on Black bodies, written with the urgency of a father who can't promise his son safety."
+    }
   ]
 }

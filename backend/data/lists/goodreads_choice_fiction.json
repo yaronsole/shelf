@@ -2,19 +2,117 @@
   "slug": "goodreads_choice_fiction",
   "title": "Goodreads Choice: Fiction",
   "books": [
-    { "title": "James", "author": "Percival Everett", "year": 2024, "selected_date": "2024", "isbn_13": "9780385550369" },
-    { "title": "Yellowface", "author": "R.F. Kuang", "year": 2023, "selected_date": "2023", "isbn_13": "9780063250918" },
-    { "title": "Tomorrow, and Tomorrow, and Tomorrow", "author": "Gabrielle Zevin", "year": 2022, "selected_date": "2022", "isbn_13": "9780593321201" },
-    { "title": "Beautiful World, Where Are You", "author": "Sally Rooney", "year": 2021, "selected_date": "2021", "isbn_13": "9780374602604" },
-    { "title": "The Midnight Library", "author": "Matt Haig", "year": 2020, "selected_date": "2020", "isbn_13": "9780525559474" },
-    { "title": "Normal People", "author": "Sally Rooney", "year": 2019, "selected_date": "2019", "isbn_13": "9781984822185" },
-    { "title": "Washington Black", "author": "Esi Edugyan", "year": 2018, "selected_date": "2018", "isbn_13": "9780525520412" },
-    { "title": "Lincoln in the Bardo", "author": "George Saunders", "year": 2017, "selected_date": "2017", "isbn_13": "9780812995343" },
-    { "title": "All the Light We Cannot See", "author": "Anthony Doerr", "year": 2015, "selected_date": "2015", "isbn_13": "9781501173219" },
-    { "title": "The Goldfinch", "author": "Donna Tartt", "year": 2013, "selected_date": "2013", "isbn_13": "9780316055437" },
-    { "title": "Gone Girl", "author": "Gillian Flynn", "year": 2012, "selected_date": "2012", "isbn_13": "9780307588371" },
-    { "title": "The Night Circus", "author": "Erin Morgenstern", "year": 2011, "selected_date": "2011", "isbn_13": "9780307744432" },
-    { "title": "The Girl with the Dragon Tattoo", "author": "Stieg Larsson", "year": 2010, "selected_date": "2010", "isbn_13": "9780307949486" },
-    { "title": "The Help", "author": "Kathryn Stockett", "year": 2009, "selected_date": "2009", "isbn_13": "9780425232200" }
+    {
+      "title": "James",
+      "author": "Percival Everett",
+      "year": 2024,
+      "selected_date": "2024",
+      "isbn_13": "9780385550369",
+      "description": "Everett retells Huckleberry Finn from Jim's perspective, revealing the strategic performance enslaved people had to maintain around white folks — Jim code-switches between \"slave dialect\" and sharp, educated speech depending on who's watching. It's frequently funny and genuinely harrowing, tracking Jim's escape down the Mississippi in 1861 as he tries to get back to his family."
+    },
+    {
+      "title": "Yellowface",
+      "author": "R.F. Kuang",
+      "year": 2023,
+      "selected_date": "2023",
+      "isbn_13": "9780063250918",
+      "description": "A white author steals her dead Asian American friend's manuscript about Chinese WWI laborers, rebrands herself with an ethnically ambiguous pen name, and watches her lies compound as she justifies every terrible choice. Kuang writes it as darkly funny satire of publishing's diversity theater, but the real hook is June's utterly delusional first-person voice — you'll cringe-laugh while wanting to shake her."
+    },
+    {
+      "title": "Tomorrow, and Tomorrow, and Tomorrow",
+      "author": "Gabrielle Zevin",
+      "year": 2022,
+      "selected_date": "2022",
+      "isbn_13": "9780593321201",
+      "description": "Two game designers meet as kids, drift apart, reunite in college, and spend decades building video games together while navigating a relationship that's too tangled to be friendship but never becomes romance. Zevin gets the creative partnership right — how making something with another person can be more intimate than dating them, and just as likely to blow up."
+    },
+    {
+      "title": "Beautiful World, Where Are You",
+      "author": "Sally Rooney",
+      "year": 2021,
+      "selected_date": "2021",
+      "isbn_13": "9780374602604",
+      "description": "Two friends—a novelist and an editor—exchange long emails about capitalism, climate collapse, and whether romantic love still matters, while fumbling through their own relationships with men who confuse them. Rooney's doing her thing here: smart people overthinking everything, lots of texting, that specific anxiety of being a person with opinions in a world that feels like it's ending."
+    },
+    {
+      "title": "The Midnight Library",
+      "author": "Matt Haig",
+      "year": 2020,
+      "selected_date": "2020",
+      "isbn_13": "9780525559474",
+      "description": "Nora gets access to a library where she can try out all her what-if lives — the one where she became a glaciologist, stayed with her ex, kept up with swimming. It's a premise that could feel gimmicky, but Haig uses it to genuinely explore regret and what actually makes a life feel worth living."
+    },
+    {
+      "title": "Normal People",
+      "author": "Sally Rooney",
+      "year": 2019,
+      "selected_date": "2019",
+      "isbn_13": "9781984822185",
+      "description": "Follows two Irish teenagers from high school through university as they keep circling back to each other despite class differences and their own emotional cowardice. Rooney nails the way smart young people can be fluent in ideas but completely inarticulate about what they actually want from each other."
+    },
+    {
+      "title": "Washington Black",
+      "author": "Esi Edugyan",
+      "year": 2018,
+      "selected_date": "2018",
+      "isbn_13": "9780525520412",
+      "description": "A young slave on a Barbados plantation gets pulled into his master's brother's world of hot air balloons and naturalist expeditions, then spends the rest of the novel crossing continents as a fugitive trying to figure out who he is when he's no longer property. Edugyan is interested in the weird intimacy between Wash and his abolitionist mentor—how freedom given by someone else isn't quite freedom, and how that debt shapes everything that follows."
+    },
+    {
+      "title": "Lincoln in the Bardo",
+      "author": "George Saunders",
+      "year": 2017,
+      "selected_date": "2017",
+      "isbn_13": "9780812995343",
+      "description": "Saunders builds a ghost story around Lincoln grieving his dead son Willie, set in a purgatory populated by spirits who don't realize they're dead. The whole thing is told through a cacophony of overlapping voices — ghosts bickering and confessing, historical documents contradicting each other — and somehow lands as genuinely moving about grief and letting go."
+    },
+    {
+      "title": "All the Light We Cannot See",
+      "author": "Anthony Doerr",
+      "year": 2015,
+      "selected_date": "2015",
+      "isbn_13": "9781501173219",
+      "description": "A blind French girl and a German orphan with a gift for radios move through occupied France on converging paths — she's fled Paris with her father and a possibly cursed jewel, he's been conscripted to hunt the resistance. Doerr writes in short, crystalline chapters that toggle between their storylines, building toward Saint-Malo as the Allies close in."
+    },
+    {
+      "title": "The Goldfinch",
+      "author": "Donna Tartt",
+      "year": 2013,
+      "selected_date": "2013",
+      "isbn_13": "9780316055437",
+      "description": "A 13-year-old loses his mother in a museum bombing and walks out with a tiny Dutch masterpiece he shouldn't have — a theft that shadows him for decades through foster homes, drug habits, and the shady antiques trade. Tartt takes her time (nearly 800 pages), but the book earns it by making you feel how grief and guilt can calcify around a single object."
+    },
+    {
+      "title": "Gone Girl",
+      "author": "Gillian Flynn",
+      "year": 2012,
+      "selected_date": "2012",
+      "isbn_13": "9780307588371",
+      "description": "Nick and Amy seem like the perfect couple until Amy vanishes on their fifth anniversary, and Flynn keeps flipping the script on who you're supposed to trust. It's a marriage-as-psychological-warfare thriller where every chapter makes you revise your theory about what actually happened."
+    },
+    {
+      "title": "The Night Circus",
+      "author": "Erin Morgenstern",
+      "year": 2011,
+      "selected_date": "2011",
+      "isbn_13": "9780307744432",
+      "description": "Two rival magicians, raised from childhood to destroy each other, instead fall in love while building increasingly impossible wonders inside a mysterious black-and-white circus that appears without warning. Morgenstern treats magic like architecture—every chapter adds another elaborately constructed tent or illusion—and the whole thing reads like wandering through the world's most aesthetically obsessive Instagram feed, in the best way."
+    },
+    {
+      "title": "The Girl with the Dragon Tattoo",
+      "author": "Stieg Larsson",
+      "year": 2010,
+      "selected_date": "2010",
+      "isbn_13": "9780307949486",
+      "description": "A disgraced journalist and a brilliant, antisocial hacker dig into a decades-old disappearance on a wealthy Swedish family's private island, uncovering old murders and ugly secrets the family would rather keep buried. It's a slow-burn mystery that rewards patience—Larsson piles on corporate intrigue, family dysfunction, and violence, and Lisbeth Salander is one of those characters who takes over every scene she's in."
+    },
+    {
+      "title": "The Help",
+      "author": "Kathryn Stockett",
+      "year": 2009,
+      "selected_date": "2009",
+      "isbn_13": "9780425232200",
+      "description": "Set in 1962 Mississippi, three women—two Black maids and a white college grad—secretly collaborate on a book exposing what it's really like to work in white households. Stockett writes the friction and risk of that project with real tension, though the framing through a white protagonist's perspective has drawn fair criticism."
+    }
   ]
 }

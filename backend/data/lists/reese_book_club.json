@@ -1,46 +1,251 @@
 {
   "slug": "reese_book_club",
   "books": [
-    { "title": "Eleanor Oliphant Is Completely Fine", "author": "Gail Honeyman", "year": 2017 },
-    { "title": "The Alice Network", "author": "Kate Quinn", "year": 2017 },
-    { "title": "Little Fires Everywhere", "author": "Celeste Ng", "year": 2017 },
-    { "title": "The Light We Lost", "author": "Jill Santopolo", "year": 2017 },
-    { "title": "The Rules of Magic", "author": "Alice Hoffman", "year": 2017 },
-    { "title": "The Last Mrs. Parrish", "author": "Liv Constantine", "year": 2017 },
-    { "title": "The Lying Game", "author": "Ruth Ware", "year": 2017 },
-    { "title": "One Day in December", "author": "Josie Silver", "year": 2018 },
-    { "title": "Where the Crawdads Sing", "author": "Delia Owens", "year": 2018 },
-    { "title": "Conversations with Friends", "author": "Sally Rooney", "year": 2017 },
-    { "title": "Daisy Jones & The Six", "author": "Taylor Jenkins Reid", "year": 2019 },
-    { "title": "The Last Romantics", "author": "Tara Conklin", "year": 2019 },
-    { "title": "The Proposal", "author": "Jasmine Guillory", "year": 2018 },
-    { "title": "The Giver of Stars", "author": "Jojo Moyes", "year": 2019 },
-    { "title": "Such a Fun Age", "author": "Kiley Reid", "year": 2019 },
-    { "title": "The Henna Artist", "author": "Alka Joshi", "year": 2020 },
-    { "title": "The Vanishing Half", "author": "Brit Bennett", "year": 2020 },
-    { "title": "The Guest List", "author": "Lucy Foley", "year": 2020 },
-    { "title": "Group", "author": "Christie Tate", "year": 2020 },
-    { "title": "Outlawed", "author": "Anna North", "year": 2021 },
-    { "title": "The Last Thing He Told Me", "author": "Laura Dave", "year": 2021 },
-    { "title": "Malibu Rising", "author": "Taylor Jenkins Reid", "year": 2021 },
-    { "title": "Seven Days in June", "author": "Tia Williams", "year": 2021 },
-    { "title": "The Love Songs of W.E.B. Du Bois", "author": "Honorée Fanonne Jeffers", "year": 2021 },
-    { "title": "Beautiful Country", "author": "Qian Julie Wang", "year": 2021 },
-    { "title": "Honor", "author": "Thrity Umrigar", "year": 2022 },
-    { "title": "The School for Good Mothers", "author": "Jessamine Chan", "year": 2022 },
-    { "title": "Black Cake", "author": "Charmaine Wilkerson", "year": 2022 },
-    { "title": "Lessons in Chemistry", "author": "Bonnie Garmus", "year": 2022 },
-    { "title": "Carrie Soto Is Back", "author": "Taylor Jenkins Reid", "year": 2022 },
-    { "title": "The Marriage Portrait", "author": "Maggie O'Farrell", "year": 2022 },
-    { "title": "Mika in Real Life", "author": "Emiko Jean", "year": 2022 },
-    { "title": "The Light Pirate", "author": "Lily Brooks-Dalton", "year": 2022 },
-    { "title": "Hello Beautiful", "author": "Ann Napolitano", "year": 2023 },
-    { "title": "Maame", "author": "Jessica George", "year": 2023 },
-    { "title": "Bright Young Women", "author": "Jessica Knoll", "year": 2023 },
-    { "title": "The Many Lives of Mama Love", "author": "Lara Love Hardin", "year": 2023 },
-    { "title": "The Magnolia Palace", "author": "Fiona Davis", "year": 2022 },
-    { "title": "The Family", "author": "Naomi Krupitsky", "year": 2021 },
-    { "title": "Tom Lake", "author": "Ann Patchett", "year": 2023 },
-    { "title": "The Maid", "author": "Nita Prose", "year": 2022 }
+    {
+      "title": "Eleanor Oliphant Is Completely Fine",
+      "author": "Gail Honeyman",
+      "year": 2017,
+      "description": "Eleanor runs her life on a rigid schedule of work, frozen pizza, and vodka-fueled calls with her mother, convinced this counts as fine. When she and a schlubby IT coworker rescue an old man who's fallen on the sidewalk, the unlikely friendship that forms starts cracking open years of carefully maintained isolation—and the darker reasons behind it."
+    },
+    {
+      "title": "The Alice Network",
+      "author": "Kate Quinn",
+      "year": 2017,
+      "description": "Two timelines braid together: a pregnant American in 1947 searching for her cousin who vanished in Nazi-occupied France, and a young WWI spy recruited into a real network of female agents behind German lines. Quinn does the dual-narrative thing well here, with the older spy — now bitter and drunk in postwar London — forced to revisit the betrayal that ended her career when the young American shows up asking questions."
+    },
+    {
+      "title": "Little Fires Everywhere",
+      "author": "Celeste Ng",
+      "year": 2017,
+      "description": "A fire opens the novel, but the real conflagration is the slow collision between two families in a wealthy Ohio suburb: the Richardsons, who believe in rules and order, and Mia, an itinerant artist whose presence exposes the cracks in their carefully maintained world. Ng is especially sharp on the lies comfortable people tell themselves about fairness and belonging."
+    },
+    {
+      "title": "The Light We Lost",
+      "author": "Jill Santopolo",
+      "year": 2017,
+      "description": "Lucy and Gabe meet at Columbia on 9/11, fall hard, then spend thirteen years circling each other while he chases war photography overseas and she builds a life in New York. It's told entirely in second person addressed to Gabe, which either pulls you in or drives you crazy—and that ending will genuinely gut you."
+    },
+    {
+      "title": "The Rules of Magic",
+      "author": "Alice Hoffman",
+      "year": 2017,
+      "description": "A prequel to *Practical Magic* set in 1960s New York, following three Owens siblings — a difficult redhead, a mind-reading beauty, and a troublemaking brother — as they break every rule their mother sets to keep them from discovering their witchcraft and, worse, falling in love. Hoffman does her cozy-gothic thing well here, though it's more about atmosphere and family lore than plot."
+    },
+    {
+      "title": "The Last Mrs. Parrish",
+      "author": "Liv Constantine",
+      "year": 2017,
+      "description": "A schemer worms her way into a wealthy Connecticut family by befriending the glossy wife while angling for the husband—then the book pulls a sharp mid-point reversal that reframes everything you thought you knew about who's actually playing whom. It's trashy in the best way, built for one-sitting consumption."
+    },
+    {
+      "title": "The Lying Game",
+      "author": "Ruth Ware",
+      "year": 2017,
+      "description": "Four women who bonded over a lying game at boarding school get pulled back to their seaside town when the past they've been running from—including their art teacher's disappearance—starts catching up with them. Ware does her usual closed-circle suspicion thing, slowly revealing which of these lifelong friends might still be playing the game."
+    },
+    {
+      "title": "One Day in December",
+      "author": "Josie Silver",
+      "year": 2018,
+      "description": "Laurie spots a stranger through a bus window, feels that instant jolt of recognition, then watches the bus pull away — only to meet him months later as her best friend's new boyfriend. The book follows all three of them over ten years, and Silver makes you genuinely conflicted about who deserves what, which is harder to pull off than it sounds."
+    },
+    {
+      "title": "Where the Crawdads Sing",
+      "author": "Delia Owens",
+      "year": 2018,
+      "description": "A girl abandoned by her family grows up feral in a North Carolina marsh, teaching herself to survive among the tides and seabirds — then becomes the prime suspect when a local man turns up dead. Owens braids a murder mystery with a lonely, stubborn coming-of-age, though the real draw is how vividly she writes the marsh itself, all mud and mollusks and indifferent beauty."
+    },
+    {
+      "title": "Conversations with Friends",
+      "author": "Sally Rooney",
+      "year": 2017,
+      "description": "Frances, a Dublin student, falls into an affair with an older married man while navigating her complicated dynamic with her ex-girlfriend and best friend Bobbi. Rooney nails the specific self-deceptions of being young and intellectual — Frances thinks she's above messy emotions until she's completely undone by them."
+    },
+    {
+      "title": "Daisy Jones & The Six",
+      "author": "Taylor Jenkins Reid",
+      "year": 2019,
+      "description": "A fake oral history of a '70s rock band's implosion, told through interviews with band members, producers, and hangers-on. Reid nails the Fleetwood Mac energy — the onstage chemistry, offstage addiction spirals, and the specific way creative partnerships get tangled up with romantic ones."
+    },
+    {
+      "title": "The Last Romantics",
+      "author": "Tara Conklin",
+      "year": 2019,
+      "description": "A poet looks back on the summer that derailed her Connecticut family—their father's death, a feral stretch of unsupervised childhood, and how those months shaped the loyalties and resentments between four siblings for decades. Conklin traces how one brother becomes everyone's project and burden, and what happens when the family mythology finally cracks."
+    },
+    {
+      "title": "The Proposal",
+      "author": "Jasmine Guillory",
+      "year": 2018,
+      "description": "A woman gets publicly rejected after her boyfriend proposes at a Dodgers game (he can't even spell her name right), then falls into a no-strings fling with the cute doctor who helped her escape the stadium cameras. Guillory's good at letting the fun, food-filled hangouts slowly become something more complicated than either person planned for."
+    },
+    {
+      "title": "The Giver of Stars",
+      "author": "Jojo Moyes",
+      "year": 2019,
+      "description": "Five women in 1930s Kentucky become packhorse librarians, riding through Appalachian terrain to deliver books to remote communities. Moyes builds the story around their friendships and the inevitable clash with local men who don't like women operating independently — it's historical fiction that's genuinely fun to read, even when it gets heavy."
+    },
+    {
+      "title": "Such a Fun Age",
+      "author": "Kiley Reid",
+      "year": 2019,
+      "description": "A Black babysitter gets accused of kidnapping while watching her white employer's kid at a grocery store, and the fallout exposes how the well-meaning liberal mom's attempts to \"fix\" things are really about her own guilt and image. Reid is sharp about the awkwardness of paid intimacy — who's performing for whom, and what happens when good intentions become their own kind of condescension."
+    },
+    {
+      "title": "The Henna Artist",
+      "author": "Alka Joshi",
+      "year": 2020,
+      "description": "Lakshmi escapes an abusive marriage at seventeen and builds a life as Jaipur's most sought-after henna artist to wealthy women in the 1950s, holding their secrets while hiding her own past. Then her husband shows up with a sister she never knew existed, and Joshi uses this setup to dig into what independence actually costs when you're a woman navigating traditional society's sharp edges."
+    },
+    {
+      "title": "The Vanishing Half",
+      "author": "Brit Bennett",
+      "year": 2020,
+      "description": "Twin sisters grow up in a small Black Louisiana town, then split — one returns to raise her dark-skinned daughter there, while the other passes for white in Los Angeles, hiding her entire history from her husband and child. Bennett traces both families across decades, watching how the sisters' choices ripple through their daughters' lives when those cousins inevitably cross paths."
+    },
+    {
+      "title": "The Guest List",
+      "author": "Lucy Foley",
+      "year": 2020,
+      "description": "A murder mystery set at a glossy destination wedding on a remote Irish island, where each chapter shifts between suspects—the bridesmaid, the best man, the wedding planner—slowly revealing how their grudges and secrets connect to the body that turns up mid-reception. It's doing the Agatha Christie locked-room thing with a contemporary influencer-culture sheen."
+    },
+    {
+      "title": "Group",
+      "author": "Christie Tate",
+      "year": 2020,
+      "description": "Christie Tate was a top law student with a controlled eating disorder who still fantasized about dying—so she joined a therapy group where she had to share everything with strangers. This memoir tracks her slow, awkward, sometimes absurd path from total emotional isolation to actually letting people know her, with all the cringeworthy honesty that entails."
+    },
+    {
+      "title": "Outlawed",
+      "author": "Anna North",
+      "year": 2021,
+      "description": "In an alternate Old West where barren women get hanged as witches, a midwife joins an all-female outlaw gang plotting to carve out a place where society's rejects can actually survive. It's a feminist heist Western that takes the genre's lone gunslinger mythology and hands it to the people usually left out of those stories."
+    },
+    {
+      "title": "The Last Thing He Told Me",
+      "author": "Laura Dave",
+      "year": 2021,
+      "description": "Hannah's husband vanishes, leaving only a cryptic note telling her to protect his teenage stepdaughter — who can't stand her. What follows is part mystery (who was Owen, really?) and part reluctant road-trip bonding as Hannah and Bailey dig into his past together, with feds circling the whole time."
+    },
+    {
+      "title": "Malibu Rising",
+      "author": "Taylor Jenkins Reid",
+      "year": 2021,
+      "description": "It's 1983 Malibu, and the four Riva siblings—gorgeous, famous, children of a crooner who abandoned them—are throwing their legendary end-of-summer party while privately unraveling with secrets and resentments. Reid does her signature thing of making celebrity feel both mythic and messy, and the whole book barrels toward a house fire with satisfying inevitability."
+    },
+    {
+      "title": "Seven Days in June",
+      "author": "Tia Williams",
+      "year": 2021,
+      "description": "Two erotica writers who had an intense teenage fling run into each other fifteen years later at a Brooklyn literary event, and Williams uses their week of reconnecting to dig into chronic pain, single motherhood, and the way they've been leaving coded messages for each other in their published novels all along. It's genuinely funny and very steamy, with a sharp eye for the Black literary scene."
+    },
+    {
+      "title": "The Love Songs of W.E.B. Du Bois",
+      "author": "Honorée Fanonne Jeffers",
+      "year": 2021,
+      "description": "Follows Ailey Pearl Garfield between her northern city life and summers in rural Georgia while simultaneously unspooling her family's history back through slavery, tenant farming, and the Indigenous people who were there before. It's genuinely long and dense — Jeffers is a poet and it shows in the sentences — but the payoff is watching Ailey piece together how centuries of survival, violence, and stubborn love shaped the specific person she's becoming."
+    },
+    {
+      "title": "Beautiful Country",
+      "author": "Qian Julie Wang",
+      "year": 2021,
+      "description": "Wang's memoir captures her childhood as an undocumented seven-year-old in 1990s New York—sweatshop-working parents who'd been professors in China, learning English through Berenstain Bears books, finding small treasures in Brooklyn trash on \"shopping days.\" It's the specific textures of poverty and fear that land hardest: her mother hiding an illness because doctors cost money and ask questions."
+    },
+    {
+      "title": "Honor",
+      "author": "Thrity Umrigar",
+      "year": 2022,
+      "description": "Umrigar sends an Indian American journalist back to India to cover an honor violence case, then uses that assignment to crack open the journalist's own buried family trauma. It's doing double duty — reporting on a Hindu-Muslim marriage that turned deadly while asking what it costs to leave a country and what it means to return."
+    },
+    {
+      "title": "The School for Good Mothers",
+      "author": "Jessamine Chan",
+      "year": 2022,
+      "description": "A Chinese American mom leaves her toddler alone for two hours on a bad day, and the state sends her to a dystopian reform school where mothers practice parenting on creepy AI dolls while being surveilled and scored. Chan takes helicopter parenting anxiety to its logical nightmare conclusion — it's satirical but plays it straight enough to feel genuinely unsettling."
+    },
+    {
+      "title": "Black Cake",
+      "author": "Charmaine Wilkerson",
+      "year": 2022,
+      "description": "A mother's deathbed voice recording sends her estranged adult children down a rabbit hole of family secrets—murder accusations, a disappeared sibling, a swimmer who fled the Caribbean decades ago. Wilkerson hops between timelines and islands, using the titular recipe as connective tissue between generations of women keeping dangerous secrets from each other."
+    },
+    {
+      "title": "Lessons in Chemistry",
+      "author": "Bonnie Garmus",
+      "year": 2022,
+      "description": "A 1960s chemist gets pushed out of her lab job and accidentally becomes a TV cooking show host who teaches housewives recipes using scientific terminology — it's basically a wish-fulfillment fantasy about a brilliant woman refusing to dumb herself down, with a deadpan humor that lands more often than not."
+    },
+    {
+      "title": "Carrie Soto Is Back",
+      "author": "Taylor Jenkins Reid",
+      "year": 2022,
+      "description": "Reid writes a retired tennis legend—prickly, ruthless, the kind of champion people respect but don't like—who comes back at 37 to reclaim a record, training alongside her aging father and an ex-flame she never quite let in. It's really about what it costs to be the best and whether winning is enough when you've pushed everyone away to get there."
+    },
+    {
+      "title": "The Marriage Portrait",
+      "author": "Maggie O'Farrell",
+      "year": 2022,
+      "description": "O'Farrell reconstructs the short life of Lucrezia de' Medici, married off at fifteen to the Duke of Ferrara, slowly realizing her new husband may be planning to kill her. It's a claustrophobic thriller dressed in Renaissance silks—less about court intrigue than about a girl learning to read danger in every gesture and glance."
+    },
+    {
+      "title": "Mika in Real Life",
+      "author": "Emiko Jean",
+      "year": 2022,
+      "description": "Mika's a 35-year-old whose life is genuinely falling apart when the daughter she placed for adoption sixteen years ago reaches out—and Mika, desperate to seem worthy, starts lying about basically everything. Jean balances the comedic spiral of Mika's fabricated life with the real emotional stakes of reconnecting with her daughter and tentatively falling for the girl's widowed dad, while weaving in Mika's complicated relationship with her Japanese heritage and parents."
+    },
+    {
+      "title": "The Light Pirate",
+      "author": "Lily Brooks-Dalton",
+      "year": 2022,
+      "description": "Florida's slow drowning unfolds through four sections tracking a girl born during a hurricane who grows up as civilization withdraws and the swamps reclaim the coast. Brooks-Dalton grounds the climate collapse in mundane specifics—power outages, supply chain failures, the logistics of staying when everyone else leaves—making the premise feel more like documentary than disaster movie."
+    },
+    {
+      "title": "Hello Beautiful",
+      "author": "Ann Napolitano",
+      "year": 2023,
+      "description": "A modern riff on Little Women following four Chicago sisters whose tight bond fractures when one of them marries William, a guy so numbed by his lonely childhood he doesn't know how to stay present in his own life. Napolitano tracks the fallout across decades — estrangements, grudges, the slow work of figuring out if family can survive actual betrayal."
+    },
+    {
+      "title": "Maame",
+      "author": "Jessica George",
+      "year": 2023,
+      "description": "Maddie's been caring for her Parkinson's-stricken dad while her mom stays mostly absent in Ghana, so when she finally gets the chance to move out and have a life in London—dating, friends, actual fun—she goes for it. George nails that specific guilt of being a first-gen kid caught between duty and wanting your own existence, and she's genuinely funny about the awkwardness of figuring yourself out in your twenties."
+    },
+    {
+      "title": "Bright Young Women",
+      "author": "Jessica Knoll",
+      "year": 2023,
+      "description": "Knoll retells the Ted Bundy murders from the perspective of the women he killed and the people who loved them—a deliberate refusal to give the killer the spotlight. It's part true-crime reconstruction, part argument that our obsession with charismatic monsters has always come at the expense of the victims who deserved our attention."
+    },
+    {
+      "title": "The Many Lives of Mama Love",
+      "author": "Lara Love Hardin",
+      "year": 2023,
+      "description": "Hardin was a suburban mom who got hooked on opiates and started stealing identities to fund her habit until she landed in a California prison, where she became the go-to letter writer for other inmates. It's a genuinely funny, unflinching account of addiction and reinvention that earns its redemption arc by not skipping over the ugly parts."
+    },
+    {
+      "title": "The Magnolia Palace",
+      "author": "Fiona Davis",
+      "year": 2022,
+      "description": "Two timelines in the Frick mansion — a 1919 artist's model who posed for half the statues in New York takes a secretarial job with the demanding Helen Frick and gets pulled into family drama involving stolen jewels and possible murder, while in the 1960s a model on a Vogue shoot discovers hidden clues that connect back to those old secrets. Davis does her usual thing of making you feel like you actually know the building and its weird rich family history."
+    },
+    {
+      "title": "The Family",
+      "author": "Naomi Krupitsky",
+      "year": 2021,
+      "description": "Two Italian-American girls grow up inseparable in mid-century Brooklyn, their fathers both deep in the mob — until one dad disappears and the silence around it starts pulling them apart. Krupitsky follows Sofia and Antonia through decades as they become wives and mothers still tangled in Family business, building toward an inevitable reckoning between friendship and loyalty."
+    },
+    {
+      "title": "Tom Lake",
+      "author": "Ann Patchett",
+      "year": 2023,
+      "description": ""
+    },
+    {
+      "title": "The Maid",
+      "author": "Nita Prose",
+      "year": 2022,
+      "description": "A cozy locked-room mystery where a hotel maid who struggles to read social cues finds a wealthy guest dead and becomes the prime suspect. Molly's literal-minded narration makes her both an unreliable detective and genuinely endearing—it's a gentle whodunit that's more interested in her finding unexpected friendships than in being dark or twisty."
+    }
   ]
 }

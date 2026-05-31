@@ -2,64 +2,477 @@
   "slug": "pulitzer_fiction",
   "title": "Pulitzer Prize Fiction",
   "books": [
-    { "title": "James", "author": "Percival Everett", "year": 2025, "selected_date": "2025", "isbn_13": "9780385550369" },
-    { "title": "Long Island Compromise", "author": "Taffy Brodesser-Akner", "year": 2024, "selected_date": "2024", "isbn_13": "9780593493755" },
-    { "title": "Demon Copperhead", "author": "Barbara Kingsolver", "year": 2023, "selected_date": "2023", "isbn_13": "9780063251922" },
-    { "title": "Trust", "author": "Hernan Diaz", "year": 2023, "selected_date": "2023", "isbn_13": "9780593320860" },
-    { "title": "The Netanyahus", "author": "Joshua Cohen", "year": 2022, "selected_date": "2022", "isbn_13": "9781954118027" },
-    { "title": "The Night Watchman", "author": "Louise Erdrich", "year": 2021, "selected_date": "2021", "isbn_13": "9780062671189" },
-    { "title": "The Nickel Boys", "author": "Colson Whitehead", "year": 2020, "selected_date": "2020", "isbn_13": "9780385537070" },
-    { "title": "The Overstory", "author": "Richard Powers", "year": 2019, "selected_date": "2019", "isbn_13": "9780393356687" },
-    { "title": "Less", "author": "Andrew Sean Greer", "year": 2018, "selected_date": "2018", "isbn_13": "9780316316132" },
-    { "title": "The Underground Railroad", "author": "Colson Whitehead", "year": 2017, "selected_date": "2017", "isbn_13": "9780385542364" },
-    { "title": "The Sympathizer", "author": "Viet Thanh Nguyen", "year": 2016, "selected_date": "2016", "isbn_13": "9780802123459" },
-    { "title": "All the Light We Cannot See", "author": "Anthony Doerr", "year": 2015, "selected_date": "2015", "isbn_13": "9781501173219" },
-    { "title": "The Goldfinch", "author": "Donna Tartt", "year": 2014, "selected_date": "2014", "isbn_13": "9780316055437" },
-    { "title": "The Orphan Master's Son", "author": "Adam Johnson", "year": 2013, "selected_date": "2013", "isbn_13": "9780812982626" },
-    { "title": "A Visit from the Goon Squad", "author": "Jennifer Egan", "year": 2011, "selected_date": "2011", "isbn_13": "9780307477477" },
-    { "title": "Tinkers", "author": "Paul Harding", "year": 2010, "selected_date": "2010", "isbn_13": "9781934137123" },
-    { "title": "Olive Kitteridge", "author": "Elizabeth Strout", "year": 2009, "selected_date": "2009", "isbn_13": "9780812971583" },
-    { "title": "The Brief Wondrous Life of Oscar Wao", "author": "Junot Diaz", "year": 2008, "selected_date": "2008", "isbn_13": "9781594483233" },
-    { "title": "The Road", "author": "Cormac McCarthy", "year": 2007, "selected_date": "2007", "isbn_13": "9780307387899" },
-    { "title": "March", "author": "Geraldine Brooks", "year": 2006, "selected_date": "2006", "isbn_13": "9780143036661" },
-    { "title": "Gilead", "author": "Marilynne Robinson", "year": 2005, "selected_date": "2005", "isbn_13": "9780312426521" },
-    { "title": "The Known World", "author": "Edward P. Jones", "year": 2004, "selected_date": "2004", "isbn_13": "9780061010989" },
-    { "title": "Middlesex", "author": "Jeffrey Eugenides", "year": 2003, "selected_date": "2003", "isbn_13": "9780374199692" },
-    { "title": "Empire Falls", "author": "Richard Russo", "year": 2002, "selected_date": "2002", "isbn_13": "9780375726408" },
-    { "title": "The Amazing Adventures of Kavalier & Clay", "author": "Michael Chabon", "year": 2001, "selected_date": "2001", "isbn_13": "9780312282998" },
-    { "title": "Interpreter of Maladies", "author": "Jhumpa Lahiri", "year": 2000, "selected_date": "2000", "isbn_13": "9780618104208" },
-    { "title": "The Hours", "author": "Michael Cunningham", "year": 1999, "selected_date": "1999", "isbn_13": "9780312243029" },
-    { "title": "American Pastoral", "author": "Philip Roth", "year": 1998, "selected_date": "1998", "isbn_13": "9780375701429" },
-    { "title": "Martin Dressler", "author": "Steven Millhauser", "year": 1997, "selected_date": "1997", "isbn_13": "9780679781271" },
-    { "title": "Independence Day", "author": "Richard Ford", "year": 1996, "selected_date": "1996", "isbn_13": "9780679745297" },
-    { "title": "The Stone Diaries", "author": "Carol Shields", "year": 1995, "selected_date": "1995", "isbn_13": "9780140250398" },
-    { "title": "The Shipping News", "author": "Annie Proulx", "year": 1994, "selected_date": "1994", "isbn_13": "9780684190204" },
-    { "title": "A Good Scent from a Strange Mountain", "author": "Robert Olen Butler", "year": 1993, "selected_date": "1993", "isbn_13": "9780802135711" },
-    { "title": "A Thousand Acres", "author": "Jane Smiley", "year": 1992, "selected_date": "1992", "isbn_13": "9780804114172" },
-    { "title": "Rabbit at Rest", "author": "John Updike", "year": 1991, "selected_date": "1991", "isbn_13": "9780449911815" },
-    { "title": "The Mambo Kings Play Songs of Love", "author": "Oscar Hijuelos", "year": 1990, "selected_date": "1990", "isbn_13": "9780060972127" },
-    { "title": "Breathing Lessons", "author": "Anne Tyler", "year": 1989, "selected_date": "1989", "isbn_13": "9780425114650" },
-    { "title": "Beloved", "author": "Toni Morrison", "year": 1988, "selected_date": "1988", "isbn_13": "9781400033416" },
-    { "title": "A Summons to Memphis", "author": "Peter Taylor", "year": 1987, "selected_date": "1987", "isbn_13": "9780345344441" },
-    { "title": "Foreign Affairs", "author": "Alison Lurie", "year": 1985, "selected_date": "1985", "isbn_13": "9780380699379" },
-    { "title": "Ironweed", "author": "William Kennedy", "year": 1984, "selected_date": "1984", "isbn_13": "9780140070439" },
-    { "title": "The Color Purple", "author": "Alice Walker", "year": 1983, "selected_date": "1983", "isbn_13": "9780156028356" },
-    { "title": "Rabbit Is Rich", "author": "John Updike", "year": 1982, "selected_date": "1982", "isbn_13": "9780449911556" },
-    { "title": "The Executioner's Song", "author": "Norman Mailer", "year": 1980, "selected_date": "1980", "isbn_13": "9780316544269" },
-    { "title": "The Stories of John Cheever", "author": "John Cheever", "year": 1979, "selected_date": "1979", "isbn_13": "9780375724428" },
-    { "title": "Elbow Room", "author": "James Alan McPherson", "year": 1978, "selected_date": "1978", "isbn_13": "9780684157047" },
-    { "title": "Humboldt's Gift", "author": "Saul Bellow", "year": 1976, "selected_date": "1976", "isbn_13": "9780140189360" },
-    { "title": "The Killer Angels", "author": "Michael Shaara", "year": 1975, "selected_date": "1975", "isbn_13": "9780345348104" },
-    { "title": "The Optimist's Daughter", "author": "Eudora Welty", "year": 1973, "selected_date": "1973", "isbn_13": "9780679749189" },
-    { "title": "Angle of Repose", "author": "Wallace Stegner", "year": 1972, "selected_date": "1972", "isbn_13": "9780143105695" },
-    { "title": "Collected Stories", "author": "Jean Stafford", "year": 1970, "selected_date": "1970", "isbn_13": "9780374139858" },
-    { "title": "House Made of Dawn", "author": "N. Scott Momaday", "year": 1969, "selected_date": "1969", "isbn_13": "9780062748638" },
-    { "title": "The Fixer", "author": "Bernard Malamud", "year": 1967, "selected_date": "1967", "isbn_13": "9780374529277" },
-    { "title": "Collected Stories", "author": "Katherine Anne Porter", "year": 1966, "selected_date": "1966", "isbn_13": "9780156188760" },
-    { "title": "To Kill a Mockingbird", "author": "Harper Lee", "year": 1961, "selected_date": "1961", "isbn_13": "9780061743528" },
-    { "title": "The Old Man and the Sea", "author": "Ernest Hemingway", "year": 1953, "selected_date": "1953", "isbn_13": "9780684801223" },
-    { "title": "The Way West", "author": "A.B. Guthrie", "year": 1950, "selected_date": "1950", "isbn_13": "9780395702673" },
-    { "title": "Guard of Honor", "author": "James Gould Cozzens", "year": 1949, "selected_date": "1949", "isbn_13": "9780156002967" },
-    { "title": "Tales of the South Pacific", "author": "James A. Michener", "year": 1948, "selected_date": "1948", "isbn_13": "9780449206829" }
+    {
+      "title": "James",
+      "author": "Percival Everett",
+      "year": 2025,
+      "selected_date": "2025",
+      "isbn_13": "9780385550369",
+      "description": "Everett retells *Huckleberry Finn* from Jim's perspective, and the central conceit is devastating: Jim and the other enslaved characters speak in dialect around white people as a survival tactic, code-switching into sharp, philosophical prose when alone. It's funny and brutal, using Twain's framework to say things Twain couldn't or wouldn't."
+    },
+    {
+      "title": "Long Island Compromise",
+      "author": "Taffy Brodesser-Akner",
+      "year": 2024,
+      "selected_date": "2024",
+      "isbn_13": "9780593493755",
+      "description": "The Fletchers are wealthy Long Island Jews who never recovered from a 1980 kidnapping — the father obsessively seeks closure, the mother manages his fragility, and their three adult children have each built their identities around trauma they barely remember. Brodesser-Akner uses the family's money problems to poke at how wealth both protects and poisons, with the same sharp eye for self-deception she brought to *Fleishman Is in Trouble*."
+    },
+    {
+      "title": "Demon Copperhead",
+      "author": "Barbara Kingsolver",
+      "year": 2023,
+      "selected_date": "2023",
+      "isbn_13": "9780063251922",
+      "description": "Kingsolver retells David Copperfield in present-day Appalachian Virginia, following a foster kid through the opioid crisis with a voice that's funny, furious, and heartbreakingly specific about how systems fail children. It's long but earns the length — Demon's narration keeps you reading even when the subject matter is brutal."
+    },
+    {
+      "title": "Trust",
+      "author": "Hernan Diaz",
+      "year": 2023,
+      "selected_date": "2023",
+      "isbn_13": "9780593320860",
+      "description": "A puzzle-box novel where four different accounts of a 1920s Wall Street fortune contradict and undermine each other — a fictional novel, a tycoon's memoir, a ghostwriter's notes, a wife's diary. Diaz makes you work to figure out what actually happened and who got written out of the story, which is both the point and the pleasure."
+    },
+    {
+      "title": "The Netanyahus",
+      "author": "Joshua Cohen",
+      "year": 2022,
+      "selected_date": "2022",
+      "isbn_13": "9781954118027",
+      "description": "A Jewish history professor at a sleepy 1959 college gets roped into hosting a visiting Israeli scholar's campus interview — except Benzion Netanyahu arrives with his whole family, including young Bibi, and proceeds to demolish the host's careful assimilation into American academic life. Cohen turns this real anecdote into a sharp, funny novel about what it means to be Jewish in America versus what the Netanyahus insist it should mean."
+    },
+    {
+      "title": "The Night Watchman",
+      "author": "Louise Erdrich",
+      "year": 2021,
+      "selected_date": "2021",
+      "isbn_13": "9780062671189",
+      "description": "Set in 1953 North Dakota, this follows a Chippewa council member working nights at a factory while fighting a government bill designed to strip Native Americans of their land rights, alongside a young woman from the reservation searching for her missing sister. Erdrich based it on her grandfather's real activism, and the reservation community feels fully inhabited — messy family dynamics, workplace friendships, traditional beliefs rubbing against economic necessity."
+    },
+    {
+      "title": "The Nickel Boys",
+      "author": "Colson Whitehead",
+      "year": 2020,
+      "selected_date": "2020",
+      "isbn_13": "9780385537070",
+      "description": "Two Black teenagers in 1960s Florida end up at a reform school based on a real institution that brutalized kids for over a century — one believes in keeping his head down, the other can't stop believing the world should be better. Whitehead keeps it tight and brutal, letting the friendship carry the weight of what the place does to both of them."
+    },
+    {
+      "title": "The Overstory",
+      "author": "Richard Powers",
+      "year": 2019,
+      "selected_date": "2019",
+      "isbn_13": "9780393356687",
+      "description": "Powers weaves together nine characters—a Vietnam vet saved by a banyan, a scientist decoding how trees talk to each other, an artist documenting a dying chestnut—who all end up radicalized into eco-activism in the Pacific Northwest timber wars. It's genuinely trying to make you see trees as protagonists with their own timescales and agendas, which sounds hokey but mostly works."
+    },
+    {
+      "title": "Less",
+      "author": "Andrew Sean Greer",
+      "year": 2018,
+      "selected_date": "2018",
+      "isbn_13": "9780316316132",
+      "description": "This is actually describing the sequel \"Less Is Lost\" (or its Portuguese title), not the original \"Less.\" I don't have usable source material for the first book."
+    },
+    {
+      "title": "The Underground Railroad",
+      "author": "Colson Whitehead",
+      "year": 2017,
+      "selected_date": "2017",
+      "isbn_13": "9780385542364",
+      "description": "Whitehead makes the Underground Railroad literal — actual trains running through tunnels beneath the South — and uses that conceit to send an escaped slave named Cora through different states that each represent a distinct American horror, from eugenics programs to public lynchings. It's part adventure, part nightmare tour of the ways this country has tried to control and destroy Black lives."
+    },
+    {
+      "title": "The Sympathizer",
+      "author": "Viet Thanh Nguyen",
+      "year": 2016,
+      "selected_date": "2016",
+      "isbn_13": "9780802123459",
+      "description": "A communist double agent — half-French, half-Vietnamese — escapes to LA after Saigon falls and reports back to his handlers while building a life among refugees. Nguyen writes the whole thing as a confession, and the narrator's bitter, sardonic voice cuts through American myths about the war while never letting his own side off the hook either."
+    },
+    {
+      "title": "All the Light We Cannot See",
+      "author": "Anthony Doerr",
+      "year": 2015,
+      "selected_date": "2015",
+      "isbn_13": "9781501173219",
+      "description": "A blind French girl flees Paris with her father and a possibly cursed museum jewel; a German orphan with a gift for radios gets conscripted to hunt the resistance. Doerr alternates their stories in short, precise chapters that build toward Saint-Malo's bombardment — it's structural and sensory in a way that feels almost architectural."
+    },
+    {
+      "title": "The Goldfinch",
+      "author": "Donna Tartt",
+      "year": 2014,
+      "selected_date": "2014",
+      "isbn_13": "9780316055437",
+      "description": "A 13-year-old loses his mother in a terrorist attack and secretly takes a priceless Dutch painting from the wreckage, a decision that shadows him for the next fourteen years as he drifts between wealthy Manhattan households, a neglectful father in Las Vegas, and eventually the shady edges of the art world. Tartt writes at a leisurely 19th-century pace — this thing is 800 pages — but it earns the length with vivid characters and a plot that keeps tightening around Theo like a debt he can't pay"
+    },
+    {
+      "title": "The Orphan Master's Son",
+      "author": "Adam Johnson",
+      "year": 2013,
+      "selected_date": "2013",
+      "isbn_13": "9780812982626",
+      "description": "Jun Do grows up running an orphan camp in North Korea, then gets promoted to professional kidnapper for the state—and the novel tracks his survival through the regime's arbitrary brutality with dark humor and surprising tenderness. Johnson builds an absurdist nightmare that somehow becomes a genuine love story."
+    },
+    {
+      "title": "A Visit from the Goon Squad",
+      "author": "Jennifer Egan",
+      "year": 2011,
+      "selected_date": "2011",
+      "isbn_13": "9780307477477",
+      "description": "Egan connects a sprawling cast across decades—punk kids turned jaded executives, assistants with kleptomania, washed-up musicians—through linked stories that keep jumping in time and perspective. The structure itself makes the point: time is the goon squad, and she tracks exactly how it rearranges people's ambitions, relationships, and selves."
+    },
+    {
+      "title": "Tinkers",
+      "author": "Paul Harding",
+      "year": 2010,
+      "selected_date": "2010",
+      "isbn_13": "9781934137123",
+      "description": "George Washington Crosby is dying in his family home, and the novel drifts through his fading consciousness—back to his childhood in rural Maine, to his father Howard who traveled the backroads as a tinker selling pots and clocks from a mule cart. Harding writes in long, looping sentences that feel like memory itself, less interested in plot than in how objects and landscapes hold time."
+    },
+    {
+      "title": "Olive Kitteridge",
+      "author": "Elizabeth Strout",
+      "year": 2009,
+      "selected_date": "2009",
+      "isbn_13": "9780812971583",
+      "description": "A cranky retired schoolteacher in coastal Maine serves as the gravitational center for these linked stories about her neighbors' quiet crises—affairs, suicides, estrangements. Strout writes Olive as genuinely difficult, someone who wounds the people she loves while remaining stubbornly sympathetic."
+    },
+    {
+      "title": "The Brief Wondrous Life of Oscar Wao",
+      "author": "Junot Diaz",
+      "year": 2008,
+      "selected_date": "2008",
+      "isbn_13": "9781594483233",
+      "description": "A nerdy, overweight Dominican kid in Jersey pines for love and dreams of fantasy-writer fame while his family drags generations of bad luck behind them. Díaz tells it in this restless, footnote-heavy style that bounces between Oscar's sci-fi obsessions and the brutal history of Trujillo's Dominican Republic—funny and devastating in almost the same breath."
+    },
+    {
+      "title": "The Road",
+      "author": "Cormac McCarthy",
+      "year": 2007,
+      "selected_date": "2007",
+      "isbn_13": "9780307387899",
+      "description": "The description is for a graphic novel adaptation of The Road, not the original novel by Cormac McCarthy. Since it describes a different edition/format than the title and author given, I should respond with nothing."
+    },
+    {
+      "title": "March",
+      "author": "Geraldine Brooks",
+      "year": 2006,
+      "selected_date": "2006",
+      "isbn_13": "9780143036661",
+      "description": "Brooks imagines the absent father from *Little Women* during his Civil War chaplaincy year — his earlier entanglement with an enslaved woman, his idealism colliding with battlefield horror. A clever companion piece that fills in what Alcott left out, grounded in the real transcendentalist circles her father moved in."
+    },
+    {
+      "title": "Gilead",
+      "author": "Marilynne Robinson",
+      "year": 2005,
+      "selected_date": "2005",
+      "isbn_13": "9780312426521",
+      "description": "An elderly Iowa preacher writes a letter to his young son, knowing he won't live to see him grow up—reflecting on his abolitionist grandfather who fought in Bleeding Kansas, his pacifist father, and the return of his best friend's troubled namesake son. Robinson writes in long, quiet sentences that make ordinary things (light on water, blessing a child) feel genuinely holy without ever getting sentimental about it."
+    },
+    {
+      "title": "The Known World",
+      "author": "Edward P. Jones",
+      "year": 2004,
+      "selected_date": "2004",
+      "isbn_13": "9780061010989",
+      "description": "Jones builds an intricate web around a Black slaveholder in antebellum Virginia, following what happens to his plantation after his death as the whole social order—slaves, patrollers, free Blacks being kidnapped back into bondage—fractures and collides. It's less interested in easy moral lessons than in mapping how slavery warped everyone it touched."
+    },
+    {
+      "title": "Middlesex",
+      "author": "Jeffrey Eugenides",
+      "year": 2003,
+      "selected_date": "2003",
+      "isbn_13": "9780374199692",
+      "description": "Cal Stephanides narrates their own life — born as a girl in 1960s Detroit, becoming a boy at fourteen when a recessive gene finally surfaces after three generations of a Greek-American family's complicated history. Eugenides tracks the Stephanides clan from a burning village in Asia Minor through Prohibition, the '67 riots, and suburban Michigan, making the whole sprawling thing feel intimate because Cal's trying to figure out how all of it made them who they are."
+    },
+    {
+      "title": "Empire Falls",
+      "author": "Richard Russo",
+      "year": 2002,
+      "selected_date": "2002",
+      "isbn_13": "9780375726408",
+      "description": "Miles Roby has spent twenty years flipping burgers at the Empire Grill in a dying Maine mill town, stuck there by some combination of his teenage daughter, his divorcing wife, and the wealthy widow who owns the place and seems to think she owns him too. Russo writes working-class frustration and small-town entanglement with real humor—this won the Pulitzer, and it earns it by making you care about people going nowhere in particular."
+    },
+    {
+      "title": "The Amazing Adventures of Kavalier & Clay",
+      "author": "Michael Chabon",
+      "year": 2001,
+      "selected_date": "2001",
+      "isbn_13": "9780312282998",
+      "description": "Two Jewish cousins in 1940s New York channel their anxieties about Nazis, sexuality, and belonging into creating comic book superheroes — and Chabon uses their partnership to explore how art becomes both escape hatch and trap. It's genuinely fun about the Golden Age comics industry while also being deeply melancholy about what we lose when we pour ourselves into our creations."
+    },
+    {
+      "title": "Interpreter of Maladies",
+      "author": "Jhumpa Lahiri",
+      "year": 2000,
+      "selected_date": "2000",
+      "isbn_13": "9780618104208",
+      "description": "Lahiri writes about Indian immigrants and their American-born kids navigating the gap between cultures — a couple's marriage unravels during a blackout, a tour guide in India becomes an unlikely confessor, a lonely kid bonds with a Calcutta neighbor. The stories are quiet and precise, more interested in small domestic moments than big dramatic arcs."
+    },
+    {
+      "title": "The Hours",
+      "author": "Michael Cunningham",
+      "year": 1999,
+      "selected_date": "1999",
+      "isbn_13": "9780312243029",
+      "description": "Cunningham braids three women across different eras—Virginia Woolf writing Mrs. Dalloway, a 1950s housewife reading it, and a modern New Yorker throwing a party for her dying friend—each trapped in the gap between the life they're living and the one they imagined."
+    },
+    {
+      "title": "American Pastoral",
+      "author": "Philip Roth",
+      "year": 1998,
+      "selected_date": "1998",
+      "isbn_13": "9780375701429",
+      "description": "Roth builds up the perfect postwar American life—star athlete, thriving business, happy family—then detonates it when the protagonist's daughter becomes a domestic terrorist in the 1960s. It's a brutal examination of how the country's upheavals invaded even the most carefully constructed private lives, told with Roth's characteristic fury and obsessive circling around what went wrong."
+    },
+    {
+      "title": "Martin Dressler",
+      "author": "Steven Millhauser",
+      "year": 1997,
+      "selected_date": "1997",
+      "isbn_13": "9780679781271",
+      "description": "Millhauser traces a cigar-shop kid's rise through Gilded Age Manhattan—bellhop to restaurateur to hotel magnate building ever more fantastical complexes—until his visions outpace reality and isolate him completely. It's a fable about American ambition as a kind of fever dream, watching someone construct elaborate worlds that gradually consume him."
+    },
+    {
+      "title": "Independence Day",
+      "author": "Richard Ford",
+      "year": 1996,
+      "selected_date": "1996",
+      "isbn_13": "9780679745297",
+      "description": "Frank Bascombe is back, now a divorced real estate agent drifting through a New Jersey July 4th weekend, trying to connect with his troubled teenage son on a road trip that keeps sliding sideways. Ford nails the melancholy of middle-aged American men who can't stop narrating their own disappointments."
+    },
+    {
+      "title": "The Stone Diaries",
+      "author": "Carol Shields",
+      "year": 1995,
+      "selected_date": "1995",
+      "isbn_13": "9780140250398",
+      "description": "Shields invents a fictional autobiography for an \"ordinary\" woman across the twentieth century, then keeps pulling the rug out—Daisy Goodwill narrates her own life but the perspective keeps shifting, leaving you uncertain what's memory, what's invention, and who's actually telling the story. It's a quiet puzzle box about how women disappear into the roles assigned to them."
+    },
+    {
+      "title": "The Shipping News",
+      "author": "Annie Proulx",
+      "year": 1994,
+      "selected_date": "1994",
+      "isbn_13": "9780684190204",
+      "description": "Quoyle is a pushover with a chin like a luggage handle who drags his neglected daughters to a freezing Newfoundland outport after his terrible wife dies. Proulx writes sentences that hit like cold spray off the North Atlantic—blunt, strange, and weirdly beautiful—while Quoyle slowly figures out he might actually be worth something."
+    },
+    {
+      "title": "A Good Scent from a Strange Mountain",
+      "author": "Robert Olen Butler",
+      "year": 1993,
+      "selected_date": "1993",
+      "isbn_13": "9780802135711",
+      "description": "Butler writes from inside the heads of Vietnamese immigrants in Louisiana — a former bar girl, a man haunted by his grandfather's ghost, a woman obsessing over her son's American wife. These aren't stories *about* the Vietnam War so much as stories about what you carry with you after, told in voices that feel earned rather than borrowed."
+    },
+    {
+      "title": "A Thousand Acres",
+      "author": "Jane Smiley",
+      "year": 1992,
+      "selected_date": "1992",
+      "isbn_13": "9780804114172",
+      "description": "Smiley transplants King Lear to an Iowa farm, where a patriarch's decision to divide his land among three daughters cracks open decades of buried family secrets. It's less interested in the farmland than in the women's perspectives Shakespeare ignored—what the daughters actually endured."
+    },
+    {
+      "title": "Rabbit at Rest",
+      "author": "John Updike",
+      "year": 1991,
+      "selected_date": "1991",
+      "isbn_13": "9780449911815",
+      "description": "Updike follows Harry Angstrom into his sixties as Reagan-era prosperity curdles — he's got a Florida condo, a bad heart, a son who's clearly on something, and a daughter-in-law giving him looks he shouldn't be noticing. It's the final Rabbit novel, tracking one ordinary American's slow fade through 1989 with Updike's usual unsparing attention to both the body's failures and the country's."
+    },
+    {
+      "title": "The Mambo Kings Play Songs of Love",
+      "author": "Oscar Hijuelos",
+      "year": 1990,
+      "selected_date": "1990",
+      "isbn_13": "9780060972127",
+      "description": "Two Cuban brothers land in 1949 New York and chase mambo stardom in the dance halls, and Hijuelos renders their nights of music and romance with such sensory richness you can practically hear the horns. It's nostalgic without being sentimental—a real portrait of immigrant ambition and the particular ache of watching your glory days recede."
+    },
+    {
+      "title": "Breathing Lessons",
+      "author": "Anne Tyler",
+      "year": 1989,
+      "selected_date": "1989",
+      "isbn_13": "9780425114650",
+      "description": "A married couple drives to a funeral and spends the day cycling through decades of accumulated grievances and quiet affections, with Maggie's well-meaning meddling threatening to derail everything. Tyler nails the specific texture of long marriage — how you can be simultaneously irritated and devoted, how small kindnesses and old resentments coexist in the same car ride."
+    },
+    {
+      "title": "Beloved",
+      "author": "Toni Morrison",
+      "year": 1988,
+      "selected_date": "1988",
+      "isbn_13": "9781400033416",
+      "description": "A ghost story rooted in the aftermath of slavery, where an escaped woman living in Ohio is haunted—literally—by the child she killed rather than let be taken back. Morrison builds the horror slowly through fragments of memory, letting you piece together what happened and why, until the supernatural and the historical trauma become indistinguishable."
+    },
+    {
+      "title": "A Summons to Memphis",
+      "author": "Peter Taylor",
+      "year": 1987,
+      "selected_date": "1987",
+      "isbn_13": "9780345344441",
+      "description": "Phillip Carver's elderly father wants to remarry, and his meddling sisters want him to help stop it—but the real story is how their father uprooted the family from Nashville to Memphis decades ago and quietly destroyed each of his children's chances at love. Taylor writes with such restrained precision about Southern family resentment that you feel the decades of grudges accumulating like dust."
+    },
+    {
+      "title": "Foreign Affairs",
+      "author": "Alison Lurie",
+      "year": 1985,
+      "selected_date": "1985",
+      "isbn_13": "9780380699379",
+      "description": "A middle-aged academic snob gets tangled up with a tacky Oklahoma tourist in London while her handsome younger colleague falls for an elusive actress — Lurie finds the comedy in Americans performing versions of themselves abroad. It's sharp about class pretension and the embarrassing gap between how we see ourselves and how we actually behave."
+    },
+    {
+      "title": "Ironweed",
+      "author": "William Kennedy",
+      "year": 1984,
+      "selected_date": "1984",
+      "isbn_13": "9780140070439",
+      "description": "Francis Phelan is a drunk ex-ballplayer wandering Depression-era Albany, talking to ghosts of people he's wronged while trying to decide if he can face his family again after two decades of running. Kennedy writes about skid row with real humor and zero sentimentality—it won the Pulitzer and deserved it."
+    },
+    {
+      "title": "The Color Purple",
+      "author": "Alice Walker",
+      "year": 1983,
+      "selected_date": "1983",
+      "isbn_13": "9780156028356",
+      "description": "Celie writes letters to God across twenty years of abuse and isolation in rural Georgia, and Walker makes you feel every small victory as she finds solidarity with other women — her husband's lover, her defiant daughter-in-law, her separated sister. It's unflinching about brutality but genuinely earns its hard-won warmth."
+    },
+    {
+      "title": "Rabbit Is Rich",
+      "author": "John Updike",
+      "year": 1982,
+      "selected_date": "1982",
+      "isbn_13": "9780449911556",
+      "description": "Updike catches Rabbit Angstrom in 1979, finally comfortable running his father-in-law's Toyota dealership while gas lines stretch and Carter stumbles—until his adult son shows up wanting a piece of everything Harry's built. It's Updike at his most richly textured, finding the whole anxious mood of late-seventies America in one Pennsylvania car lot and one restless middle-aged man who can't stop wanting more."
+    },
+    {
+      "title": "The Executioner's Song",
+      "author": "Norman Mailer",
+      "year": 1980,
+      "selected_date": "1980",
+      "isbn_13": "9780316544269",
+      "description": "Mailer spent years reconstructing the life of Gary Gilmore, the first person executed in America after the death penalty resumed in 1977. It's exhaustive true-crime journalism that builds Gilmore and everyone around him—girlfriends, lawyers, family—into something uncomfortably human."
+    },
+    {
+      "title": "The Stories of John Cheever",
+      "author": "John Cheever",
+      "year": 1979,
+      "selected_date": "1979",
+      "isbn_13": "9780375724428",
+      "description": "Cheever's specialty is the quiet desperation of mid-century suburban professionals—men who drink too much, marriages going stale, the gap between respectable surfaces and interior chaos. These sixty-one stories span his whole career, from the famous ones like \"The Swimmer\" (a man pool-hops through his neighborhood as his life unravels) to dozens of smaller portraits of commuters, cocktail parties, and carefully maintained lawns hiding real loneliness."
+    },
+    {
+      "title": "Elbow Room",
+      "author": "James Alan McPherson",
+      "year": 1978,
+      "selected_date": "1978",
+      "isbn_13": "9780684157047",
+      "description": "McPherson's Pulitzer-winning stories zero in on Black American life in the 1970s — street kids, preachers losing their grip, couples tearing each other apart — all rendered with sharp wit and zero sentimentality. He's interested in the friction between who people think they are and who they actually turn out to be."
+    },
+    {
+      "title": "Humboldt's Gift",
+      "author": "Saul Bellow",
+      "year": 1976,
+      "selected_date": "1976",
+      "isbn_13": "9780140189360",
+      "description": "Charlie Citrine's life is a mess—divorce, a flaky girlfriend, a small-time gangster shaking him down—when his dead mentor, a brilliant poet who died broke and crazy, leaves him something that might actually matter. Bellow uses the comic chaos of Charlie's present to circle back around questions about art, money, and whether American life leaves any room for the things Humboldt believed in."
+    },
+    {
+      "title": "The Killer Angels",
+      "author": "Michael Shaara",
+      "year": 1975,
+      "selected_date": "1975",
+      "isbn_13": "9780345348104",
+      "description": "Shaara puts you inside the heads of Lee, Longstreet, Chamberlain, and the other commanders at Gettysburg, hour by hour, as they make decisions that will kill thousands of men they can see from the hilltops. It's less interested in strategy than in what it feels like to order a charge you know will fail, or to hold a line with no ammunition left."
+    },
+    {
+      "title": "The Optimist's Daughter",
+      "author": "Eudora Welty",
+      "year": 1973,
+      "selected_date": "1973",
+      "isbn_13": "9780679749189",
+      "description": "A middle-aged woman returns to Mississippi after her father's death and gets stuck clearing out the family home with her tactless young stepmother. Welty uses the tension between these two women to dig into how we construct memories of the dead and whether we ever really knew them."
+    },
+    {
+      "title": "Angle of Repose",
+      "author": "Wallace Stegner",
+      "year": 1972,
+      "selected_date": "1972",
+      "isbn_13": "9780143105695",
+      "description": "A wheelchair-bound historian in 1970s California pieces together his grandmother's life as a frontier artist married to a mining engineer, using her letters to understand both her compromised marriage and his own. Stegner builds the whole thing as a meditation on what we sacrifice for ambition, how marriages quietly fracture, and whether we can ever really know the people whose choices shaped us."
+    },
+    {
+      "title": "Collected Stories",
+      "author": "Jean Stafford",
+      "year": 1970,
+      "selected_date": "1970",
+      "isbn_13": "9780374139858",
+      "description": ""
+    },
+    {
+      "title": "House Made of Dawn",
+      "author": "N. Scott Momaday",
+      "year": 1969,
+      "selected_date": "1969",
+      "isbn_13": "9780062748638",
+      "description": "A Native American veteran returns from WWII to his New Mexico pueblo and can't fit back into either world—not his grandfather's ceremonial life tied to the land, not the brutal anonymity of 1950s Los Angeles. Momaday writes in fragments and loops that mirror Abel's dislocation, making this less a conventional novel than a slow, disorienting immersion in what it costs to be severed from your own language and place."
+    },
+    {
+      "title": "The Fixer",
+      "author": "Bernard Malamud",
+      "year": 1967,
+      "selected_date": "1967",
+      "isbn_13": "9780374529277",
+      "description": "A Jewish handyman in 1911 Kiev gets scapegoated for a child's murder and spends years in prison refusing to falsely confess. Malamud builds the whole novel around one man's stubborn, grinding endurance against a system designed to break him — it's claustrophobic and relentless, clearly drawing from the Mendel Beilis affair."
+    },
+    {
+      "title": "Collected Stories",
+      "author": "Katherine Anne Porter",
+      "year": 1966,
+      "selected_date": "1966",
+      "isbn_13": "9780156188760",
+      "description": "Porter writes precise, unsparing stories about self-deception and the small betrayals people commit in the name of survival. This collects her major work—including the devastating \"Pale Horse, Pale Rider\"—and shows why her lean, controlled prose influenced generations of short fiction writers."
+    },
+    {
+      "title": "To Kill a Mockingbird",
+      "author": "Harper Lee",
+      "year": 1961,
+      "selected_date": "1961",
+      "isbn_13": "9780061743528",
+      "description": "Scout Finch grows up in 1930s Alabama watching her lawyer father defend a Black man against a rape charge the whole town knows is false. Lee filters the ugliness of small-town racism through a kid's half-understanding eye, which somehow makes the injustice land harder."
+    },
+    {
+      "title": "The Old Man and the Sea",
+      "author": "Ernest Hemingway",
+      "year": 1953,
+      "selected_date": "1953",
+      "isbn_13": "9780684801223",
+      "description": "An aging Cuban fisherman hooks a massive marlin and spends days in a brutal, solitary standoff with it far from shore. Hemingway strips everything down to one man, one fish, and the Gulf Stream—it's lean and punishing, the kind of book you finish in an afternoon but keep turning over for weeks."
+    },
+    {
+      "title": "The Way West",
+      "author": "A.B. Guthrie",
+      "year": 1950,
+      "selected_date": "1950",
+      "isbn_13": "9780395702673",
+      "description": "A wagon train of settlers heads from Independence toward Oregon, and Guthrie makes you feel every tedious mile, petty conflict, and small tragedy along the way. It won the Pulitzer for good reason—this is the anti-romantic Western, where the journey grinds people down as much as it transforms them."
+    },
+    {
+      "title": "Guard of Honor",
+      "author": "James Gould Cozzens",
+      "year": 1949,
+      "selected_date": "1949",
+      "isbn_13": "9780156002967",
+      "description": "Cozzens drops you into a Florida Air Force base in 1942 where a racial confrontation forces officers at every level to navigate military bureaucracy, personal loyalties, and their own compromises. It's dense with procedural detail and moral gray areas — the kind of book that trusts you to keep up with dozens of characters making imperfect decisions under institutional pressure."
+    },
+    {
+      "title": "Tales of the South Pacific",
+      "author": "James A. Michener",
+      "year": 1948,
+      "selected_date": "1948",
+      "isbn_13": "9780449206829",
+      "description": "Michener's linked short stories capture the strange rhythms of American soldiers scattered across Pacific islands during WWII — the boredom, the humid waiting, the odd romances with locals, and occasional bursts of violence. It's the book that became the musical *South Pacific*, but grittier and more episodic than you'd expect."
+    }
   ]
 }

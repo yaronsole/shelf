@@ -2,62 +2,461 @@
   "slug": "booker_prize_winners",
   "title": "Booker Prize Winners",
   "books": [
-    { "title": "Orbital", "author": "Samantha Harvey", "year": 2024, "selected_date": "2024", "isbn_13": "9780802163783" },
-    { "title": "Prophet Song", "author": "Paul Lynch", "year": 2023, "selected_date": "2023", "isbn_13": "9780802162342" },
-    { "title": "The Seven Moons of Maali Almeida", "author": "Shehan Karunatilaka", "year": 2022, "selected_date": "2022", "isbn_13": "9781641293228" },
-    { "title": "The Promise", "author": "Damon Galgut", "year": 2021, "selected_date": "2021", "isbn_13": "9780063096301" },
-    { "title": "Shuggie Bain", "author": "Douglas Stuart", "year": 2020, "selected_date": "2020", "isbn_13": "9780802148506" },
-    { "title": "Girl, Woman, Other", "author": "Bernardine Evaristo", "year": 2019, "selected_date": "2019", "isbn_13": "9780802157706" },
-    { "title": "The Testaments", "author": "Margaret Atwood", "year": 2019, "selected_date": "2019", "isbn_13": "9780385543781" },
-    { "title": "Milkman", "author": "Anna Burns", "year": 2018, "selected_date": "2018", "isbn_13": "9781644450000" },
-    { "title": "Lincoln in the Bardo", "author": "George Saunders", "year": 2017, "selected_date": "2017", "isbn_13": "9780812995343" },
-    { "title": "The Sellout", "author": "Paul Beatty", "year": 2016, "selected_date": "2016", "isbn_13": "9780374260507" },
-    { "title": "A Brief History of Seven Killings", "author": "Marlon James", "year": 2015, "selected_date": "2015", "isbn_13": "9781594633348" },
-    { "title": "The Narrow Road to the Deep North", "author": "Richard Flanagan", "year": 2014, "selected_date": "2014", "isbn_13": "9781101873021" },
-    { "title": "The Luminaries", "author": "Eleanor Catton", "year": 2013, "selected_date": "2013", "isbn_13": "9780316074292" },
-    { "title": "Bring Up the Bodies", "author": "Hilary Mantel", "year": 2012, "selected_date": "2012", "isbn_13": "9780805090031" },
-    { "title": "The Sense of an Ending", "author": "Julian Barnes", "year": 2011, "selected_date": "2011", "isbn_13": "9780307947727" },
-    { "title": "The Finkler Question", "author": "Howard Jacobson", "year": 2010, "selected_date": "2010", "isbn_13": "9781608194353" },
-    { "title": "Wolf Hall", "author": "Hilary Mantel", "year": 2009, "selected_date": "2009", "isbn_13": "9780312429980" },
-    { "title": "The White Tiger", "author": "Aravind Adiga", "year": 2008, "selected_date": "2008", "isbn_13": "9781416562603" },
-    { "title": "The Gathering", "author": "Anne Enright", "year": 2007, "selected_date": "2007", "isbn_13": "9780802170392" },
-    { "title": "The Inheritance of Loss", "author": "Kiran Desai", "year": 2006, "selected_date": "2006", "isbn_13": "9780802142818" },
-    { "title": "The Sea", "author": "John Banville", "year": 2005, "selected_date": "2005", "isbn_13": "9780307276600" },
-    { "title": "The Line of Beauty", "author": "Alan Hollinghurst", "year": 2004, "selected_date": "2004", "isbn_13": "9781582344553" },
-    { "title": "Vernon God Little", "author": "D.B.C. Pierre", "year": 2003, "selected_date": "2003", "isbn_13": "9781841154794" },
-    { "title": "Life of Pi", "author": "Yann Martel", "year": 2002, "selected_date": "2002", "isbn_13": "9780156027328" },
-    { "title": "True History of the Kelly Gang", "author": "Peter Carey", "year": 2001, "selected_date": "2001", "isbn_13": "9780375724671" },
-    { "title": "The Blind Assassin", "author": "Margaret Atwood", "year": 2000, "selected_date": "2000", "isbn_13": "9780385720953" },
-    { "title": "Disgrace", "author": "J.M. Coetzee", "year": 1999, "selected_date": "1999", "isbn_13": "9780143114536" },
-    { "title": "Amsterdam", "author": "Ian McEwan", "year": 1998, "selected_date": "1998", "isbn_13": "9780385493628" },
-    { "title": "The God of Small Things", "author": "Arundhati Roy", "year": 1997, "selected_date": "1997", "isbn_13": "9780812979657" },
-    { "title": "Last Orders", "author": "Graham Swift", "year": 1996, "selected_date": "1996", "isbn_13": "9780679745907" },
-    { "title": "The Ghost Road", "author": "Pat Barker", "year": 1995, "selected_date": "1995", "isbn_13": "9780452275348" },
-    { "title": "How Late It Was, How Late", "author": "James Kelman", "year": 1994, "selected_date": "1994", "isbn_13": "9780393312478" },
-    { "title": "Paddy Clarke Ha Ha Ha", "author": "Roddy Doyle", "year": 1993, "selected_date": "1993", "isbn_13": "9780140233902" },
-    { "title": "The English Patient", "author": "Michael Ondaatje", "year": 1992, "selected_date": "1992", "isbn_13": "9780679745204" },
-    { "title": "The Famished Road", "author": "Ben Okri", "year": 1991, "selected_date": "1991", "isbn_13": "9780385425247" },
-    { "title": "Possession", "author": "A.S. Byatt", "year": 1990, "selected_date": "1990", "isbn_13": "9780679735779" },
-    { "title": "The Remains of the Day", "author": "Kazuo Ishiguro", "year": 1989, "selected_date": "1989", "isbn_13": "9780679731726" },
-    { "title": "Oscar and Lucinda", "author": "Peter Carey", "year": 1988, "selected_date": "1988", "isbn_13": "9780060916220" },
-    { "title": "Moon Tiger", "author": "Penelope Lively", "year": 1987, "selected_date": "1987", "isbn_13": "9780802139023" },
-    { "title": "The Old Devils", "author": "Kingsley Amis", "year": 1986, "selected_date": "1986", "isbn_13": "9780099477914" },
-    { "title": "The Bone People", "author": "Keri Hulme", "year": 1985, "selected_date": "1985", "isbn_13": "9780807132142" },
-    { "title": "Hotel du Lac", "author": "Anita Brookner", "year": 1984, "selected_date": "1984", "isbn_13": "9780679731887" },
-    { "title": "Life and Times of Michael K", "author": "J.M. Coetzee", "year": 1983, "selected_date": "1983", "isbn_13": "9780140074482" },
-    { "title": "Schindler's Ark", "author": "Thomas Keneally", "year": 1982, "selected_date": "1982", "isbn_13": "9780743231473" },
-    { "title": "Midnight's Children", "author": "Salman Rushdie", "year": 1981, "selected_date": "1981", "isbn_13": "9780812976533" },
-    { "title": "Rites of Passage", "author": "William Golding", "year": 1980, "selected_date": "1980", "isbn_13": "9780374518912" },
-    { "title": "Offshore", "author": "Penelope Fitzgerald", "year": 1979, "selected_date": "1979", "isbn_13": "9780006543558" },
-    { "title": "The Sea, the Sea", "author": "Iris Murdoch", "year": 1978, "selected_date": "1978", "isbn_13": "9780140189056" },
-    { "title": "Staying On", "author": "Paul Scott", "year": 1977, "selected_date": "1977", "isbn_13": "9780226743394" },
-    { "title": "Saville", "author": "David Storey", "year": 1976, "selected_date": "1976", "isbn_13": "9780099554110" },
-    { "title": "Heat and Dust", "author": "Ruth Prawer Jhabvala", "year": 1975, "selected_date": "1975", "isbn_13": "9780684826820" },
-    { "title": "The Conservationist", "author": "Nadine Gordimer", "year": 1974, "selected_date": "1974", "isbn_13": "9780140036718" },
-    { "title": "The Siege of Krishnapur", "author": "J.G. Farrell", "year": 1973, "selected_date": "1973", "isbn_13": "9781681374635" },
-    { "title": "G.", "author": "John Berger", "year": 1972, "selected_date": "1972", "isbn_13": "9780679736486" },
-    { "title": "In a Free State", "author": "V.S. Naipaul", "year": 1971, "selected_date": "1971", "isbn_13": "9780330522854" },
-    { "title": "The Elected Member", "author": "Bernice Rubens", "year": 1970, "selected_date": "1970", "isbn_13": "9780712661416" },
-    { "title": "Something to Answer For", "author": "P.H. Newby", "year": 1969, "selected_date": "1969", "isbn_13": "9780907871446" }
+    {
+      "title": "Orbital",
+      "author": "Samantha Harvey",
+      "year": 2024,
+      "selected_date": "2024",
+      "isbn_13": "9780802163783",
+      "description": "Harvey puts six astronauts on a space station for a single day—sixteen orbits, sixteen sunrises—and uses that frame to slow everything down, letting small moments (rehydrated meals, photos from home, the strange intimacy of floating near strangers) accumulate into something quietly devastating about Earth, distance, and what we're doing to the place we left behind."
+    },
+    {
+      "title": "Prophet Song",
+      "author": "Paul Lynch",
+      "year": 2023,
+      "selected_date": "2023",
+      "isbn_13": "9780802162342",
+      "description": "Ireland slides into authoritarianism and a Dublin mother watches her ordinary life disintegrate after secret police take her husband. Lynch writes it in long, breathless sentences that trap you in Eilish's perspective as each small horror becomes the new normal—it's less a warning about fascism than an immersion in how quickly \"unthinkable\" becomes \"what we live with now.\""
+    },
+    {
+      "title": "The Seven Moons of Maali Almeida",
+      "author": "Shehan Karunatilaka",
+      "year": 2022,
+      "selected_date": "2022",
+      "isbn_13": "9781641293228",
+      "description": "A dead war photographer gets seven days to haunt 1990s Colombo and point his loved ones toward photos that could expose atrocities—meanwhile he's also trying to figure out which of the many death squads, paramilitaries, or personal enemies actually killed him. Karunatilaka uses the afterlife setup to cut loose with dark comedy while cataloging the chaos of Sri Lanka's civil war with an insider's bitter specificity."
+    },
+    {
+      "title": "The Promise",
+      "author": "Damon Galgut",
+      "year": 2021,
+      "selected_date": "2021",
+      "isbn_13": "9780063096301",
+      "description": "A white South African family circles the drain across thirty years and four funerals, all orbiting a broken promise to their Black housekeeper that none of them quite manages to keep. Galgut's roving, restless narration slips between consciousnesses with dark wit, making this less a family saga than an autopsy of how comfortable people fail each other."
+    },
+    {
+      "title": "Shuggie Bain",
+      "author": "Douglas Stuart",
+      "year": 2020,
+      "selected_date": "2020",
+      "isbn_13": "9780802148506",
+      "description": "A young boy in 1980s Glasgow clings to his alcoholic mother as she spirals, convinced his devotion can somehow save her while the mining town around them crumbles. Stuart writes addiction and working-class pride with unflinching specificity—the false teeth Agnes treasures, the way Shuggie's fastidiousness marks him as \"no' right\" to neighbors—making the inevitable losses hit harder."
+    },
+    {
+      "title": "Girl, Woman, Other",
+      "author": "Bernardine Evaristo",
+      "year": 2019,
+      "selected_date": "2019",
+      "isbn_13": "9780802157706",
+      "description": "Twelve Black British women across generations — a lesbian playwright, a burnt-out teacher, a banker who's lost her roots, a 93-year-old farmer — get interwoven chapters that read almost like prose poetry, no periods until the very end. Evaristo pulls off something rare: a genuinely experimental structure that's also warm and funny and moves fast."
+    },
+    {
+      "title": "The Testaments",
+      "author": "Margaret Atwood",
+      "year": 2019,
+      "selected_date": "2019",
+      "isbn_13": "9780385543781",
+      "description": "Atwood returns to Gilead fifteen years later, and the smartest move is making Aunt Lydia a narrator — you finally see how someone becomes complicit in a regime while quietly working to dismantle it. The three rotating perspectives (two young women raised under the theocracy, plus Lydia) give you both the insider view of how Gilead actually functions and the satisfaction of watching it start to crack."
+    },
+    {
+      "title": "Milkman",
+      "author": "Anna Burns",
+      "year": 2018,
+      "selected_date": "2018",
+      "isbn_13": "9781644450000",
+      "description": "Set in 1970s Northern Ireland without using a single proper name, an 18-year-old woman tries to disappear into her books while a paramilitary twice her age stalks her — and the community's gossip machine does his work for him, turning her into a pariah before he even touches her. Burns captures how surveillance and conformity become their own violence, where reading while walking is suspicious and refusing to take sides is its own transgression."
+    },
+    {
+      "title": "Lincoln in the Bardo",
+      "author": "George Saunders",
+      "year": 2017,
+      "selected_date": "2017",
+      "isbn_13": "9780812995343",
+      "description": "Willie Lincoln dies at eleven, and his ghost gets stuck in a cemetery limbo populated by spirits who don't realize they're dead. Saunders builds the whole thing from overlapping voices—ghosts, historical documents, contradictory eyewitness accounts—while Lincoln keeps returning to the crypt to hold his son's body, and it's genuinely funny and genuinely wrecking."
+    },
+    {
+      "title": "The Sellout",
+      "author": "Paul Beatty",
+      "year": 2016,
+      "selected_date": "2016",
+      "isbn_13": "9780374260507",
+      "description": "A Black man in L.A. tries to reinstate slavery and segregation in his neighborhood — and it works, landing him before the Supreme Court. Beatty writes satire so sharp it draws blood, turning every sacred cow of American race relations into absurdist comedy."
+    },
+    {
+      "title": "A Brief History of Seven Killings",
+      "author": "Marlon James",
+      "year": 2015,
+      "selected_date": "2015",
+      "isbn_13": "9781594633348",
+      "description": "Sprawling oral history of the 1976 attempt on Bob Marley's life, told through dozens of voices—gunmen, CIA operatives, drug dealers, ghosts—that follows the fallout across three decades from Kingston's gang wars through the crack epidemic in New York. James writes in raw, profane monologues that demand your full attention but reward it with an insider's view of how political violence and the drug trade reshaped Jamaica and bled into America."
+    },
+    {
+      "title": "The Narrow Road to the Deep North",
+      "author": "Richard Flanagan",
+      "year": 2014,
+      "selected_date": "2014",
+      "isbn_13": "9781101873021",
+      "description": "Flanagan follows an Australian surgeon through his time on the Burma Death Railway and the decades after, showing how that brutality never fully releases its grip. The prose runs hot—sometimes too hot—but the central question about whether survival leaves anything worth saving lands hard."
+    },
+    {
+      "title": "The Luminaries",
+      "author": "Eleanor Catton",
+      "year": 2013,
+      "selected_date": "2013",
+      "isbn_13": "9780316074292",
+      "description": "A 19th-century New Zealand gold rush mystery where twelve men try to untangle three crimes from a single day—a disappearance, a hidden fortune, a near-death—and every chapter is literally half the length of the one before, structured around the zodiac. It's a puzzle-box whodunit that rewards patience; Catton builds an absurdly intricate web of secrets across 800+ pages."
+    },
+    {
+      "title": "Bring Up the Bodies",
+      "author": "Hilary Mantel",
+      "year": 2012,
+      "selected_date": "2012",
+      "isbn_13": "9780805090031",
+      "description": "Mantel puts you inside Cromwell's head as he engineers Anne Boleyn's destruction—three weeks of legal maneuvering, manufactured evidence, and cold political calculation that reads like a thriller even though you know exactly how it ends."
+    },
+    {
+      "title": "The Sense of an Ending",
+      "author": "Julian Barnes",
+      "year": 2011,
+      "selected_date": "2011",
+      "isbn_13": "9780307947727",
+      "description": "A retired man receives an unexpected inheritance that forces him to reexamine a college friendship, an old girlfriend, and the self-serving stories he's told himself for decades. Barnes writes with surgical precision about how memory betrays us — this is a short, unsettling book about the lies we tell ourselves to stay comfortable."
+    },
+    {
+      "title": "The Finkler Question",
+      "author": "Howard Jacobson",
+      "year": 2010,
+      "selected_date": "2010",
+      "isbn_13": "9781608194353",
+      "description": "A middle-aged non-Jewish man becomes obsessed with Jewishness after a mugging he's convinced was anti-Semitic, circling his successful Jewish friend with a mix of envy and longing. Jacobson writes comedy that's genuinely uncomfortable — neurotic, argumentative, and surprisingly moving about what it means to belong to something."
+    },
+    {
+      "title": "Wolf Hall",
+      "author": "Hilary Mantel",
+      "year": 2009,
+      "selected_date": "2009",
+      "isbn_13": "9780312429980",
+      "description": "This is Cromwell's story as a stage play, not the novel — Mike Poulton's adaptation of Mantel's first two books for the RSC, with extensive character notes from Mantel herself that make it useful for anyone staging the work or wanting her direct commentary on who these people are."
+    },
+    {
+      "title": "The White Tiger",
+      "author": "Aravind Adiga",
+      "year": 2008,
+      "selected_date": "2008",
+      "isbn_13": "9781416562603",
+      "description": "A servant-turned-chauffeur in Delhi narrates his own origin story as a murderer and entrepreneur, laying out exactly how he killed his way out of India's rigid class system. Adiga writes it as a letter to a Chinese premier, which sounds gimmicky but works—Balram's voice is funny, self-aware, and completely unrepentant about what he did to get ahead."
+    },
+    {
+      "title": "The Gathering",
+      "author": "Anne Enright",
+      "year": 2007,
+      "selected_date": "2007",
+      "isbn_13": "9780802170392",
+      "description": "Veronica Hegarty collects her brother's body after he drowns himself and finds herself circling back to something that happened in their grandmother's house decades ago—a secret that's shaped both their lives. Enright writes family dysfunction with surgical precision, tracking how damage passes between generations without ever letting the prose tip into melodrama."
+    },
+    {
+      "title": "The Inheritance of Loss",
+      "author": "Kiran Desai",
+      "year": 2006,
+      "selected_date": "2006",
+      "isbn_13": "9780802142818",
+      "description": "Set in a crumbling Himalayan mansion, this follows a bitter retired judge, his lovelorn granddaughter, and their cook whose son is scraping by illegally in New York kitchens—all while Nepali insurgents gather outside. Desai threads together colonial hangover, immigration's indignities, and the way people cling to dreams of elsewhere while their actual lives fall apart around them."
+    },
+    {
+      "title": "The Sea",
+      "author": "John Banville",
+      "year": 2005,
+      "selected_date": "2005",
+      "isbn_13": "9780307276600",
+      "description": "Banville's narrator returns to a seaside town after his wife's death, but the grief keeps sliding into memories of a wealthy family he orbited as a boy—their glamour, their carelessness, a drowning. The prose is almost uncomfortably beautiful, every sentence worked until it gleams, which either hypnotizes you or makes you want to throw the book across the room."
+    },
+    {
+      "title": "The Line of Beauty",
+      "author": "Alan Hollinghurst",
+      "year": 2004,
+      "selected_date": "2004",
+      "isbn_13": "9781582344553",
+      "description": "Nick Guest, a gay Oxford grad with a weakness for beauty in all forms, lodges with a Tory MP's family during Thatcher's boom years and watches their world of money and power from an insider's outside perch. Hollinghurst writes sentences you want to read twice while dissecting how wealth, desire, and political ambition corrode everyone they touch—including Nick himself."
+    },
+    {
+      "title": "Vernon God Little",
+      "author": "D.B.C. Pierre",
+      "year": 2003,
+      "selected_date": "2003",
+      "isbn_13": "9781841154794",
+      "description": "A teenage outcast in small-town Texas gets blamed for his friend's school shooting, then watches as media vultures and revenge-hungry neighbors turn his life into a circus. Pierre writes in this manic, profane voice that captures how absurd American spectacle culture looks through the eyes of a kid who's mostly just confused and screwed."
+    },
+    {
+      "title": "Life of Pi",
+      "author": "Yann Martel",
+      "year": 2002,
+      "selected_date": "2002",
+      "isbn_13": "9780156027328",
+      "description": "A teenager survives 227 days on a lifeboat with a Bengal tiger, using his zookeeper's-kid knowledge to stay alive—then the ending asks you to choose between the miraculous version and a darker explanation. It's a novel about what stories we tell ourselves to survive, dressed up as a castaway adventure."
+    },
+    {
+      "title": "True History of the Kelly Gang",
+      "author": "Peter Carey",
+      "year": 2001,
+      "selected_date": "2001",
+      "isbn_13": "9780375724671",
+      "description": "Carey channels Ned Kelly's voice in fractured, unpunctuated prose that reads like a confession scrawled on butcher paper — the outlaw telling his own myth to a daughter he'll never see grow up. It's colonial Australia as class war, where horse theft becomes rebellion and a homemade suit of armor becomes folk legend."
+    },
+    {
+      "title": "The Blind Assassin",
+      "author": "Margaret Atwood",
+      "year": 2000,
+      "selected_date": "2000",
+      "isbn_13": "9780385720953",
+      "description": "Opens with an old woman looking back at her sister's suspicious death, then keeps folding in layers — a scandalous novel-within-a-novel, a pulp sci-fi romance invented by secret lovers, and the ugly history of a wealthy Canadian family between the wars. Atwood's playing a long structural game here, and the pleasure is watching how all the nested stories eventually click together."
+    },
+    {
+      "title": "Disgrace",
+      "author": "J.M. Coetzee",
+      "year": 1999,
+      "selected_date": "1999",
+      "isbn_13": "9780143114536",
+      "description": "A disgraced professor flees to his daughter's South African farm after refusing to perform public contrition for sleeping with a student, only to find the country's post-apartheid power shifts have followed him there. Coetzee writes with surgical detachment about guilt, land, and what happens when a man who's built his identity on European high culture confronts a world that no longer has any use for it."
+    },
+    {
+      "title": "Amsterdam",
+      "author": "Ian McEwan",
+      "year": 1998,
+      "selected_date": "1998",
+      "isbn_13": "9780385493628",
+      "description": "Two successful men — a composer and a newspaper editor — attend their ex-lover's funeral and end up in a pact that spirals into dark farce. McEwan at his most wickedly entertaining, using a slim setup to skewer male ego, moral compromise, and the British establishment."
+    },
+    {
+      "title": "The God of Small Things",
+      "author": "Arundhati Roy",
+      "year": 1997,
+      "selected_date": "1997",
+      "isbn_13": "9780812979657",
+      "description": "Roy writes in this hypnotic, fragmented style that mirrors how memory actually works—jumping between 1969 Kerala and the present as twin siblings piece together the forbidden love affair and accidental death that broke their family apart. It's as much about India's caste system and political tensions as it is about these specific people, and the prose is so dense and sensory it almost feels like too much until you realize that's the point."
+    },
+    {
+      "title": "Last Orders",
+      "author": "Graham Swift",
+      "year": 1996,
+      "selected_date": "1996",
+      "isbn_13": "9780679745907",
+      "description": "Four old friends drive to scatter a butcher's ashes at sea, and Swift uses the road trip to unspool decades of messy history between them—affairs, resentments, class anxieties, the whole tangle of long friendships. It won the Booker, and it earns it through these perfectly distinct working-class voices that somehow add up to something genuinely moving about ordinary English lives."
+    },
+    {
+      "title": "The Ghost Road",
+      "author": "Pat Barker",
+      "year": 1995,
+      "selected_date": "1995",
+      "isbn_13": "9780452275348",
+      "description": "Rivers keeps patching up traumatized soldiers just to send them back to die, and he knows it. Barker closes her Regeneration trilogy by putting a military psychiatrist's moral exhaustion against Billy Prior's fatalistic march toward the final push—unflinching about the institutional machinery that ground men down on both sides of the treatment room."
+    },
+    {
+      "title": "How Late It Was, How Late",
+      "author": "James Kelman",
+      "year": 1994,
+      "selected_date": "1994",
+      "isbn_13": "9780393312478",
+      "description": "Sammy wakes up blind after a run-in with Glasgow police and spends the novel stumbling through bureaucratic hellscapes trying to get disability benefits while the city grinds him down. Kelman writes the whole thing in raw Glaswegian dialect, stream-of-consciousness style—it won the Booker and scandalized people who thought literature shouldn't sound like this."
+    },
+    {
+      "title": "Paddy Clarke Ha Ha Ha",
+      "author": "Roddy Doyle",
+      "year": 1993,
+      "selected_date": "1993",
+      "isbn_13": "9780140233902",
+      "description": "Dublin, 1968: ten-year-old Paddy narrates in jagged fragments—biting liver oil capsules, warring with kids from the housing estate, tormenting his little brother—while his parents' marriage quietly disintegrates in the background. Doyle never explains or sentimentalizes; he just drops you inside a kid's head as the ground shifts beneath him."
+    },
+    {
+      "title": "The English Patient",
+      "author": "Michael Ondaatje",
+      "year": 1992,
+      "selected_date": "1992",
+      "isbn_13": "9780679745204",
+      "description": "Four broken people wait out the end of WWII in a bombed Italian villa — a burnt man with secrets, his nurse, a thief with ruined hands, a bomb defuser — and Ondaatje moves between their pasts in prose so lyrical it sometimes feels like the point is the sentences themselves."
+    },
+    {
+      "title": "The Famished Road",
+      "author": "Ben Okri",
+      "year": 1991,
+      "selected_date": "1991",
+      "isbn_13": "9780385425247",
+      "description": "Okri drops you into the consciousness of Azaro, a spirit child in Lagos who keeps getting pulled between the living world and the spirit realm that wants him back. It's genuinely hypnotic and disorienting — the poverty and political chaos of Nigeria blur into myth and hallucination in ways that feel less like magical realism and more like inhabiting a completely different relationship to reality."
+    },
+    {
+      "title": "Possession",
+      "author": "A.S. Byatt",
+      "year": 1990,
+      "selected_date": "1990",
+      "isbn_13": "9780679735779",
+      "description": "Two modern-day scholars stumble onto evidence of a secret affair between Victorian poets and become obsessed with piecing together what really happened—while their own tentative connection mirrors the romance they're investigating. Byatt constructs the whole thing with fake letters, journals, and genuinely good Victorian-style verse, making the literary detective work feel as urgent as any thriller."
+    },
+    {
+      "title": "The Remains of the Day",
+      "author": "Kazuo Ishiguro",
+      "year": 1989,
+      "selected_date": "1989",
+      "isbn_13": "9780679731726",
+      "description": "A butler looks back on decades of flawless service and slowly realizes he may have wasted his life on the wrong things. Ishiguro does something quietly devastating here — Stevens keeps almost confronting his regrets, then retreating into professional dignity, and you want to shake him."
+    },
+    {
+      "title": "Oscar and Lucinda",
+      "author": "Peter Carey",
+      "year": 1988,
+      "selected_date": "1988",
+      "isbn_13": "9780060916220",
+      "description": "Oscar is a twitchy Anglican minister who believes God speaks to him through gambling; Lucinda is a young heiress who buys a glassworks partly to prove women can run things. Their shared compulsion for wagering leads to an absurd, doomed bet: hauling a prefabricated glass church through the Australian bush, a journey that's equal parts love story and colonial critique."
+    },
+    {
+      "title": "Moon Tiger",
+      "author": "Penelope Lively",
+      "year": 1987,
+      "selected_date": "1987",
+      "isbn_13": "9780802139023",
+      "description": "Claudia Hampton is dying and decides to dictate her own history of the world, which really means circling back obsessively to her wartime affair in Egypt and the people she's pushed away. Lively jumps between perspectives and time periods in a way that feels genuinely fractured rather than gimmicky—it's a book about how we construct our own stories and what we conveniently leave out."
+    },
+    {
+      "title": "The Old Devils",
+      "author": "Kingsley Amis",
+      "year": 1986,
+      "selected_date": "1986",
+      "isbn_13": "9780099477914",
+      "description": "A group of Welsh retirees spend their days drinking at the pub and needling each other until an old friend returns with his still-entrancing wife, dredging up decades of jealousy and regret. Amis is brutally funny about aging bodies and marriages gone stale, but there's real tenderness underneath the acid."
+    },
+    {
+      "title": "The Bone People",
+      "author": "Keri Hulme",
+      "year": 1985,
+      "selected_date": "1985",
+      "isbn_13": "9780807132142",
+      "description": "A mute boy who survived a shipwreck crashes into the solitary life of a painter on New Zealand's South Island, pulling her into his relationship with his adoptive father — a man capable of both fierce tenderness and terrible violence. Hulme writes in a dense, Joyce-influenced style that weaves Maori language and myth throughout, demanding patience but rewarding it with something genuinely unlike anything else in English fiction."
+    },
+    {
+      "title": "Hotel du Lac",
+      "author": "Anita Brookner",
+      "year": 1984,
+      "selected_date": "1984",
+      "isbn_13": "9780679731887",
+      "description": "A romance novelist hiding out at a Swiss hotel after a scandal finds herself studying the other guests — lonely, difficult women whose lives mirror the questions she's been avoiding about love and compromise. Brookner writes with dry precision about what women are supposed to want versus what they actually choose."
+    },
+    {
+      "title": "Life and Times of Michael K",
+      "author": "J.M. Coetzee",
+      "year": 1983,
+      "selected_date": "1983",
+      "isbn_13": "9780140074482",
+      "description": "A simple-minded gardener tries to transport his dying mother across a war-ravaged South Africa, then finds himself repeatedly caught and escaping from camps and institutions that can't comprehend someone who just wants to tend a small garden and be left alone. Coetzee strips everything down to watch what remains of a person when society keeps trying to conscript or categorize him."
+    },
+    {
+      "title": "Schindler's Ark",
+      "author": "Thomas Keneally",
+      "year": 1982,
+      "selected_date": "1982",
+      "isbn_13": "9780743231473",
+      "description": "Keneally pieces together the real story of Oskar Schindler, a German industrialist and unlikely hero who manipulated Nazi bureaucracy to save over a thousand Jewish workers from the death camps. It's novelistic nonfiction — meticulously researched but reading like a thriller about one man gaming a genocidal system."
+    },
+    {
+      "title": "Midnight's Children",
+      "author": "Salman Rushdie",
+      "year": 1981,
+      "selected_date": "1981",
+      "isbn_13": "9780812976533",
+      "description": "Saleem Sinai is born at the exact moment of Indian independence, telepathically linked to every other child born in that midnight hour—and Rushdie uses his unreliable, rambling narration to barrel through decades of Indian history with invention piled on invention. It's maximalist and messy in the best way, blending family saga with political allegory and magical realism that never lets you settle into anything comfortable."
+    },
+    {
+      "title": "Rites of Passage",
+      "author": "William Golding",
+      "year": 1980,
+      "selected_date": "1980",
+      "isbn_13": "9780374518912",
+      "description": "Talbot's a smug young aristocrat keeping a journal on a ship to Australia, and Golding uses his blind spots to devastating effect—especially when a pathetic parson becomes the target of the crew's cruelty and Talbot has to confront what he's been complicit in. It's claustrophobic, class-conscious, and genuinely unsettling about how social hierarchies enable ordinary brutality."
+    },
+    {
+      "title": "Offshore",
+      "author": "Penelope Fitzgerald",
+      "year": 1979,
+      "selected_date": "1979",
+      "isbn_13": "9780006543558",
+      "description": "A motley crew of misfits living on houseboats along the Thames—a male prostitute, an abandoned wife with feral daughters, a buttoned-up ex-navy man—drift through their precarious lives in this slim, Booker-winning gem. Fitzgerald writes with the economy of someone who trusts you to catch what she's doing, letting the river's tides mirror how these people float between connection and isolation."
+    },
+    {
+      "title": "The Sea, the Sea",
+      "author": "Iris Murdoch",
+      "year": 1978,
+      "selected_date": "1978",
+      "isbn_13": "9780140189056",
+      "description": "A retired theater director holes up by the sea to write his memoirs, then spots his childhood sweetheart in the village and proceeds to lose his grip on reality in spectacular fashion. Murdoch skewers male ego and self-deception with dark humor—Arrowby narrates his own unraveling while remaining magnificently oblivious to what a monster he's being."
+    },
+    {
+      "title": "Staying On",
+      "author": "Paul Scott",
+      "year": 1977,
+      "selected_date": "1977",
+      "isbn_13": "9780226743394",
+      "description": "An aging British couple remains in India after independence, clinging to a world that no longer exists while their marriage quietly crumbles and reignites in cramped quarters. Scott writes their petty grievances and buried tenderness with real comic timing — it's a slim, sharp portrait of two people running out of time and excuses."
+    },
+    {
+      "title": "Saville",
+      "author": "David Storey",
+      "year": 1976,
+      "selected_date": "1976",
+      "isbn_13": "9780099554110",
+      "description": ""
+    },
+    {
+      "title": "Heat and Dust",
+      "author": "Ruth Prawer Jhabvala",
+      "year": 1975,
+      "selected_date": "1975",
+      "isbn_13": "9780684826820",
+      "description": "In 1920s India, a bored English wife begins an affair with a local prince that ends her marriage; decades later, her step-granddaughter retraces her path through the same small town, trying to understand what actually happened. Jhabvala layers both women's stories together, watching how India transforms — or traps — each of them differently."
+    },
+    {
+      "title": "The Conservationist",
+      "author": "Nadine Gordimer",
+      "year": 1974,
+      "selected_date": "1974",
+      "isbn_13": "9780140036718",
+      "description": "Mehring, a wealthy white South African industrialist, clings to his rural farm as a weekend escape, but everything slips from his grip — mistress, son, workers, the land itself. Gordimer builds the novel around what Mehring refuses to see: a dead black man buried on his property, surfacing and resurfacing as the country moves toward something he can't control."
+    },
+    {
+      "title": "The Siege of Krishnapur",
+      "author": "J.G. Farrell",
+      "year": 1973,
+      "selected_date": "1973",
+      "isbn_13": "9781681374635",
+      "description": ""
+    },
+    {
+      "title": "G.",
+      "author": "John Berger",
+      "year": 1972,
+      "selected_date": "1972",
+      "isbn_13": "9780679736486",
+      "description": "Berger reimagines Don Juan as a turn-of-the-century illegitimate son moving through a Europe on the edge of war — part erotic picaresque, part political upheaval, with experimental prose that owes more to Diderot than to conventional storytelling. Won the Booker in 1972, and Berger famously gave half the prize money to the Black Panthers."
+    },
+    {
+      "title": "In a Free State",
+      "author": "V.S. Naipaul",
+      "year": 1971,
+      "selected_date": "1971",
+      "isbn_13": "9780330522854",
+      "description": "Naipaul structures this around a tense car journey through a collapsing African nation—two British expats, each compromised in their own way, driving through ethnic violence they can't quite believe applies to them. The main novella has that Conradian dread of complicity, and the surrounding stories of displacement (a servant in Washington, a tramp on a ship) make it feel like a book about the loneliness of being nowhere, belonging nowhere."
+    },
+    {
+      "title": "The Elected Member",
+      "author": "Bernice Rubens",
+      "year": 1970,
+      "selected_date": "1970",
+      "isbn_13": "9780712661416",
+      "description": "A Jewish family in London's East End watches their golden child—infant prodigy, brilliant barrister—unravel into drug addiction and paranoid hallucinations at forty-one. Rubens digs into how family pride curdles into guilt, and how the sister still wearing her childhood ankle socks becomes the only one capable of bridging the wreckage."
+    },
+    {
+      "title": "Something to Answer For",
+      "author": "P.H. Newby",
+      "year": 1969,
+      "selected_date": "1969",
+      "isbn_13": "9780907871446",
+      "description": "Newby drops you into 1956 Port Said during the Suez Crisis, following an Englishman trying to figure out if his friend was murdered while British paratroops are literally invading around him. It's slippery and disorienting by design—Townrow can't trust anyone's version of events, including his own, and the political chaos mirrors his personal unraveling."
+    }
   ]
 }
