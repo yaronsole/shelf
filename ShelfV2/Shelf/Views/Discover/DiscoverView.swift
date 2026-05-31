@@ -2,46 +2,58 @@ import SwiftUI
 
 /// Curated-lists browser. Fetches /v1/lists and shows each list as a gradient
 /// card. Tapping a card navigates to ListDetailView.
+///
+/// Discover doubles as the app's universal book search: the shared
+/// `BookSearchView` puts a search box at the top, shows the curated lists while
+/// the box is empty, and swaps in "read it / save" search results once the user
+/// types. (Search used to live only in the Taste tab.)
 struct DiscoverView: View {
     @State private var vm = DiscoverViewModel()
 
     var body: some View {
         NavigationStack {
-            ScrollView {
-                LazyVStack(spacing: 12) {
-                    if vm.isLoading && vm.lists.isEmpty {
-                        ProgressView()
-                            .padding(.top, 60)
-                    } else if let errorMessage = vm.errorMessage {
-                        EmptyStateView(
-                            systemImage: "exclamationmark.icloud",
-                            title: "Couldn't load lists",
-                            subtitle: errorMessage,
-                            action: { vm.load() },
-                            actionLabel: Strings.Common.retry
-                        )
-                        .padding(.top, 60)
-                    } else if vm.lists.isEmpty {
-                        Text(Strings.Discover.comingSoon)
-                            .foregroundStyle(.secondary)
-                            .padding(.top, 60)
-                    } else {
-                        ForEach(vm.lists) { list in
-                            NavigationLink(value: list.slug) {
-                                ListCatalogCard(list: list)
-                            }
-                            .buttonStyle(.plain)
-                        }
-                    }
-                }
-                .padding(.horizontal, 16)
-                .padding(.top, 12)
-                .padding(.bottom, 24)
+            BookSearchView(placeholder: "Search for any book…") {
+                listsContent
             }
             .navigationDestination(for: String.self) { slug in
                 ListDetailView(slug: slug)
             }
             .onAppear { vm.loadIfNeeded() }
+        }
+    }
+
+    /// The curated-lists scroll view, shown when the search box is empty.
+    private var listsContent: some View {
+        ScrollView {
+            LazyVStack(spacing: 12) {
+                if vm.isLoading && vm.lists.isEmpty {
+                    ProgressView()
+                        .padding(.top, 60)
+                } else if let errorMessage = vm.errorMessage {
+                    EmptyStateView(
+                        systemImage: "exclamationmark.icloud",
+                        title: "Couldn't load lists",
+                        subtitle: errorMessage,
+                        action: { vm.load() },
+                        actionLabel: Strings.Common.retry
+                    )
+                    .padding(.top, 60)
+                } else if vm.lists.isEmpty {
+                    Text(Strings.Discover.comingSoon)
+                        .foregroundStyle(.secondary)
+                        .padding(.top, 60)
+                } else {
+                    ForEach(vm.lists) { list in
+                        NavigationLink(value: list.slug) {
+                            ListCatalogCard(list: list)
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+            }
+            .padding(.horizontal, 16)
+            .padding(.top, 12)
+            .padding(.bottom, 24)
         }
     }
 }
