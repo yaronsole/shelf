@@ -20,14 +20,22 @@ struct SimilarBooksSheet: View {
     @State private var liveSuggestions: [SuggestionDTO] = []
     @State private var hiddenIds: Set<String> = []
 
+    // title|author keys for books the user has already saved (Shelf) or read/seeded (Taste);
+    // these are filtered out of the displayed suggestions.
+    @State private var ownedKeys: Set<String> = []
+
     // Detail-sheet state — wired to BookDetailView (same pattern as ForYouView)
     @State private var selectedDisplay: SuggestionDetailContext? = nil
 
     private var visibleLive: [SuggestionDTO] {
-        liveSuggestions.filter { !hiddenIds.contains($0.id) }
+        liveSuggestions.filter {
+            !hiddenIds.contains($0.id) && !ownedKeys.contains(Self.key($0.title, $0.author))
+        }
     }
     private var visibleCached: [CachedSuggestion] {
-        suggestions.filter { !hiddenIds.contains($0.id) }
+        suggestions.filter {
+            !hiddenIds.contains($0.id) && !ownedKeys.contains(Self.key($0.title, $0.author))
+        }
     }
 
     var body: some View {
@@ -227,17 +235,20 @@ struct SimilarBooksSheet: View {
     // MARK: - Load logic
 
     private func initialLoad() async {
+        let owned = loadOwnedKeys()
         if SimilarBooksCacheService.isCacheUsable(seed) {
             // Fresh per-open nonce → the cached deck re-rolls on every sheet open.
             let rotationKey = UUID().uuidString
             let cached = SimilarBooksCacheService.displaySuggestions(for: seed, rotationKey: rotationKey)
             await MainActor.run {
+                self.ownedKeys = owned
                 self.suggestions = cached
                 self.servedFromCache = true
                 self.isLoading = false
             }
             return
         }
+        await MainActor.run { self.ownedKeys = owned }
         await liveFetchInitial()
     }
 
@@ -248,6 +259,7 @@ struct SimilarBooksSheet: View {
             self.liveSuggestions = []
             self.liveFetchExcludeKeys = []
             self.hiddenIds = []
+            self.ownedKeys = loadOwnedKeys()
         }
         await liveFetchInitial()
     }
@@ -285,16 +297,25 @@ struct SimilarBooksSheet: View {
         }
     }
 
-    /// Keys we never want the backend to return: this seed, books already saved
-    /// to the Shelf, plus the per-seed suggestion history.
+    /// Keys we never want the backend to return: this seed, books the user has
+    /// already saved or read/seeded, plus the per-seed suggestion history.
     private func baseExcludeKeys() -> [String] {
         let seedKey = Self.key(seed.title, seed.author)
-        let savedKeys = (try? modelContext.fetch(FetchDescriptor<ReadingListItem>()))?
-            .map { Self.key($0.title, $0.author) } ?? []
         let history = Self.loadHistory(for: seed)
-        var keys: [String] = []
-        for k in [seedKey] + savedKeys + history where !keys.contains(k) { keys.append(k) }
+        var keys: [String] = [seedKey]
+        for k in loadOwnedKeys() where !keys.contains(k) { keys.append(k) }
+        for k in history where !keys.contains(k) { keys.append(k) }
         return keys
+    }
+
+    /// title|author keys for every book the user has saved to the Shelf
+    /// (ReadingListItem) or added as a Taste seed / marked read (LocalSeedBook).
+    private func loadOwnedKeys() -> Set<String> {
+        let saved = (try? modelContext.fetch(FetchDescriptor<ReadingListItem>()))?
+            .map { Self.key($0.title, $0.author) } ?? []
+        let seeds = (try? modelContext.fetch(FetchDescriptor<LocalSeedBook>()))?
+            .map { Self.key($0.title, $0.author) } ?? []
+        return Set(saved + seeds)
     }
 
     // MARK: - Fetch helper
