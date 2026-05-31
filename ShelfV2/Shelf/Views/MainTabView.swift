@@ -34,6 +34,7 @@ struct MainTabView: View {
                     .tag(3)
             }
             .onChange(of: selectedTab) { _, newTab in
+                appState.isViewingForYou = (newTab == 0)
                 if newTab == 0 {
                     appState.hasForYouBadge = false
                 }
@@ -49,6 +50,7 @@ struct MainTabView: View {
                     ToastManager.shared.show(.firstGeneration)
                 }
             }
+            appState.isViewingForYou = (selectedTab == 0)
             // Warm the seed-grid covers early so they're ready by the time the
             // user opens For You. Only while still gathering seeds (the grid is
             // shown) — unlocked/returning users never see it, so skip the work.

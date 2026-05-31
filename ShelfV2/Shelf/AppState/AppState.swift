@@ -13,8 +13,15 @@ final class AppState {
     // Per-launch flags — reset each app launch (not persisted).
     var hasDoneLaunchTimePrune: Bool = false
 
-    // Set to true when a new For You batch arrives after onboarding; cleared when user taps For You.
+    // Set to true when a new For You batch arrives *while the user isn't looking
+    // at For You*; cleared as soon as they view the For You tab. Gated by
+    // isViewingForYou so a normal refresh while the user is already on the feed
+    // never lights the badge (that was the "badge shows all the time" bug).
     var hasForYouBadge: Bool = false
+
+    // Whether For You is the currently active/visible tab. Drives badge gating.
+    // Not persisted — recomputed from the selected tab each launch.
+    var isViewingForYou: Bool = false
 
     // When non-nil, MainTabView selects this tab on first appear then clears it.
     var pendingInitialTab: Int? = nil

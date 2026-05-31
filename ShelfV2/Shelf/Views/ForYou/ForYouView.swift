@@ -54,10 +54,19 @@ struct ForYouView: View {
             }
         }
         .onAppear {
+            // Viewing the feed clears the "new recs" badge.
+            appState.isViewingForYou = true
+            appState.hasForYouBadge = false
             vm.refreshIfNeeded(modelContext: modelContext)
         }
-        .onChange(of: vm.didReceiveFirstBatch) { _, received in
-            if received {
+        .onDisappear {
+            appState.isViewingForYou = false
+        }
+        .onChange(of: vm.newBatchTick) { _, _ in
+            // Light the badge only when fresh recs land while the user is NOT
+            // looking at For You. If they're already on the feed, no badge —
+            // that was the "badge shows all the time" bug.
+            if !appState.isViewingForYou {
                 appState.hasForYouBadge = true
             }
         }

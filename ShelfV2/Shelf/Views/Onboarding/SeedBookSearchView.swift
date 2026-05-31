@@ -185,14 +185,14 @@ private struct PopularBookTile: View {
     let onToggleSelect: () -> Void
     let onToggleSave: () -> Void
 
-    @State private var isPressing = false
+    @State private var bounce = false
 
     var body: some View {
         VStack(spacing: 6) {
             ZStack(alignment: .topTrailing) {
                 BookCoverView(url: book.coverURL ?? "")
-                    .scaleEffect(isPressing ? 0.93 : 1)
-                    .animation(.easeInOut(duration: 0.12), value: isPressing)
+                    .scaleEffect(bounce ? 0.93 : 1)
+                    .animation(.easeInOut(duration: 0.12), value: bounce)
 
                 if isSelected {
                     Image(systemName: "checkmark.circle.fill")
@@ -208,12 +208,21 @@ private struct PopularBookTile: View {
                         .padding(4)
                 }
             }
+            // Match the proven tap+long-press pattern used by BookCardView /
+            // ListDetailView. The older `pressing:`/`perform:` form left the
+            // gesture recognizer stuck after the first toggle (the release event
+            // is dropped when `perform` rebuilds the view), so a second
+            // long-press never fired — which is why saved books wouldn't unsave.
+            .contentShape(Rectangle())
             .onTapGesture { onToggleSelect() }
-            .onLongPressGesture(minimumDuration: 0.45, pressing: { pressing in
-                isPressing = pressing
-            }, perform: {
+            .onLongPressGesture(minimumDuration: 0.45) {
+                Haptics.medium()
+                withAnimation(.easeInOut(duration: 0.12)) { bounce = true }
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.12) {
+                    withAnimation(.easeInOut(duration: 0.12)) { bounce = false }
+                }
                 onToggleSave()
-            })
+            }
 
             Text(book.title)
                 .font(.caption2.weight(.medium))

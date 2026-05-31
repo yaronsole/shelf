@@ -11,6 +11,13 @@ final class ForYouViewModel {
     // first-generation state.
     var didReceiveFirstBatch: Bool = false
 
+    // Incremented every time a fetch actually inserts new recs. The view watches
+    // this to decide whether to light the For You tab badge (only when the user
+    // isn't currently viewing the feed). Using a tick rather than didReceiveFirstBatch
+    // means the badge can re-light for later batches (e.g. the nightly rotation),
+    // not just the very first one.
+    var newBatchTick: Int = 0
+
     // Tracks IDs newly seen this session (scrolled past upward) — written to backend in batches
     private var pendingSeenIds: Set<String> = []
     private var seenSyncTask: Task<Void, Never>? = nil
@@ -116,6 +123,8 @@ final class ForYouViewModel {
                     // Once any batch lands, the "Your shelf is being built"
                     // empty state shouldn't reappear if the feed later empties.
                     self.didReceiveFirstBatch = true
+                    // Signal the view that fresh recs arrived (for badge gating).
+                    self.newBatchTick += 1
                 }
             }
         } catch {
