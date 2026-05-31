@@ -10,9 +10,6 @@ struct SimilarBooksSheet: View {
 
     @Environment(\.dismiss) private var dismiss
 
-    // Unique ID per app session so display selection rotates across sessions
-    @State private var sessionId = UUID().uuidString
-
     @State private var suggestions: [CachedSuggestion] = []
     @State private var isLoading = true
     @State private var isLoadingMore = false
@@ -231,7 +228,9 @@ struct SimilarBooksSheet: View {
 
     private func initialLoad() async {
         if SimilarBooksCacheService.isCacheUsable(seed) {
-            let cached = SimilarBooksCacheService.displaySuggestions(for: seed, sessionId: sessionId)
+            // Fresh per-open nonce → the cached deck re-rolls on every sheet open.
+            let rotationKey = UUID().uuidString
+            let cached = SimilarBooksCacheService.displaySuggestions(for: seed, rotationKey: rotationKey)
             await MainActor.run {
                 self.suggestions = cached
                 self.servedFromCache = true

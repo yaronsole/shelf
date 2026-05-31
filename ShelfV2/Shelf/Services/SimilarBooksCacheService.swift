@@ -92,12 +92,13 @@ enum SimilarBooksCacheService {
         return (try? JSONDecoder().decode([CachedSuggestion].self, from: seed.similarBooksData)) ?? []
     }
 
-    // Return displayCount items chosen pseudo-randomly using generationToken + sessionId
-    // so the visible set is stable within a session but rotates across sessions.
-    static func displaySuggestions(for seed: LocalSeedBook, sessionId: String) -> [CachedSuggestion] {
+    // Return displayCount items chosen pseudo-randomly using a per-open rotationKey
+    // so the visible set re-rolls every time the sheet is opened (within-session repeats
+    // vanish). The deck itself still comes from cache; only WHICH displayCount show changes.
+    static func displaySuggestions(for seed: LocalSeedBook, rotationKey: String) -> [CachedSuggestion] {
         let all = allCachedSuggestions(for: seed)
         guard all.count > displayCount else { return all }
-        let hashInput = "\(sessionId)|\(seed.similarBooksGenerationToken)"
+        let hashInput = "\(rotationKey)|\(seed.similarBooksGenerationToken)"
         var h: UInt64 = 14695981039346656037
         for byte in hashInput.utf8 {
             h ^= UInt64(byte)
