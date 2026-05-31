@@ -72,6 +72,13 @@ app.add_middleware(
 # ---------------------------------------------------------------------------
 MAX_EXCLUSION_LIST = 150  # cap to keep prompts bounded
 
+# Sampling temperatures (tunable). For You uses a moderate temperature to move
+# off the conservative, "obvious" default picks without drifting off-taste. The
+# similar-books path stays lower because "closely related" wants less spread.
+# Tune toward 0 to make a path more conservative without a code revert.
+REC_TEMPERATURE = 0.7
+SIMILAR_TEMPERATURE = 0.4
+
 
 def get_user_id(authorization: Annotated[str | None, Header()] = None) -> str:
     if not authorization or not authorization.startswith("Bearer "):
@@ -319,6 +326,7 @@ def _generate_recommendations(user_id: str, domain: str, mark_delivered: bool = 
     message = claude.messages.create(
         model="claude-opus-4-5",
         max_tokens=4096,
+        temperature=REC_TEMPERATURE,
         messages=[{"role": "user", "content": prompt}],
     )
     raw = message.content[0].text
@@ -384,6 +392,7 @@ def get_suggestions(body: SuggestionsRequest, user_id: UserID):
     message = claude.messages.create(
         model="claude-opus-4-5",
         max_tokens=2048,  # bumped — blurbs need more tokens
+        temperature=SIMILAR_TEMPERATURE,
         messages=[{"role": "user", "content": prompt}],
     )
     raw = message.content[0].text

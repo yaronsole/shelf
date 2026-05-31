@@ -46,6 +46,8 @@ CRITICAL: Do NOT recommend any of the following books — they have already been
 Generate exactly {count} book recommendations for domain "{domain}".
 For each book include roughly 80% books that clearly match their taste, and 20% that are a gentle stretch outside their comfort zone (set is_comfort_zone_push true for those).
 
+Aim for some natural variety across the batch — try not to make every pick the same genre or era. This is a gentle nudge, NOT a quota: do NOT force breadth that isn't reflected in this reader's taste. If their profile is genuinely narrow, honor that and stay true to it. There is no required number of genres or eras; relevance to their taste always comes first, and a coherent on-taste batch beats a scattered one.
+
 Respond with ONLY a JSON array. No markdown, no explanation. Each object must have:
   title          (string)
   author         (string)
