@@ -40,7 +40,7 @@ extension CachedSuggestion {
 enum SimilarBooksCacheService {
     static let staleThreshold: TimeInterval = 8 * 3600    // 8 hours → trigger background refresh
     static let validThreshold:  TimeInterval = 24 * 3600  // 24 hours → still show in modal
-    static let candidateCount = 10
+    static let candidateCount = 18
     static let displayCount = 5
     static let maxParallel = 2
     static let staggerSeconds: UInt64 = 500_000_000 // 0.5s in nanoseconds
