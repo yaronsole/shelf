@@ -88,6 +88,38 @@ RECENT_BATCH_LOOKBACK = 3
 SIMILAR_TASTE_CAP = 25
 
 
+def _parse_json_array(raw: str) -> list[dict]:
+    """Parse a JSON array from an LLM response, tolerating markdown code fences
+    and incidental preamble.
+
+    Despite the prompts instructing "raw JSON only, no markdown", Claude
+    intermittently wraps the array in a ```json … ``` fence (observed ~50% of
+    the time at the current sampling temperature). A bare json.loads() then
+    raises JSONDecodeError on the leading backticks and 500s the endpoint, so
+    we strip fences and, as a last resort, extract the outermost [...] span.
+    """
+    text = raw.strip()
+
+    # Strip a surrounding markdown code fence (```json … ``` or ``` … ```).
+    if text.startswith("```"):
+        newline = text.find("\n")
+        if newline != -1:
+            text = text[newline + 1:]
+        if text.rstrip().endswith("```"):
+            text = text.rstrip()[:-3]
+        text = text.strip()
+
+    try:
+        return json.loads(text)
+    except json.JSONDecodeError:
+        # Last resort: salvage the outermost JSON array if the model added prose.
+        start, end = text.find("["), text.rfind("]")
+        if start != -1 and end > start:
+            return json.loads(text[start:end + 1])
+        log.error("Could not parse JSON array from model output: %.200r", raw)
+        raise
+
+
 def get_user_id(authorization: Annotated[str | None, Header()] = None) -> str:
     if not authorization or not authorization.startswith("Bearer "):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
@@ -375,7 +407,7 @@ def _generate_recommendations(user_id: str, domain: str, mark_delivered: bool = 
         messages=[{"role": "user", "content": prompt}],
     )
     raw = message.content[0].text
-    books: list[dict] = json.loads(raw)
+    books: list[dict] = _parse_json_array(raw)
 
     # Validate `because_of` against the user's actual seed titles. If Claude
     # invents or distorts a title, drop the field rather than show a confusing
@@ -463,7 +495,7 @@ def get_suggestions(body: SuggestionsRequest, user_id: UserID):
         messages=[{"role": "user", "content": prompt}],
     )
     raw = message.content[0].text
-    books: list[dict] = json.loads(raw)
+    books: list[dict] = _parse_json_array(raw)
 
     # Server-side dedup against the supplied exclude list (lowercased title|author)
     exclude_keys = {item.lower().strip() for item in (body.exclude or [])}
