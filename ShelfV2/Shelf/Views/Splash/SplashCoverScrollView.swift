@@ -4,33 +4,39 @@ import SwiftUI
 /// background of the welcome screen. Uses TimelineView so the scroll keeps
 /// running every frame instead of relying on a one-shot withAnimation call
 /// that SwiftUI can silently drop.
+///
+/// The covers are BUNDLED LOCAL ASSETS (Assets.xcassets/SplashCovers), not
+/// network images. This is the very first screen a new user sees, and it's the
+/// one screen we can't prefetch — so on a fresh TestFlight install with an empty
+/// URL cache, loading these over the network made them pop in one-by-one. Local
+/// assets render instantly and offline. The art is static/curated, so bundling
+/// costs us nothing in flexibility (changing the wall already meant a code
+/// change). See SplashCovers/ for the imageset → book mapping below.
 struct SplashCoverScrollView: View {
-    // Curated mix of popular, well-photographed book covers from our curated lists
-    // (Reese / Oprah / Obama / NYT / Booker / Pulitzer / Goodreads). All chosen for
-    // high recognizability and reliable Open Library cover matches.
-    private static let urls: [String] = [
-        // Reese
-        "https://covers.openlibrary.org/b/isbn/9780735220683-M.jpg", // Eleanor Oliphant
-        "https://covers.openlibrary.org/b/isbn/9780735224292-M.jpg", // Little Fires Everywhere
-        "https://covers.openlibrary.org/b/isbn/9780399184529-M.jpg", // The Light We Lost
-        "https://covers.openlibrary.org/b/isbn/9781524798628-M.jpg", // Daisy Jones & The Six
-        "https://covers.openlibrary.org/b/isbn/9780525541905-M.jpg", // Such a Fun Age
-        "https://covers.openlibrary.org/b/isbn/9780525559023-M.jpg", // Where the Crawdads Sing
-        // Obama / NYT / Booker / Pulitzer crossover
-        "https://covers.openlibrary.org/b/isbn/9780812995343-M.jpg", // Lincoln in the Bardo
-        "https://covers.openlibrary.org/b/isbn/9780399590504-M.jpg", // Educated
-        "https://covers.openlibrary.org/b/isbn/9781524763138-M.jpg", // Becoming
-        "https://covers.openlibrary.org/b/isbn/9780385542364-M.jpg", // The Underground Railroad
-        "https://covers.openlibrary.org/b/isbn/9780593321201-M.jpg", // Tomorrow, and Tomorrow
-        "https://covers.openlibrary.org/b/isbn/9780802162175-M.jpg", // The Covenant of Water
-        "https://covers.openlibrary.org/b/isbn/9781455563920-M.jpg", // Pachinko
-        "https://covers.openlibrary.org/b/isbn/9780525657743-M.jpg", // Crying in H Mart
-        "https://covers.openlibrary.org/b/isbn/9780525536291-M.jpg", // The Vanishing Half
-        "https://covers.openlibrary.org/b/isbn/9780374611996-M.jpg", // Intermezzo
-        "https://covers.openlibrary.org/b/isbn/9780385550369-M.jpg", // James (Percival Everett)
-        "https://covers.openlibrary.org/b/isbn/9780593472620-M.jpg", // The God of the Woods
-        "https://covers.openlibrary.org/b/isbn/9781668050200-M.jpg", // The Ministry of Time
-        "https://covers.openlibrary.org/b/isbn/9780802163783-M.jpg", // Orbital
+    // Curated mix of popular, well-photographed covers from our lists
+    // (Reese / Oprah / Obama / NYT / Booker / Pulitzer / Goodreads). Order here
+    // maps 1:1 to Assets.xcassets/SplashCovers/SplashCover00…19.
+    private static let coverAssets: [String] = [
+        "SplashCover00", // Eleanor Oliphant Is Completely Fine
+        "SplashCover01", // Little Fires Everywhere
+        "SplashCover02", // The Light We Lost
+        "SplashCover03", // Daisy Jones & The Six
+        "SplashCover04", // Such a Fun Age
+        "SplashCover05", // Where the Crawdads Sing
+        "SplashCover06", // Lincoln in the Bardo
+        "SplashCover07", // Educated
+        "SplashCover08", // Becoming
+        "SplashCover09", // The Underground Railroad
+        "SplashCover10", // Tomorrow, and Tomorrow, and Tomorrow
+        "SplashCover11", // The Covenant of Water
+        "SplashCover12", // Pachinko
+        "SplashCover13", // Crying in H Mart
+        "SplashCover14", // The Vanishing Half
+        "SplashCover15", // Intermezzo
+        "SplashCover16", // James (Percival Everett)
+        "SplashCover17", // The God of the Woods
+        "SplashCover18", // The Ministry of Time
+        "SplashCover19", // Orbital
     ]
 
     private let coverWidth: CGFloat = 130
@@ -41,14 +47,14 @@ struct SplashCoverScrollView: View {
 
     @State private var start: Date = .now
 
-    private var leftURLs: [String] {
-        stride(from: 0, to: Self.urls.count, by: 2).map { Self.urls[$0] }
+    private var leftCovers: [String] {
+        stride(from: 0, to: Self.coverAssets.count, by: 2).map { Self.coverAssets[$0] }
     }
-    private var rightURLs: [String] {
-        stride(from: 1, to: Self.urls.count, by: 2).map { Self.urls[$0] }
+    private var rightCovers: [String] {
+        stride(from: 1, to: Self.coverAssets.count, by: 2).map { Self.coverAssets[$0] }
     }
     private var loopHeight: CGFloat {
-        CGFloat(leftURLs.count) * (coverHeight + gap)
+        CGFloat(leftCovers.count) * (coverHeight + gap)
     }
 
     var body: some View {
@@ -60,8 +66,8 @@ struct SplashCoverScrollView: View {
                 let offset = -raw.truncatingRemainder(dividingBy: loopHeight)
 
                 HStack(alignment: .top, spacing: gap) {
-                    column(urls: leftURLs + leftURLs)
-                    column(urls: rightURLs + rightURLs)
+                    column(names: leftCovers + leftCovers)
+                    column(names: rightCovers + rightCovers)
                 }
                 .frame(width: geo.size.width, alignment: .center)
                 .offset(y: offset)
@@ -72,19 +78,14 @@ struct SplashCoverScrollView: View {
     }
 
     @ViewBuilder
-    private func column(urls: [String]) -> some View {
+    private func column(names: [String]) -> some View {
         VStack(spacing: gap) {
-            ForEach(0..<urls.count, id: \.self) { i in
-                AsyncImage(url: URL(string: urls[i])) { phase in
-                    switch phase {
-                    case .success(let image):
-                        image.resizable().aspectRatio(contentMode: .fill)
-                    default:
-                        Rectangle().fill(Color(hex: 0xE2D9CC))
-                    }
-                }
-                .frame(width: coverWidth, height: coverHeight)
-                .clipShape(RoundedRectangle(cornerRadius: 6))
+            ForEach(0..<names.count, id: \.self) { i in
+                Image(names[i])
+                    .resizable()
+                    .aspectRatio(contentMode: .fill)
+                    .frame(width: coverWidth, height: coverHeight)
+                    .clipShape(RoundedRectangle(cornerRadius: 6))
             }
         }
     }

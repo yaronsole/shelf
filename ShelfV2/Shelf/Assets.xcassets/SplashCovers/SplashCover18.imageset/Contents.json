@@ -1,0 +1,12 @@
+{
+  "images" : [
+    {
+      "filename" : "SplashCover18.jpg",
+      "idiom" : "universal"
+    }
+  ],
+  "info" : {
+    "author" : "xcode",
+    "version" : 1
+  }
+}
