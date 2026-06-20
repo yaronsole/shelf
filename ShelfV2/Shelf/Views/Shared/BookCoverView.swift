@@ -40,18 +40,7 @@ struct BookCoverView: View {
         Rectangle()
             .fill(Color(.secondarySystemFill))
             .overlay {
-                AsyncImage(url: hiResURL) { phase in
-                    switch phase {
-                    case .success(let image):
-                        image.resizable().scaledToFill()
-                    case .empty, .failure:
-                        Image(systemName: "book.closed")
-                            .font(.title2)
-                            .foregroundStyle(Color(.tertiaryLabel))
-                    @unknown default:
-                        Color.clear
-                    }
-                }
+                CachedCoverImage(url: hiResURL)
             }
     }
 
@@ -60,5 +49,77 @@ struct BookCoverView: View {
             .replacingOccurrences(of: "&zoom=1", with: "&zoom=3")
             .replacingOccurrences(of: "?zoom=1", with: "?zoom=3")
         return URL(string: upgraded)
+    }
+}
+
+// MARK: - Cached cover loader
+
+/// Process-wide in-memory cache of decoded cover images, keyed by hi-res URL.
+/// It outlives individual view lifetimes, so the For You feed's LazyVStack
+/// recycling (and `@Query` mutations from `markSeenIfScrolledPast`) no longer
+/// drop already-fetched covers.
+private final class CoverImageCache {
+    static let shared = CoverImageCache()
+    private let cache = NSCache<NSURL, UIImage>()
+    private init() { cache.countLimit = 500 }
+
+    func image(for url: URL) -> UIImage? { cache.object(forKey: url as NSURL) }
+    func insert(_ image: UIImage, for url: URL) { cache.setObject(image, forKey: url as NSURL) }
+}
+
+/// Drop-in replacement for the cover `AsyncImage`. Stock `AsyncImage` fires its
+/// request once on instantiation; when a row is recycled mid-flight (request
+/// cancelled) or a fetch fails, the recreated view lands on `.empty`/`.failure`
+/// and latches on the placeholder permanently — the top-of-feed bug.
+///
+/// This instead:
+///   • reads decoded images from `CoverImageCache`, so a recreated row shows
+///     instantly without re-fetching;
+///   • loads in `.task(id: url)`, so a recreated or previously-failed view
+///     re-issues the request rather than getting stuck on a stale phase;
+///   • on failure/cancel leaves the placeholder and retries on next appearance.
+///
+/// Visual output is identical to the old AsyncImage: success → resizable
+/// `scaledToFill`; otherwise the `book.closed` symbol (over the parent's
+/// `secondarySystemFill` rectangle).
+private struct CachedCoverImage: View {
+    let url: URL?
+    @State private var image: UIImage?
+
+    var body: some View {
+        Group {
+            if let image {
+                Image(uiImage: image)
+                    .resizable()
+                    .scaledToFill()
+            } else {
+                Image(systemName: "book.closed")
+                    .font(.title2)
+                    .foregroundStyle(Color(.tertiaryLabel))
+            }
+        }
+        .task(id: url) { await load() }
+    }
+
+    private func load() async {
+        guard let url else { return }
+        if let cached = CoverImageCache.shared.image(for: url) {
+            image = cached
+            return
+        }
+        // Recreated view starts fresh — never inherit a prior failed state.
+        image = nil
+        do {
+            var request = URLRequest(url: url)
+            request.cachePolicy = .returnCacheDataElseLoad
+            let (data, _) = try await URLSession.shared.data(for: request)
+            if Task.isCancelled { return }
+            guard let ui = UIImage(data: data) else { return }
+            CoverImageCache.shared.insert(ui, for: url)
+            image = ui
+        } catch {
+            // Cancelled (scrolled away) or network error: stay on the placeholder.
+            // `.task(id:)` re-runs on reappearance, so the next appear retries.
+        }
     }
 }
