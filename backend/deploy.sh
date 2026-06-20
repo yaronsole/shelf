@@ -35,10 +35,15 @@ gcloud builds submit \
   --tag "$IMAGE" \
   .
 
+echo "▶ Resolving freshly-built image digest (avoids stale :latest resolution)"
+IMAGE_DIGEST=$(gcloud container images describe "$IMAGE:latest" \
+  --project "$PROJECT_ID" --format='value(image_summary.digest)')
+echo "  digest: $IMAGE_DIGEST"
+
 echo "▶ Deploying to Cloud Run: $SERVICE_NAME ($REGION)"
 gcloud run deploy "$SERVICE_NAME" \
   --project "$PROJECT_ID" \
-  --image "$IMAGE" \
+  --image "$IMAGE@$IMAGE_DIGEST" \
   --region "$REGION" \
   --platform managed \
   --allow-unauthenticated \
@@ -48,6 +53,13 @@ gcloud run deploy "$SERVICE_NAME" \
   --min-instances 0 \
   --max-instances 5 \
   --timeout 60
+
+# Defensive: if traffic was ever pinned to a specific revision (e.g. a past
+# rollback via --to-revisions), `gcloud run deploy` creates a new revision but
+# won't shift traffic to it. Force 100% to the latest so deploys always land.
+echo "▶ Routing 100% traffic to the latest revision"
+gcloud run services update-traffic "$SERVICE_NAME" \
+  --project "$PROJECT_ID" --region "$REGION" --to-latest >/dev/null
 
 SERVICE_URL=$(gcloud run services describe "$SERVICE_NAME" \
   --project "$PROJECT_ID" \
