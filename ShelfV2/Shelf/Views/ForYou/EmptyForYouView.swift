@@ -374,8 +374,7 @@ final class PopularPicksStore {
             // Covers are fetched concurrently; entries whose lookup fails are
             // dropped, so the rendered count may be slightly under 24.
             let subset = Array(PopularBooks.books.prefix(24))
-            var loaded: [PopularPickItem] = []
-            await withTaskGroup(of: (Int, PopularPickItem?).self) { group in
+            let loaded = await withTaskGroup(of: (Int, PopularPickItem?).self) { group -> [PopularPickItem] in
                 for (index, entry) in subset.enumerated() {
                     group.addTask {
                         if let cover = await OpenLibraryService.shared.lookupCoverURL(title: entry.title, author: entry.author) {
@@ -391,7 +390,7 @@ final class PopularPicksStore {
                 for await (i, item) in group {
                     if let item { indexed.append((i, item)) }
                 }
-                loaded = indexed.sorted { $0.0 < $1.0 }.map { $0.1 }
+                return indexed.sorted { $0.0 < $1.0 }.map { $0.1 }
             }
             await MainActor.run {
                 self.items = loaded
