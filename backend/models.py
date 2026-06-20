@@ -165,3 +165,14 @@ class ListReactionRequest(BaseModel):
     cover_url: str = ""
     kind: ListReactionKind
     domain: str = "books"
+
+
+# ---------------------------------------------------------------------------
+# User settings (community contribution toggle)
+# ---------------------------------------------------------------------------
+class UserSettingsRequest(BaseModel):
+    contribute: bool = True
+
+
+class UserSettingsResponse(BaseModel):
+    contribute: bool = True

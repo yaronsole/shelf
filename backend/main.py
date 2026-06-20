@@ -8,6 +8,7 @@ import json
 import logging
 import os
 import uuid
+from collections import defaultdict
 from datetime import datetime, timezone
 from typing import Annotated
 
@@ -32,13 +33,15 @@ from models import (
     SeedBookResponse,
     SuggestionResponse,
     SuggestionsRequest,
+    UserSettingsRequest,
+    UserSettingsResponse,
 )
 from prompts import build_recommendations_prompt, build_suggestions_prompt
 from google_books import lookup_cover, lookup_metadata
 from open_library import lookup_cover as open_library_lookup_cover
 from nyt_bestsellers import lookup_bestseller
 from nyt_history import fetch_next_pages as nyt_history_fetch_next_pages, lookup_bestseller_history
-from lists import get_list_metadata, load_catalog, load_list_books
+from lists import book_id_hash, get_list_metadata, load_catalog, load_list_books
 
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import httpx
@@ -54,6 +57,18 @@ log = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 db = firestore.Client()
 claude = anthropic.Anthropic(api_key=os.environ["ANTHROPIC_API_KEY"])
+
+# ---------------------------------------------------------------------------
+# Community list ("loved by readers") config
+# ---------------------------------------------------------------------------
+# Slug must match the entry in data/lists/_index.json. The computed books live
+# in Firestore (computed_lists/<slug>) so serving is a cheap single-doc read;
+# Cloud Run's filesystem is ephemeral so we can't write a JSON file there.
+COMMUNITY_LIST_SLUG = "loved_by_readers"
+COMMUNITY_LIST_SIZE = int(os.environ.get("COMMUNITY_LIST_SIZE", "30"))
+# Device token whose taste (seed_books) bootstraps the list on day one. Counts
+# as that one reader's love; real reactions augment it over time. Unset → no seed.
+COMMUNITY_SEED_TOKEN = os.environ.get("COMMUNITY_SEED_TOKEN", "")
 
 # ---------------------------------------------------------------------------
 # App
@@ -709,9 +724,14 @@ def _user_list_status_map(user_id: str, domain: str) -> dict[tuple[str, str], st
 # ---------------------------------------------------------------------------
 @app.get("/v1/lists", response_model=ListCatalogResponse)
 def get_lists():
-    return ListCatalogResponse(
-        lists=[ListMetadata(**entry) for entry in load_catalog()]
-    )
+    out: list[ListMetadata] = []
+    for entry in load_catalog():
+        m = ListMetadata(**entry)
+        if entry["slug"] == COMMUNITY_LIST_SLUG:
+            # book_count for the computed list comes from Firestore, not a file
+            m.book_count = len(_community_list_books())
+        out.append(m)
+    return ListCatalogResponse(lists=out)
 
 
 # ---------------------------------------------------------------------------
@@ -722,12 +742,18 @@ def get_list_detail(slug: str, user_id: UserID, domain: str = "books"):
     meta = get_list_metadata(slug)
     if not meta:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="list not found")
-    try:
-        books = load_list_books(slug)
-    except FileNotFoundError:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="list books not found")
 
-    covers = _resolve_list_covers(books)
+    if slug == COMMUNITY_LIST_SLUG:
+        # Precomputed in Firestore; covers were resolved at compute time.
+        books = _community_list_books()
+        covers = {b["book_id"]: b.get("cover_url", "") for b in books}
+    else:
+        try:
+            books = load_list_books(slug)
+        except FileNotFoundError:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="list books not found")
+        covers = _resolve_list_covers(books)
+
     user_status = _user_list_status_map(user_id, domain)
 
     decorated = []
@@ -806,10 +832,13 @@ def react_to_list_book(slug: str, body: ListReactionRequest, user_id: UserID):
 # ---------------------------------------------------------------------------
 @app.delete("/v1/lists/{slug}/react/{book_id}", status_code=status.HTTP_204_NO_CONTENT)
 def unreact_to_list_book(slug: str, book_id: str, user_id: UserID, domain: str = "books"):
-    try:
-        books = load_list_books(slug)
-    except FileNotFoundError:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="list not found")
+    if slug == COMMUNITY_LIST_SLUG:
+        books = _community_list_books()
+    else:
+        try:
+            books = load_list_books(slug)
+        except FileNotFoundError:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="list not found")
     book = next((b for b in books if b["book_id"] == book_id), None)
     if not book:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="book not in list")
@@ -842,6 +871,133 @@ def unreact_to_list_book(slug: str, book_id: str, user_id: UserID, domain: str =
 
     if deleted_any:
         batch.commit()
+
+
+# ---------------------------------------------------------------------------
+# Community list — "loved by readers" (aggregated from reactions, seeded with
+# the configured seed user's taste). Computed on a schedule, persisted to
+# Firestore, served cheaply through the /v1/lists endpoints above.
+# ---------------------------------------------------------------------------
+def _community_doc_ref():
+    return db.collection("computed_lists").document(COMMUNITY_LIST_SLUG)
+
+
+def _community_list_books() -> list[dict]:
+    """Precomputed 'loved by readers' books (empty until the first recompute).
+    Each dict carries book_id/title/author/cover_url/loved_count."""
+    snap = _community_doc_ref().get()
+    if not snap.exists:
+        return []
+    return (snap.to_dict() or {}).get("books", [])
+
+
+def _compute_loved_by_readers(dry_run: bool = False) -> dict:
+    """Rank books by the count of DISTINCT users who marked them
+    'alreadyReadLiked', seeded with the configured seed user's taste so the
+    list is populated from day one. Sentiment comes from reactions only (the
+    seed is a deliberate bootstrap). Honors the per-user `contribute` flag,
+    drops cover-less books, caps at COMMUNITY_LIST_SIZE. No LLM calls.
+
+    dry_run=True computes and returns the result WITHOUT persisting."""
+    loved_users: dict[tuple[str, str], set[str]] = defaultdict(set)
+    titles: dict[tuple[str, str], dict] = {}
+
+    def _register(title: str, author: str, uid: str) -> None:
+        t = (title or "").strip()
+        a = (author or "").strip()
+        if not t:
+            return
+        key = (t.lower(), a.lower())
+        loved_users[key].add(uid)
+        titles.setdefault(key, {"title": t, "author": a})
+
+    # 1) "Read & loved" reactions across contributing users
+    for user in db.collection("users").stream():
+        if (user.to_dict() or {}).get("contribute", True) is False:
+            continue
+        uid = user.id
+        for doc in (reaction_col(uid)
+                    .where("kind", "==", ReactionKind.already_read_liked.value)
+                    .stream()):
+            d = doc.to_dict()
+            _register(d.get("title", ""), d.get("author", ""), uid)
+
+    # 2) Day-one bootstrap: the seed user's taste counts as their love
+    if COMMUNITY_SEED_TOKEN:
+        for doc in seed_col(COMMUNITY_SEED_TOKEN).where("domain", "==", "books").stream():
+            d = doc.to_dict()
+            _register(d.get("title", ""), d.get("author", ""), COMMUNITY_SEED_TOKEN)
+
+    # Rank by distinct readers desc, then title for stable ordering
+    ranked = sorted(titles.keys(), key=lambda k: (-len(loved_users[k]), k[0]))
+
+    # Resolve covers for a candidate pool (headroom for the cover guard), drop
+    # cover-less, then cap.
+    candidates = [
+        {
+            "book_id": book_id_hash(titles[k]["title"], titles[k]["author"]),
+            "title": titles[k]["title"],
+            "author": titles[k]["author"],
+            "loved_count": len(loved_users[k]),
+        }
+        for k in ranked[: COMMUNITY_LIST_SIZE * 2]
+    ]
+    covers = _resolve_list_covers(candidates) if candidates else {}
+
+    books: list[dict] = []
+    seen: set[str] = set()
+    for c in candidates:
+        if len(books) >= COMMUNITY_LIST_SIZE:
+            break
+        cover = covers.get(c["book_id"], "")
+        if not cover or c["book_id"] in seen:
+            continue
+        seen.add(c["book_id"])
+        books.append({**c, "cover_url": cover})
+
+    if not dry_run:
+        _community_doc_ref().set({
+            "books": books,
+            "count": len(books),
+            "updated_at": datetime.now(timezone.utc),
+        })
+
+    return {
+        "count": len(books),
+        "distinct_books_considered": len(titles),
+        "seeded": bool(COMMUNITY_SEED_TOKEN),
+        "books": [
+            {"title": b["title"], "author": b["author"], "loved_count": b["loved_count"]}
+            for b in books
+        ],
+    }
+
+
+@app.post("/v1/cron/recompute-community")
+def cron_recompute_community(
+    x_cloud_scheduler_auth: Annotated[str | None, Header()] = None,
+):
+    """Recompute and persist the 'loved by readers' list. Protected by the
+    shared CRON_SECRET. Schedule daily via Cloud Scheduler (see deploy.sh)."""
+    expected = os.environ.get("CRON_SECRET", "")
+    if not expected or x_cloud_scheduler_auth != expected:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="invalid cron secret")
+    return _compute_loved_by_readers()
+
+
+# ---------------------------------------------------------------------------
+# User settings — community contribution toggle
+# ---------------------------------------------------------------------------
+@app.get("/v1/user/settings", response_model=UserSettingsResponse)
+def get_user_settings(user_id: UserID):
+    d = user_ref(user_id).get().to_dict() or {}
+    return UserSettingsResponse(contribute=d.get("contribute", True))
+
+
+@app.put("/v1/user/settings", response_model=UserSettingsResponse)
+def update_user_settings(body: UserSettingsRequest, user_id: UserID):
+    user_ref(user_id).set({"contribute": body.contribute}, merge=True)
+    return UserSettingsResponse(contribute=body.contribute)
 
 
 # ---------------------------------------------------------------------------

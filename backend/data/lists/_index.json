@@ -97,6 +97,20 @@
       "featured": true,
       "sort_order": 7,
       "last_updated": "2026-05-25"
+    },
+    {
+      "slug": "loved_by_readers",
+      "title": "Loved by Readers",
+      "subtitle": "Most-loved in the Shelf community",
+      "description": "The books Shelf readers have read and loved most — ranked by how many of you marked them as loved. Updated daily.",
+      "curator": "The Shelf community",
+      "icon_emoji": "❤️",
+      "category": "reader",
+      "color_start": "#B23A48",
+      "color_end": "#E86A6A",
+      "featured": true,
+      "sort_order": 0,
+      "last_updated": "2026-06-19"
     }
   ]
 }

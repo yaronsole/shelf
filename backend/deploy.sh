@@ -13,6 +13,8 @@ ANTHROPIC_API_KEY="${ANTHROPIC_API_KEY:-}"
 GOOGLE_BOOKS_API_KEY="${GOOGLE_BOOKS_API_KEY:-}"
 CRON_SECRET="${CRON_SECRET:-}"
 NYT_API_KEY="${NYT_API_KEY:-}"
+COMMUNITY_SEED_TOKEN="${COMMUNITY_SEED_TOKEN:-}"   # device token whose taste seeds the "loved by readers" list
+COMMUNITY_LIST_SIZE="${COMMUNITY_LIST_SIZE:-30}"
 # ─────────────────────────────────────────────────────────────────────────────
 
 if [[ -z "$PROJECT_ID" ]]; then
@@ -40,7 +42,7 @@ gcloud run deploy "$SERVICE_NAME" \
   --region "$REGION" \
   --platform managed \
   --allow-unauthenticated \
-  --set-env-vars "ANTHROPIC_API_KEY=$ANTHROPIC_API_KEY,GOOGLE_BOOKS_API_KEY=$GOOGLE_BOOKS_API_KEY,CRON_SECRET=$CRON_SECRET,NYT_API_KEY=$NYT_API_KEY" \
+  --set-env-vars "ANTHROPIC_API_KEY=$ANTHROPIC_API_KEY,GOOGLE_BOOKS_API_KEY=$GOOGLE_BOOKS_API_KEY,CRON_SECRET=$CRON_SECRET,NYT_API_KEY=$NYT_API_KEY,COMMUNITY_SEED_TOKEN=$COMMUNITY_SEED_TOKEN,COMMUNITY_LIST_SIZE=$COMMUNITY_LIST_SIZE" \
   --memory 512Mi \
   --cpu 1 \
   --min-instances 0 \
@@ -79,3 +81,21 @@ if [[ -n "$SLUGS" ]]; then
 else
   echo "⚠️  No list slugs returned — skipping warmup."
 fi
+
+# ── Recompute the community "loved by readers" list ──────────────────────────
+# Aggregates alreadyReadLiked reactions (+ the seed token's taste) into
+# computed_lists/loved_by_readers, which the /v1/lists endpoints then serve.
+if [[ -n "$CRON_SECRET" ]]; then
+  echo ""
+  echo "▶ Recomputing community list (loved_by_readers)..."
+  curl -s --max-time 120 -X POST "$SERVICE_URL/v1/cron/recompute-community" \
+    -H "X-Cloud-Scheduler-Auth: $CRON_SECRET"
+  echo ""
+fi
+
+# To schedule daily recomputation (run once, after first deploy):
+#   gcloud scheduler jobs create http shelf-community-recompute \
+#     --project "$PROJECT_ID" --location "$REGION" \
+#     --schedule "0 4 * * *" --time-zone "America/Los_Angeles" \
+#     --uri "$SERVICE_URL/v1/cron/recompute-community" --http-method POST \
+#     --headers "X-Cloud-Scheduler-Auth=$CRON_SECRET"
