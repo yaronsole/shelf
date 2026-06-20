@@ -1001,6 +1001,33 @@ def update_user_settings(body: UserSettingsRequest, user_id: UserID):
 
 
 # ---------------------------------------------------------------------------
+# DELETE /v1/user/data — wipe ALL Firestore data for the device token.
+# Satisfies Apple's account/data-deletion requirement without an auth system:
+# the iOS client also clears local SwiftData + the Keychain token, so a fresh
+# anonymous token is minted on next launch. Hard delete; "lose history on
+# reinstall" is the accepted trade-off.
+# ---------------------------------------------------------------------------
+@app.delete("/v1/user/data", status_code=status.HTTP_204_NO_CONTENT)
+def delete_user_data(user_id: UserID):
+    ref = user_ref(user_id)
+    # Deleting a document does not delete its subcollections — purge each
+    # (seed_books, reactions, recommendations, seen_books, …) explicitly.
+    for coll in ref.collections():
+        batch = db.batch()
+        count = 0
+        for doc in coll.stream():
+            batch.delete(doc.reference)
+            count += 1
+            if count == 400:  # stay under Firestore's 500-write batch limit
+                batch.commit()
+                batch = db.batch()
+                count = 0
+        if count:
+            batch.commit()
+    ref.delete()
+
+
+# ---------------------------------------------------------------------------
 # Health check
 # ---------------------------------------------------------------------------
 @app.get("/healthz")
