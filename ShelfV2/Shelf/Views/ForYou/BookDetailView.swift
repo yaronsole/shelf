@@ -157,6 +157,13 @@ struct BookDetailView: View {
             }
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    ShareLink(item: BookShareService.shareText(title: display.title, author: display.author)) {
+                        Image(systemName: "square.and.arrow.up")
+                            .foregroundStyle(Color(.secondaryLabel))
+                            .font(.title3)
+                    }
+                }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button { dismiss() } label: {
                         Image(systemName: "xmark.circle.fill")

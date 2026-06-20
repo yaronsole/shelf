@@ -252,6 +252,13 @@ private struct ListBookDetailSheet: View {
             }
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    ShareLink(item: BookShareService.shareText(title: book.title, author: book.author)) {
+                        Image(systemName: "square.and.arrow.up")
+                            .foregroundStyle(Color(.secondaryLabel))
+                            .font(.title3)
+                    }
+                }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button { dismiss() } label: {
                         Image(systemName: "xmark.circle.fill")
