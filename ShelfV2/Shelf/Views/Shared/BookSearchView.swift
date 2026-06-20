@@ -49,6 +49,14 @@ struct BookSearchView<Idle: View>: View {
                 idle
             }
         }
+        // Pin the search box to the top regardless of state. Without this the
+        // VStack shrinks to its content when the idle content is empty/short
+        // (e.g. the Taste add sheet, whose idle is EmptyView) and the parent
+        // centers it — so the box renders mid-page, then snaps up when the
+        // results ScrollView fills the height on the first keystroke. Hosts
+        // whose idle already fills the height (Discover's catalog ScrollView)
+        // are unaffected.
+        .frame(maxHeight: .infinity, alignment: .top)
         .sheet(item: $pendingRead) { pending in
             AlreadyReadSheet(
                 title: pending.title,
