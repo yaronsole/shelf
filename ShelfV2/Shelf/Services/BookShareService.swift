@@ -10,16 +10,12 @@ import Foundation
 ///      guard RG-01, never hand-build an Amazon URL at a call site)
 ///   3. an App Store fallback line
 enum BookShareService {
-    /// App Store listing URL. **PLACEHOLDER** until the listing exists —
-    /// plan open item `APP_STORE_URL`; fill before App Store submission.
-    static let appStoreURL = "https://apps.apple.com/app/id0000000000"
-
     static func shareText(title: String, author: String) -> String {
         var lines = ["\(title) by \(author)"]
         if let amazon = AmazonLinkService.searchURL(title: title, author: author) {
             lines.append(amazon.absoluteString)
         }
-        lines.append("Find your next read on Shelf: \(appStoreURL)")
+        lines.append("Find your next read on Shelf: \(AppLinks.appStoreURL)")
         return lines.joined(separator: "\n\n")
     }
 }

@@ -9,6 +9,7 @@ struct TasteProfileView: View {
 
     @State private var vm = TasteProfileViewModel()
     @State private var bookForSuggestions: LocalSeedBook? = nil
+    @State private var isShowingSettings = false
 
     private let columns = [
         GridItem(.flexible(), spacing: 12),
@@ -61,6 +62,14 @@ struct TasteProfileView: View {
                 }
             }
             .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button {
+                        isShowingSettings = true
+                    } label: {
+                        Image(systemName: "gearshape")
+                    }
+                    .accessibilityLabel(Strings.Settings.title)
+                }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
                         vm.isShowingAddSheet = true
@@ -75,6 +84,9 @@ struct TasteProfileView: View {
         }
         .sheet(item: $bookForSuggestions) { book in
             SimilarBooksSheet(seed: book, modelContext: modelContext)
+        }
+        .sheet(isPresented: $isShowingSettings) {
+            SettingsView()
         }
         .alert("remove from taste?", isPresented: $vm.isShowingRemoveConfirm) {
             Button("remove", role: .destructive) {

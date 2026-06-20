@@ -3,6 +3,24 @@ import Foundation
 // All user-visible strings in one place. No hardcoded strings in views.
 enum Strings {
 
+    enum Settings {
+        static let title = "Settings"
+        static let contributeTitle = "Contribute my likes"
+        static let contributeFooter = "Help build the \u{201C}Loved by Readers\u{201D} list. Your likes are counted anonymously — never your name or identity."
+        static let aboutHeader = "About"
+        static let aiRow = "How recommendations work"
+        static let privacyRow = "Privacy policy"
+        static let deleteButton = "Delete my data"
+        static let deleteAlertTitle = "Delete all your data?"
+        static let deleteAlertMessage = "This permanently removes your taste profile, saved books, and recommendations from this device and our servers. This can\u{2019}t be undone."
+        static let deleteConfirm = "Delete"
+        static let deleteFailed = "Couldn\u{2019}t delete your data. Please check your connection and try again."
+
+        static let aiDisclosureTitle = "How Shelf works"
+        static let aiDisclosureBody = "Shelf sends the books you like and dislike to Anthropic\u{2019}s Claude AI to generate your recommendations. We never send your name, email, or any personal identity — only your anonymous taste signals."
+        static let consentContinue = "Got it"
+    }
+
     enum Onboarding {
         enum Welcome {
             static let appName = "Shelf"

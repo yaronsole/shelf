@@ -169,6 +169,24 @@ final class APIClient {
         try await delete(url: components.url!)
     }
 
+    // MARK: - User Settings & Data
+
+    func fetchUserSettings() async throws -> UserSettingsDTO {
+        let url = APIConfig.baseURL.appendingPathComponent(APIConfig.Endpoints.userSettings)
+        return try await get(url: url)
+    }
+
+    func updateUserSettings(contribute: Bool) async throws {
+        let url = APIConfig.baseURL.appendingPathComponent(APIConfig.Endpoints.userSettings)
+        try await put(url: url, body: UserSettingsDTO(contribute: contribute))
+    }
+
+    /// Hard-deletes all of this device token's data on the server.
+    func deleteUserData() async throws {
+        let url = APIConfig.baseURL.appendingPathComponent(APIConfig.Endpoints.userData)
+        try await delete(url: url)
+    }
+
     // MARK: - Private HTTP primitives
 
     private func makeRequest(url: URL, method: String) -> URLRequest {
@@ -186,6 +204,13 @@ final class APIClient {
 
     private func post<B: Encodable>(url: URL, body: B) async throws {
         var request = makeRequest(url: url, method: "POST")
+        request.httpBody = try encoder.encode(body)
+        let (_, response) = try await session.data(for: request)
+        try validate(response: response)
+    }
+
+    private func put<B: Encodable>(url: URL, body: B) async throws {
+        var request = makeRequest(url: url, method: "PUT")
         request.httpBody = try encoder.encode(body)
         let (_, response) = try await session.data(for: request)
         try validate(response: response)

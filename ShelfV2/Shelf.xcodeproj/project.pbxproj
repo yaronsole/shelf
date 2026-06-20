@@ -29,6 +29,7 @@
 		576C11498DD4C5F698192CDF /* BookSearchResult.swift in Sources */ = {isa = PBXBuildFile; fileRef = FDB0FC17BD0B0F45E34874B8 /* BookSearchResult.swift */; };
 		581CEBCA7868434EDF585E37 /* WelcomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AE77D3063F5D54F6636891D8 /* WelcomeView.swift */; };
 		5AFD9D99B7C32439BFDE83F3 /* APIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBE2CB3418A0F686C4B29BAA /* APIClient.swift */; };
+		5B8F5A5976E9AE0A3E2A7B64 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0EEE3A732552A1C887B8B77B /* SettingsView.swift */; };
 		5BA5952176E574CFA501B3C7 /* SimilarBooksCacheService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 47BCBF95BC685B15A391A981 /* SimilarBooksCacheService.swift */; };
 		680914F42E37A674DF00FDAC /* KeychainService.swift in Sources */ = {isa = PBXBuildFile; fileRef = E94C910C8C8992A215F4AE9B /* KeychainService.swift */; };
 		6A2F3E715AC4C06380A8BDFE /* TasteProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 425ED17B1150334972D5E576 /* TasteProfileView.swift */; };
@@ -38,6 +39,7 @@
 		76CB7A048C2B178AC3190336 /* APIConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = B580A241E862163CFFFB9971 /* APIConfig.swift */; };
 		7C3DFCE98D936804B0D137C8 /* EmptyStateView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7645C4F2E00DD48F412E16A8 /* EmptyStateView.swift */; };
 		86DE80EF5300936D5D98937B /* APIModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 51CCF99B8E2ED56F44767C5A /* APIModels.swift */; };
+		8743C3559084806054A6CFA7 /* AppLinks.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2133B5B4B3020D910521327 /* AppLinks.swift */; };
 		8AE308039CE2F5558CB0A220 /* ReadingListCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4A0D7FF971F8790586F780E0 /* ReadingListCardView.swift */; };
 		99375824D843971237E15582 /* PopularBooks.swift in Sources */ = {isa = PBXBuildFile; fileRef = EFCEC277657A52C9ACCB97A1 /* PopularBooks.swift */; };
 		A3618751598542D3A5E4654E /* ToastView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E918ADC8BC9FE46646425C8 /* ToastView.swift */; };
@@ -62,6 +64,7 @@
 /* Begin PBXFileReference section */
 		095B1AFF9ADFD41FA8BCAB3A /* SeedBookSearchView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SeedBookSearchView.swift; sourceTree = "<group>"; };
 		0A0F51D0619ED12B7D71F19A /* BookCoverView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BookCoverView.swift; sourceTree = "<group>"; };
+		0EEE3A732552A1C887B8B77B /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		16F6DDF314F38DB0ABDA1045 /* ShelfApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShelfApp.swift; sourceTree = "<group>"; };
 		1E918ADC8BC9FE46646425C8 /* ToastView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToastView.swift; sourceTree = "<group>"; };
 		244FBEC989494531109CC0C3 /* OpenLibraryService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenLibraryService.swift; sourceTree = "<group>"; };
@@ -94,6 +97,7 @@
 		AEE65A95AA9D516A78DF7D9D /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		B580A241E862163CFFFB9971 /* APIConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIConfig.swift; sourceTree = "<group>"; };
 		B9630CB65578DEFE58EB9108 /* ListDetailViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ListDetailViewModel.swift; sourceTree = "<group>"; };
+		C2133B5B4B3020D910521327 /* AppLinks.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppLinks.swift; sourceTree = "<group>"; };
 		C25B2FD03CF7D6C9FE348257 /* ReadingListViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReadingListViewModel.swift; sourceTree = "<group>"; };
 		C434CA69BBA8550DF6E411AC /* Shelf.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = Shelf.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		C866A92385D0C7B877BDB148 /* SimilarBooksSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SimilarBooksSheet.swift; sourceTree = "<group>"; };
@@ -137,6 +141,7 @@
 			isa = PBXGroup;
 			children = (
 				B580A241E862163CFFFB9971 /* APIConfig.swift */,
+				C2133B5B4B3020D910521327 /* AppLinks.swift */,
 				45D9C6931ED93DF8585AC5CF /* DomainConfig.swift */,
 				EFCEC277657A52C9ACCB97A1 /* PopularBooks.swift */,
 				AE93E5C8E6050B409224D7B1 /* Secrets.swift */,
@@ -161,6 +166,7 @@
 				6A41B24D81CD13EDAAFFEBFA /* ForYou */,
 				5B5A7BE92F2A7F0665AA73F7 /* Onboarding */,
 				055D3E969DE0D07F8D147BBC /* ReadingList */,
+				972DB58BC758B3CA2628F87E /* Settings */,
 				39C16FA2B4E854480DDF74A9 /* Shared */,
 				6733891AF259EBE8D9632478 /* Splash */,
 				5987DA9EC230F8EA435AEC5C /* TasteProfile */,
@@ -270,6 +276,14 @@
 			path = Discover;
 			sourceTree = "<group>";
 		};
+		972DB58BC758B3CA2628F87E /* Settings */ = {
+			isa = PBXGroup;
+			children = (
+				0EEE3A732552A1C887B8B77B /* SettingsView.swift */,
+			);
+			path = Settings;
+			sourceTree = "<group>";
+		};
 		BF8BC23F04588708274C7284 /* ViewModels */ = {
 			isa = PBXGroup;
 			children = (
@@ -363,6 +377,7 @@
 				86DE80EF5300936D5D98937B /* APIModels.swift in Sources */,
 				49328344EA59A0B2A15572AB /* AlreadyReadSheet.swift in Sources */,
 				AD97DE55251883A2902F76C0 /* AmazonLinkService.swift in Sources */,
+				8743C3559084806054A6CFA7 /* AppLinks.swift in Sources */,
 				D45A91B8F859D3E0AAA63B6D /* AppState.swift in Sources */,
 				08F38D0307A9E3050F084385 /* BookCardView.swift in Sources */,
 				415CF0B8A6321AB931F51913 /* BookCoverView.swift in Sources */,
@@ -397,6 +412,7 @@
 				F0BA8F905A8715742CA0FF6B /* Secrets.swift in Sources */,
 				208FE5102D5873E83CC5D38A /* SeedBookSearchView.swift in Sources */,
 				57371A454B82CB4B137E3988 /* SeedWriter.swift in Sources */,
+				5B8F5A5976E9AE0A3E2A7B64 /* SettingsView.swift in Sources */,
 				6D17370CB142BF7755632D3F /* ShelfApp.swift in Sources */,
 				5BA5952176E574CFA501B3C7 /* SimilarBooksCacheService.swift in Sources */,
 				4623E6A766396A83B9409F07 /* SimilarBooksSheet.swift in Sources */,
@@ -540,6 +556,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = Shelf;
+				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = UIInterfaceOrientationPortrait;
@@ -564,6 +581,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = Shelf;
+				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = UIInterfaceOrientationPortrait;

@@ -42,6 +42,12 @@ final class AppState {
         didSet { UserDefaults.standard.set(forYouFeedUnlocked, forKey: Keys.forYouFeedUnlocked) }
     }
 
+    // App Store: AI-usage disclosure must be acknowledged once before use.
+    // Defaults false so existing users also see it once after updating.
+    var aiConsentAcknowledged: Bool {
+        didSet { UserDefaults.standard.set(aiConsentAcknowledged, forKey: Keys.aiConsentAcknowledged) }
+    }
+
     init() {
         // Keychain survives app uninstall on iOS, but UserDefaults does not.
         // If we don't see our "has launched" marker AND the user hasn't completed
@@ -69,6 +75,8 @@ final class AppState {
         } else {
             self.forYouFeedUnlocked = UserDefaults.standard.bool(forKey: Keys.forYouFeedUnlocked)
         }
+
+        self.aiConsentAcknowledged = UserDefaults.standard.bool(forKey: Keys.aiConsentAcknowledged)
     }
 
     func completeOnboarding() {
@@ -80,12 +88,17 @@ final class AppState {
         forYouFeedUnlocked = true
     }
 
+    /// Wipes device identity + local flags so the user becomes a fresh anonymous
+    /// user (a new token is minted on the next request). Backs "Delete my data".
     func resetAll() {
         hasCompletedOnboarding = false
         isFirstGeneration = false
         forYouFeedUnlocked = true
+        aiConsentAcknowledged = false
         UserDefaults.standard.removeObject(forKey: Keys.onboardingComplete)
         UserDefaults.standard.removeObject(forKey: Keys.forYouFeedUnlocked)
+        UserDefaults.standard.removeObject(forKey: Keys.aiConsentAcknowledged)
+        UserDefaults.standard.removeObject(forKey: Keys.contribute)
         KeychainService.delete(key: .anonymousToken)
     }
 
@@ -93,5 +106,7 @@ final class AppState {
         static let onboardingComplete = "com.ysole.shelf.onboardingComplete"
         static let hasLaunchedOnce    = "com.ysole.shelf.hasLaunchedOnce"
         static let forYouFeedUnlocked = "com.ysole.shelf.forYouFeedUnlocked"
+        static let aiConsentAcknowledged = "com.ysole.shelf.aiConsentAcknowledged"
+        static let contribute = "com.ysole.shelf.contribute"
     }
 }

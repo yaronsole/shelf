@@ -24,13 +24,16 @@ private struct RootView: View {
 
     var body: some View {
         Group {
-            if appState.hasCompletedOnboarding {
+            if !appState.aiConsentAcknowledged {
+                AIConsentView()
+            } else if appState.hasCompletedOnboarding {
                 MainTabView()
             } else {
                 OnboardingCoordinatorView()
             }
         }
         .animation(.easeInOut(duration: 0.35), value: appState.hasCompletedOnboarding)
+        .animation(.easeInOut(duration: 0.35), value: appState.aiConsentAcknowledged)
         .task {
             // Prune books seen in previous sessions exactly once per launch (PRD REC-07).
             if !appState.hasDoneLaunchTimePrune {

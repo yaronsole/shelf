@@ -311,6 +311,21 @@ struct ListReactionRequest: Encodable {
 
 // MARK: - API Error
 
+// MARK: User Settings
+
+struct UserSettingsDTO: Codable {
+    let contribute: Bool
+
+    enum CodingKeys: String, CodingKey { case contribute }
+
+    init(contribute: Bool) { self.contribute = contribute }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        contribute = (try? c.decode(Bool.self, forKey: .contribute)) ?? true
+    }
+}
+
 enum APIError: LocalizedError {
     case unauthorized
     case notFound

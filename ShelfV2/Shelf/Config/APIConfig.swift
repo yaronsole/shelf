@@ -16,5 +16,7 @@ enum APIConfig {
         static let suggestions = "/v1/onboarding/suggestions"
         static let debugInfo = "/v1/debug/generation-info"
         static let lists = "/v1/lists"
+        static let userSettings = "/v1/user/settings"
+        static let userData = "/v1/user/data"
     }
 }
