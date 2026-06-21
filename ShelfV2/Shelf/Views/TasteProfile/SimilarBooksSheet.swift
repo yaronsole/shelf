@@ -58,6 +58,13 @@ struct SimilarBooksSheet: View {
             .navigationTitle("Similar books")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    ShareLink(item: BookShareService.shareText(title: seed.title, author: seed.author)) {
+                        Image(systemName: "square.and.arrow.up")
+                            .foregroundStyle(Color(.secondaryLabel))
+                            .font(.title3)
+                    }
+                }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button(Strings.Common.done) { dismiss() }
                 }

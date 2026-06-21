@@ -15,7 +15,12 @@ enum BookShareService {
         if let amazon = AmazonLinkService.searchURL(title: title, author: author) {
             lines.append(amazon.absoluteString)
         }
-        lines.append("Find your next read on Shelf: \(AppLinks.appStoreURL)")
+        // Only append the App Store line once a real listing URL exists — the
+        // placeholder reads as a broken link. Last position lets Messages render
+        // a rich app preview when it's set.
+        if AppLinks.hasAppStoreURL {
+            lines.append("Find your next read on Shelf:\n\(AppLinks.appStoreURL)")
+        }
         return lines.joined(separator: "\n\n")
     }
 }
