@@ -7,7 +7,6 @@ import SwiftData
 /// native iOS settings screen; no change to any existing surface.
 struct SettingsView: View {
     @Environment(\.dismiss) private var dismiss
-    @Environment(\.openURL) private var openURL
     @Environment(\.modelContext) private var modelContext
     @Environment(AppState.self) private var appState
 
@@ -27,10 +26,7 @@ struct SettingsView: View {
 
                 Section(Strings.Settings.aboutHeader) {
                     NavigationLink(Strings.Settings.aiRow) { AIDisclosureView() }
-                    Button(Strings.Settings.privacyRow) {
-                        if let url = URL(string: AppLinks.privacyPolicyURL) { openURL(url) }
-                    }
-                    .tint(.primary)
+                    NavigationLink(Strings.Settings.privacyRow) { PrivacyPolicyView() }
                 }
 
                 Section {
@@ -106,12 +102,15 @@ struct SettingsView: View {
 struct AIDisclosureView: View {
     var body: some View {
         ScrollView {
-            Text(Strings.Settings.aiDisclosureBody)
-                .font(.body)
-                .foregroundStyle(Color(.label))
-                .fixedSize(horizontal: false, vertical: true)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(20)
+            VStack(alignment: .leading, spacing: 18) {
+                Text(Strings.Settings.aiDisclosureBody)
+                    .font(.body)
+                    .foregroundStyle(Color(.label))
+                    .fixedSize(horizontal: false, vertical: true)
+                NavigationLink(Strings.Settings.privacyRow) { PrivacyPolicyView() }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(20)
         }
         .navigationTitle(Strings.Settings.aiDisclosureTitle)
         .navigationBarTitleDisplayMode(.inline)
@@ -123,7 +122,7 @@ struct AIDisclosureView: View {
 /// using an external AI service to disclose it and obtain consent.
 struct AIConsentView: View {
     @Environment(AppState.self) private var appState
-    @Environment(\.openURL) private var openURL
+    @State private var showPrivacy = false
 
     var body: some View {
         VStack(spacing: 22) {
@@ -139,10 +138,8 @@ struct AIConsentView: View {
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 32)
-            Button(Strings.Settings.privacyRow) {
-                if let url = URL(string: AppLinks.privacyPolicyURL) { openURL(url) }
-            }
-            .font(.subheadline)
+            Button(Strings.Settings.privacyRow) { showPrivacy = true }
+                .font(.subheadline)
             Spacer()
             Button {
                 appState.aiConsentAcknowledged = true
@@ -155,6 +152,19 @@ struct AIConsentView: View {
             .buttonStyle(.borderedProminent)
             .padding(.horizontal, 24)
             .padding(.bottom, 24)
+        }
+        .sheet(isPresented: $showPrivacy) {
+            NavigationStack {
+                PrivacyPolicyView()
+                    .toolbar {
+                        ToolbarItem(placement: .topBarTrailing) {
+                            Button { showPrivacy = false } label: {
+                                Image(systemName: "xmark.circle.fill")
+                                    .foregroundStyle(Color(.secondaryLabel))
+                            }
+                        }
+                    }
+            }
         }
     }
 }

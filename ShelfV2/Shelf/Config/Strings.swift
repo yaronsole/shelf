@@ -16,9 +16,9 @@ enum Strings {
         static let deleteConfirm = "Delete"
         static let deleteFailed = "Couldn\u{2019}t delete your data. Please check your connection and try again."
 
-        static let aiDisclosureTitle = "How Shelf works"
-        static let aiDisclosureBody = "Shelf sends the books you like and dislike to Anthropic\u{2019}s Claude AI to generate your recommendations. We never send your name, email, or any personal identity — only your anonymous taste signals."
-        static let consentContinue = "Got it"
+        static let aiDisclosureTitle = "How Shelf makes recommendations"
+        static let aiDisclosureBody = "Shelf uses AI (Anthropic\u{2019}s Claude) to suggest books you might like. To do this, the books you like and dislike are sent to Anthropic\u{2019}s service to generate your recommendations.\n\nNo name, account, or personal identity is ever sent — only your book preferences. You can delete all your data anytime in Settings."
+        static let consentContinue = "Continue"
     }
 
     enum Onboarding {
