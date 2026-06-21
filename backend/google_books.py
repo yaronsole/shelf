@@ -50,6 +50,11 @@ def _score_volume(item: dict, expected_title: str) -> int:
     if any(jp in publisher for jp in _JUNK_PUBLISHERS):
         score -= 40
 
+    # Strongly prefer English editions — langRestrict alone lets some through,
+    # which produced foreign-language descriptions/years in the community list.
+    if (info.get("language") or "en").lower() != "en":
+        score -= 200
+
     cover = links.get("thumbnail") or links.get("smallThumbnail") or ""
     if "edge=curl" in cover:
         score += 5
@@ -84,9 +89,12 @@ def _query_books(query: str, client: httpx.Client, expected_title: str = "") -> 
     info = best.get("volumeInfo", {}) or {}
     links = info.get("imageLinks") or {}
     cover = links.get("thumbnail") or links.get("smallThumbnail") or ""
+    published = (info.get("publishedDate", "") or "")[:4]
     return {
         "cover_url": cover.replace("http://", "https://"),
         "page_count": info.get("pageCount"),
+        "description": info.get("description", "") or "",
+        "year": int(published) if published.isdigit() else None,
     }
 
 
@@ -96,7 +104,7 @@ def lookup_metadata(title: str, author: str, client: httpx.Client | None = None)
     Always returns a dict with keys cover_url (str), page_count (int|None).
     Falls back to a loose query if the strict one fails.
     """
-    empty = {"cover_url": "", "page_count": None}
+    empty = {"cover_url": "", "page_count": None, "description": "", "year": None}
     if not _API_KEY:
         return empty
 

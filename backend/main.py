@@ -7,6 +7,7 @@ from __future__ import annotations
 import json
 import logging
 import os
+import re
 import uuid
 from collections import defaultdict
 from datetime import datetime, timezone
@@ -878,6 +879,18 @@ def unreact_to_list_book(slug: str, book_id: str, user_id: UserID, domain: str =
 # the configured seed user's taste). Computed on a schedule, persisted to
 # Firestore, served cheaply through the /v1/lists endpoints above.
 # ---------------------------------------------------------------------------
+def _clean_blurb(text: str, limit: int = 480) -> str:
+    """Strip HTML / collapse whitespace from a Google Books description and
+    truncate to a sentence-ish length for the list detail sheet."""
+    if not text:
+        return ""
+    text = re.sub(r"<[^>]+>", "", text)
+    text = re.sub(r"\s+", " ", text).strip()
+    if len(text) > limit:
+        text = text[:limit].rsplit(" ", 1)[0] + "…"
+    return text
+
+
 def _community_doc_ref():
     return db.collection("computed_lists").document(COMMUNITY_LIST_SLUG)
 
@@ -955,6 +968,19 @@ def _compute_loved_by_readers(dry_run: bool = False) -> dict:
         seen.add(c["book_id"])
         books.append({**c, "cover_url": cover})
 
+    # Enrich the final list with a year + short description from Google Books
+    # (no LLM) so the detail sheet matches the curated lists instead of being bare.
+    def _meta(book: dict) -> tuple[str, dict]:
+        with httpx.Client(timeout=5.0) as cl:
+            return book["book_id"], lookup_metadata(book["title"], book["author"], client=cl)
+    if books:
+        with ThreadPoolExecutor(max_workers=8) as pool:
+            metas = dict(f.result() for f in as_completed([pool.submit(_meta, b) for b in books]))
+        for b in books:
+            m = metas.get(b["book_id"], {})
+            b["year"] = m.get("year")
+            b["description"] = _clean_blurb(m.get("description", ""))
+
     if not dry_run:
         _community_doc_ref().set({
             "books": books,
@@ -967,7 +993,8 @@ def _compute_loved_by_readers(dry_run: bool = False) -> dict:
         "distinct_books_considered": len(titles),
         "seeded": bool(COMMUNITY_SEED_TOKEN),
         "books": [
-            {"title": b["title"], "author": b["author"], "loved_count": b["loved_count"]}
+            {"title": b["title"], "author": b["author"], "loved_count": b["loved_count"],
+             "year": b.get("year"), "description": b.get("description", "")}
             for b in books
         ],
     }
