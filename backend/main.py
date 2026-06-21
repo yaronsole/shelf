@@ -941,8 +941,13 @@ def _compute_loved_by_readers(dry_run: bool = False) -> dict:
             d = doc.to_dict()
             _register(d.get("title", ""), d.get("author", ""), COMMUNITY_SEED_TOKEN)
 
-    # Rank by distinct readers desc, then title for stable ordering
-    ranked = sorted(titles.keys(), key=lambda k: (-len(loved_users[k]), k[0]))
+    # Rank by distinct readers desc; within a tier the seed user's taste comes
+    # first (the founder's picks surface ahead of other single-reader books),
+    # then title for stable ordering.
+    def _rank(k: tuple[str, str]):
+        users = loved_users[k]
+        return (-len(users), 0 if COMMUNITY_SEED_TOKEN in users else 1, k[0])
+    ranked = sorted(titles.keys(), key=_rank)
 
     # Resolve covers for a candidate pool (headroom for the cover guard), drop
     # cover-less, then cap.
