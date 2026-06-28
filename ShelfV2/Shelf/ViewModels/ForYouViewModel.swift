@@ -39,6 +39,43 @@ final class ForYouViewModel {
         }
     }
 
+    // MARK: - First-run rich feed (Phase 5)
+
+    // Show the first batch fast, then keep generating in the background until the
+    // feed reaches targetFirstFeed — so a brand-new user lands on a full feed
+    // instead of a handful of cards that run out. Cover filtering and the 50-cap
+    // still apply (each round goes through fetchLatestBatch / enforceFeedCap).
+    private static let targetFirstFeed = 40
+    private static let maxFirstFillRounds = 4
+    private var didStartFirstFill = false
+
+    func generateFirstFeed(modelContext: ModelContext) {
+        Task { @MainActor in
+            // First batch fast (shows the building/spinner state)…
+            await fetchLatestBatch(modelContext: modelContext, isForegrounded: false, force: false)
+            // …then fill the rest in the background.
+            startFirstRunFill(modelContext: modelContext)
+        }
+    }
+
+    private func startFirstRunFill(modelContext: ModelContext) {
+        guard !didStartFirstFill else { return }
+        didStartFirstFill = true
+        Task { @MainActor in
+            var rounds = 0
+            while rounds < Self.maxFirstFillRounds {
+                let count = (try? modelContext.fetch(
+                    FetchDescriptor<CachedRecommendation>(predicate: #Predicate { !$0.isReacted })
+                ))?.count ?? 0
+                if count >= Self.targetFirstFeed { break }
+                rounds += 1
+                // force:true generates a fresh distinct batch (recency exclusion);
+                // isForegrounded:false keeps it silent (no spinner, no banner).
+                await fetchLatestBatch(modelContext: modelContext, isForegrounded: false, force: true)
+            }
+        }
+    }
+
     private func fetchLatestBatch(modelContext: ModelContext, isForegrounded: Bool, force: Bool) async {
         // User-initiated force fetches (Generate more) bypass the in-flight guard —
         // otherwise an auto-refresh started by onAppear can block the explicit tap.

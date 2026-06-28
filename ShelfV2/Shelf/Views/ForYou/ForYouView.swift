@@ -30,10 +30,11 @@ struct ForYouView: View {
             } else {
                 EmptyForYouView(onSeePicks: {
                     // User chose to graduate from the grid: kick off the first
-                    // generation and switch to the personalized feed.
+                    // generation and switch to the personalized feed. Phase 5:
+                    // first batch shows fast, then the feed fills in the background.
                     appState.isFirstGeneration = true
                     appState.unlockForYouFeed()
-                    vm.refreshIfNeeded(modelContext: modelContext)
+                    vm.generateFirstFeed(modelContext: modelContext)
                 })
             }
         }
