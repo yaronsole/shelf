@@ -59,8 +59,8 @@ class SuggestionsRequest(BaseModel):
     seed_book_title: str
     seed_book_author: str
     domain: str = "books"
-    count: int = Field(default=3, ge=1, le=10)
-    # "title|author" strings already shown to the user — Claude will avoid these
+    count: int = Field(default=3, ge=1, le=25)  # le raised for the cache-pool / refresh path
+    # "title|author" strings already shown to the user — filtered out after the cache
     exclude: list[str] = Field(default_factory=list)
 
 

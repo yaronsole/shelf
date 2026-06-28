@@ -102,9 +102,9 @@ SIMILAR_TEMPERATURE = 0.4
 # the cross-session genre/era counterbalance histogram. Bounded for token cost.
 RECENT_BATCH_LOOKBACK = 3
 
-# Phase C cap: max liked/disliked reactions fed into the similar-books prompt as
-# secondary taste context. Bounded so the seed book stays the primary signal.
-SIMILAR_TASTE_CAP = 25
+# Phase 6: size of the shared, taste-blind similar-books pool generated and cached
+# per book (served to all users; per-user `exclude` applied after the cache).
+SIMILAR_CACHE_POOL_SIZE = 18
 
 
 def _parse_json_array(raw: str) -> list[dict]:
@@ -520,60 +520,57 @@ def _generate_recommendations(user_id: str, domain: str, mark_delivered: bool = 
 # ---------------------------------------------------------------------------
 @app.post("/v1/onboarding/suggestions", response_model=list[SuggestionResponse])
 def get_suggestions(body: SuggestionsRequest, user_id: UserID):
-    # Phase C: gather the reader's taste signals (same source as For You) so the
-    # similar-books picks can lean toward their positives and away from their
-    # dislike patterns while staying anchored to the seed book. Bounded by
-    # SIMILAR_TASTE_CAP to keep the prompt small. Empty for new users → the
-    # prompt falls back to its original taste-blind behavior.
-    liked = [
-        d.to_dict()
-        for d in reaction_col(user_id)
-        .where("kind", "in", [ReactionKind.save, ReactionKind.already_read_liked])
-        .limit(SIMILAR_TASTE_CAP)
-        .stream()
-    ]
-    disliked = [
-        d.to_dict()
-        for d in reaction_col(user_id)
-        .where("kind", "in", [ReactionKind.already_read_disliked, ReactionKind.dismiss])
-        .limit(SIMILAR_TASTE_CAP)
-        .stream()
-    ]
+    # Phase 6: shared, taste-blind, per-book cache. Similar-books are computed once
+    # per seed book and served to EVERY user (keyed by book_id, not by user) — the
+    # seed book is the anchor and per-user taste is intentionally not applied. The
+    # per-user `exclude` list is applied AFTER the cache so each reader still avoids
+    # books they've already been shown. No LLM call on a cache hit.
+    book_id = book_id_hash(body.seed_book_title, body.seed_book_author)
+    cache_ref = db.collection("similar_books_cache").document(book_id)
+    snap = cache_ref.get()
 
-    prompt = build_suggestions_prompt(
-        seed_title=body.seed_book_title,
-        seed_author=body.seed_book_author,
-        domain=body.domain,
-        count=body.count,
-        exclude=body.exclude,
-        liked=liked,
-        disliked=disliked,
-    )
-    message = claude.messages.create(
-        model="claude-opus-4-5",
-        max_tokens=2048,  # bumped — blurbs need more tokens
-        temperature=SIMILAR_TEMPERATURE,
-        messages=[{"role": "user", "content": prompt}],
-    )
-    raw = message.content[0].text
-    books: list[dict] = _parse_json_array(raw)
+    if snap.exists:
+        pool = (snap.to_dict() or {}).get("books", [])
+    else:
+        prompt = build_suggestions_prompt(
+            seed_title=body.seed_book_title,
+            seed_author=body.seed_book_author,
+            domain=body.domain,
+            count=SIMILAR_CACHE_POOL_SIZE,
+            exclude=None,   # user-agnostic pool — no per-user exclude baked in
+            liked=None,
+            disliked=None,
+        )
+        message = claude.messages.create(
+            model="claude-opus-4-5",
+            max_tokens=4096,  # a full pool needs more tokens than a single small ask
+            temperature=SIMILAR_TEMPERATURE,
+            messages=[{"role": "user", "content": prompt}],
+        )
+        pool = _parse_json_array(message.content[0].text)
+        # Enrich (cover + NYT + reading time + description) then drop cover-less so a
+        # cover-less book is never cached or served (Phase 2 parity).
+        with httpx.Client(timeout=5.0) as client:
+            for b in pool:
+                _enrich_book(b, client=client)
+        pool = [b for b in pool if _has_valid_cover(b.get("cover_url"))]
+        cache_ref.set({
+            "books": pool,
+            "seed_title": body.seed_book_title,
+            "seed_author": body.seed_book_author,
+            "cached_at": datetime.now(timezone.utc),
+        })
 
-    # Server-side dedup against the supplied exclude list (lowercased title|author)
+    # Per-user dedup against the supplied exclude list (lowercased title|author).
     exclude_keys = {item.lower().strip() for item in (body.exclude or [])}
     def _key(b: dict) -> str:
         return f"{b.get('title','').lower().strip()}|{b.get('author','').lower().strip()}"
-    books = [b for b in books if _key(b) not in exclude_keys]
+    filtered = [b for b in pool if _key(b) not in exclude_keys]
 
-    # Enrich with Google Books cover + NYT bestseller + reading time
-    with httpx.Client(timeout=5.0) as client:
-        for b in books:
-            _enrich_book(b, client=client)
-
-    # Phase 2: never surface cover-less suggestions (parity with the feed and the
-    # client-side guard in SimilarBooksSheet / the cache write).
-    books = [b for b in books if _has_valid_cover(b.get("cover_url"))]
-
-    return [SuggestionResponse(id=str(uuid.uuid4()), **b) for b in books]
+    return [
+        SuggestionResponse(id=str(uuid.uuid4()), **{k: v for k, v in b.items() if k != "id"})
+        for b in filtered[: body.count]
+    ]
 
 
 # ---------------------------------------------------------------------------
