@@ -18,6 +18,11 @@ struct BookDisplay {
     let nytBestseller: Bool
     let nytWeeksOnList: Int?
     let readingTimeMinutes: Int?
+    // Phase 3 PDP enrichment
+    let becauseOfReason: String
+    let bookDescription: String
+    let averageRating: Double?
+    let ratingsCount: Int?
 }
 
 extension BookDisplay {
@@ -28,7 +33,9 @@ extension BookDisplay {
             isComfortZonePush: rec.isComfortZonePush, awards: rec.awards,
             contextTag: rec.contextTag, becauseOf: rec.becauseOf,
             nytBestseller: rec.nytBestseller, nytWeeksOnList: rec.nytWeeksOnList,
-            readingTimeMinutes: rec.readingTimeMinutes
+            readingTimeMinutes: rec.readingTimeMinutes,
+            becauseOfReason: rec.becauseOfReason, bookDescription: rec.bookDescription,
+            averageRating: rec.averageRating, ratingsCount: rec.ratingsCount
         )
     }
 
@@ -39,7 +46,9 @@ extension BookDisplay {
             isComfortZonePush: false, awards: s.awards,
             contextTag: s.contextTag, becauseOf: becauseOf,
             nytBestseller: s.nytBestseller, nytWeeksOnList: s.nytWeeksOnList,
-            readingTimeMinutes: s.readingTimeMinutes
+            readingTimeMinutes: s.readingTimeMinutes,
+            becauseOfReason: "", bookDescription: s.bookDescription ?? "",
+            averageRating: s.averageRating, ratingsCount: s.ratingsCount
         )
     }
 
@@ -50,7 +59,9 @@ extension BookDisplay {
             isComfortZonePush: false, awards: s.awards,
             contextTag: s.contextTag, becauseOf: becauseOf,
             nytBestseller: s.nytBestseller, nytWeeksOnList: s.nytWeeksOnList,
-            readingTimeMinutes: s.readingTimeMinutes
+            readingTimeMinutes: s.readingTimeMinutes,
+            becauseOfReason: "", bookDescription: s.bookDescription,
+            averageRating: s.averageRating, ratingsCount: s.ratingsCount
         )
     }
 }
@@ -71,6 +82,9 @@ struct BookDetailView: View {
 
     @Environment(\.dismiss) private var dismiss
     @State private var inSentimentMode: Bool = false
+    @State private var descExpanded: Bool = false
+    // Phase 3: only show ratings when the sample is large enough to be meaningful.
+    private let ratingsThreshold = 100
 
     // Back-compat init that accepts CachedRecommendation directly.
     init(
@@ -126,6 +140,21 @@ struct BookDetailView: View {
                     )
                     .padding(.horizontal, 16)
 
+                    if showRatings, let avg = display.averageRating, let count = display.ratingsCount {
+                        HStack(spacing: 6) {
+                            Image(systemName: "star.fill")
+                                .font(.caption)
+                                .foregroundStyle(Color(hexString: "E0A23B"))
+                            Text(String(format: "%.1f", avg))
+                                .font(.subheadline.weight(.semibold))
+                            Text("(\(count.formatted()) ratings)")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                        .frame(maxWidth: .infinity, alignment: .center)
+                        .padding(.horizontal, 16)
+                    }
+
                     FlowingTagsDetail(
                         genre: display.genre,
                         isComfortZonePush: display.isComfortZonePush,
@@ -134,9 +163,11 @@ struct BookDetailView: View {
                     .padding(.horizontal, 16)
 
                     if !display.becauseOf.isEmpty {
-                        Label("Because you loved \(display.becauseOf)", systemImage: "sparkle")
+                        Label(becauseLine, systemImage: "sparkle")
                             .font(.subheadline.weight(.medium))
                             .foregroundStyle(Color(hexString: "4D3388"))
+                            .multilineTextAlignment(.leading)
+                            .frame(maxWidth: .infinity, alignment: .leading)
                             .padding(.horizontal, 16)
                     } else if !display.contextTag.isEmpty {
                         Label(display.contextTag, systemImage: "sparkle")
@@ -151,8 +182,16 @@ struct BookDetailView: View {
                         .multilineTextAlignment(.leading)
                         .fixedSize(horizontal: false, vertical: true)
                         .lineSpacing(3)
+                        .frame(maxWidth: .infinity, alignment: .leading)
                         .padding(.horizontal, 16)
-                        .padding(.bottom, 120)
+
+                    if !display.bookDescription.isEmpty {
+                        expandableDescription
+                            .padding(.horizontal, 16)
+                            .padding(.top, 4)
+                    }
+
+                    Color.clear.frame(height: 120)   // clears the bottom CTA bar
                 }
             }
             .navigationBarTitleDisplayMode(.inline)
@@ -185,6 +224,44 @@ struct BookDetailView: View {
             }
             .animation(.easeInOut(duration: 0.22), value: inSentimentMode)
         }
+    }
+
+    // MARK: - Phase 3 helpers
+
+    private var becauseLine: String {
+        display.becauseOfReason.isEmpty
+            ? "Because you loved \(display.becauseOf)"
+            : "Because you loved \(display.becauseOf) — \(display.becauseOfReason)"
+    }
+
+    private var showRatings: Bool {
+        (display.ratingsCount ?? 0) >= ratingsThreshold && display.averageRating != nil
+    }
+
+    private var isDescriptionLong: Bool { display.bookDescription.count > 220 }
+
+    private var expandableDescription: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text("OVERVIEW")
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(.tertiary)
+                .tracking(0.8)
+            Text(display.bookDescription)
+                .font(.subheadline)
+                .foregroundStyle(Color(.secondaryLabel))
+                .multilineTextAlignment(.leading)
+                .fixedSize(horizontal: false, vertical: true)
+                .lineSpacing(3)
+                .lineLimit(descExpanded || !isDescriptionLong ? nil : 4)
+            if isDescriptionLong {
+                Button(descExpanded ? "Read less" : "Read more") {
+                    withAnimation(.easeInOut(duration: 0.2)) { descExpanded.toggle() }
+                }
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(Color(hexString: "4D3388"))
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     private var primaryCtaBar: some View {

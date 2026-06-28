@@ -95,6 +95,8 @@ def _query_books(query: str, client: httpx.Client, expected_title: str = "") -> 
         "page_count": info.get("pageCount"),
         "description": info.get("description", "") or "",
         "year": int(published) if published.isdigit() else None,
+        "average_rating": info.get("averageRating"),
+        "ratings_count": info.get("ratingsCount"),
     }
 
 
@@ -104,7 +106,8 @@ def lookup_metadata(title: str, author: str, client: httpx.Client | None = None)
     Always returns a dict with keys cover_url (str), page_count (int|None).
     Falls back to a loose query if the strict one fails.
     """
-    empty = {"cover_url": "", "page_count": None, "description": "", "year": None}
+    empty = {"cover_url": "", "page_count": None, "description": "", "year": None,
+             "average_rating": None, "ratings_count": None}
     if not _API_KEY:
         return empty
 

@@ -70,7 +70,7 @@ Aim for some natural variety across the batch — try not to make every pick the
 {recent_section}
 Before writing your answer, reason through these two steps SILENTLY — do NOT include this reasoning, any headings, or any preamble in your response:
   1. Look at the books they dislike and infer what those disliked books have in COMMON — the shared appeal, tone, tropes, or subject matter to AVOID. (If there are no dislikes, skip this step.)
-  2. Build the list seed-first: for each pick, start from a SPECIFIC seed book in their taste profile and choose a genuinely new book that follows from it — the seed should DRIVE the selection, not be attached as a label afterward. Set because_of to that exact seed title. For an occasional stretch pick that isn't anchored to any single seed, use because_of "".
+  2. Build the list seed-first: for each pick, start from a SPECIFIC seed book in their taste profile and choose a genuinely new book that follows from it — the seed should DRIVE the selection, not be attached as a label afterward. Set because_of to that exact seed title, and set because_of_reason to the specific thing this pick shares with that seed. For an occasional stretch pick that isn't anchored to any single seed, use because_of "" and because_of_reason "".
 
 After reasoning silently, output ONLY the JSON array described below — no preamble, no explanation, no step labels.
 
@@ -96,6 +96,12 @@ Respond with ONLY a JSON array. No markdown, no explanation. Each object must ha
                  MUST be one of these exact strings, copied verbatim: {because_of_options}.
                  Use the empty string "" only if no seed title genuinely drove this recommendation.
                  Do NOT invent a title that isn't in the list above.)
+  because_of_reason (string — a SHORT, SPECIFIC phrase, MAX 12 words, naming what THIS book shares
+                 with the because_of seed: the concrete appeal/voice/theme/structure that makes it a
+                 natural next read (e.g. "the same spare, dread-soaked prose and father-son core",
+                 "another slow-unraveling unreliable narrator"). Do NOT restate the plot, repeat the
+                 blurb, or be generic ("a great read", "you'll love it"). Empty string "" if because_of
+                 is empty or you cannot name a specific, honest connection.)
 """
 
 

@@ -88,7 +88,11 @@ final class DailyRotationService {
                     acclaim: dto.acclaim, nytBestseller: dto.nytBestseller,
                     nytWeeksOnList: dto.nytWeeksOnList,
                     readingTimeMinutes: dto.readingTimeMinutes,
-                    becauseOf: dto.becauseOf
+                    becauseOf: dto.becauseOf,
+                    becauseOfReason: dto.becauseOfReason,
+                    bookDescription: dto.bookDescription,
+                    averageRating: dto.averageRating,
+                    ratingsCount: dto.ratingsCount
                 )
                 modelContext.insert(rec)
                 inserted += 1

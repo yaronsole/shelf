@@ -84,6 +84,14 @@ final class ForYouViewModel {
                         if rec.readingTimeMinutes == nil {
                             rec.readingTimeMinutes = dto.readingTimeMinutes
                         }
+                        if rec.becauseOfReason.isEmpty && !dto.becauseOfReason.isEmpty {
+                            rec.becauseOfReason = dto.becauseOfReason
+                        }
+                        if rec.bookDescription.isEmpty && !dto.bookDescription.isEmpty {
+                            rec.bookDescription = dto.bookDescription
+                        }
+                        if rec.averageRating == nil { rec.averageRating = dto.averageRating }
+                        if rec.ratingsCount == nil { rec.ratingsCount = dto.ratingsCount }
                         continue
                     }
                     // Filter books without resolvable cover for *new* inserts (RG-04)
@@ -110,7 +118,11 @@ final class ForYouViewModel {
                         nytBestseller: dto.nytBestseller,
                         nytWeeksOnList: dto.nytWeeksOnList,
                         readingTimeMinutes: dto.readingTimeMinutes,
-                        becauseOf: dto.becauseOf
+                        becauseOf: dto.becauseOf,
+                        becauseOfReason: dto.becauseOfReason,
+                        bookDescription: dto.bookDescription,
+                        averageRating: dto.averageRating,
+                        ratingsCount: dto.ratingsCount
                     )
                     modelContext.insert(rec)
                     insertedCount += 1

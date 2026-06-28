@@ -191,6 +191,15 @@ def _enrich_book(b: dict, client: httpx.Client) -> None:
     page_count = meta.get("page_count")
     b["reading_time_minutes"] = round(page_count * 1.7) if isinstance(page_count, int) and page_count > 0 else None
 
+    # Phase 3: store the full Google Books description + ratings so the PDP can
+    # show an expandable description and conditional ratings — captured here at
+    # build time, never fetched per-open. Claude's picks carry no description, so
+    # the Google Books value is authoritative.
+    if not b.get("description"):
+        b["description"] = meta.get("description", "") or ""
+    b["average_rating"] = meta.get("average_rating")
+    b["ratings_count"] = meta.get("ratings_count")
+
     # NYT bestseller status — check current lists first, then historical archive
     bs = lookup_bestseller(title, author)
     if bs:
@@ -445,6 +454,13 @@ def _generate_recommendations(user_id: str, domain: str, mark_delivered: bool = 
             b["because_of"] = seed_title_lookup.get(raw_because.strip().lower())
         else:
             b["because_of"] = None
+        # Phase 3: the reason clause is only meaningful next to a valid because_of.
+        # Drop it if the attribution didn't validate; cap length defensively.
+        raw_reason = b.get("because_of_reason")
+        if b["because_of"] and isinstance(raw_reason, str) and raw_reason.strip():
+            b["because_of_reason"] = raw_reason.strip()[:120]
+        else:
+            b["because_of_reason"] = ""
 
     # Enrich with Google Books cover + NYT bestseller + reading time
     with httpx.Client(timeout=5.0) as client:

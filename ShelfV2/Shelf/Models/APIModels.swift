@@ -23,6 +23,11 @@ struct RecommendationDTO: Decodable, Identifiable {
     let nytWeeksOnList: Int?
     let readingTimeMinutes: Int?
     let becauseOf: String  // Phase 2 attribution; empty when none
+    // Phase 3 PDP enrichment
+    let becauseOfReason: String
+    let bookDescription: String
+    let averageRating: Double?
+    let ratingsCount: Int?
 
     enum CodingKeys: String, CodingKey {
         case id, title, author, blurb, genre, era, domain, awards, acclaim
@@ -34,6 +39,10 @@ struct RecommendationDTO: Decodable, Identifiable {
         case nytWeeksOnList = "nyt_weeks_on_list"
         case readingTimeMinutes = "reading_time_minutes"
         case becauseOf = "because_of"
+        case becauseOfReason = "because_of_reason"
+        case bookDescription = "description"
+        case averageRating = "average_rating"
+        case ratingsCount = "ratings_count"
     }
 
     init(from decoder: Decoder) throws {
@@ -56,6 +65,10 @@ struct RecommendationDTO: Decodable, Identifiable {
         nytWeeksOnList = try? c.decodeIfPresent(Int.self, forKey: .nytWeeksOnList)
         readingTimeMinutes = try? c.decodeIfPresent(Int.self, forKey: .readingTimeMinutes)
         becauseOf = (try? c.decodeIfPresent(String.self, forKey: .becauseOf)) ?? ""
+        becauseOfReason = (try? c.decodeIfPresent(String.self, forKey: .becauseOfReason)) ?? ""
+        bookDescription = (try? c.decode(String.self, forKey: .bookDescription)) ?? ""
+        averageRating = try? c.decodeIfPresent(Double.self, forKey: .averageRating)
+        ratingsCount = try? c.decodeIfPresent(Int.self, forKey: .ratingsCount)
     }
 }
 
@@ -166,6 +179,10 @@ struct SuggestionDTO: Decodable, Identifiable {
     let nytBestseller: Bool
     let nytWeeksOnList: Int?
     let readingTimeMinutes: Int?
+    // Phase 3 PDP enrichment
+    let bookDescription: String
+    let averageRating: Double?
+    let ratingsCount: Int?
 
     enum CodingKeys: String, CodingKey {
         case id, title, author, blurb, genre, era, awards, acclaim
@@ -174,6 +191,9 @@ struct SuggestionDTO: Decodable, Identifiable {
         case nytBestseller = "nyt_bestseller"
         case nytWeeksOnList = "nyt_weeks_on_list"
         case readingTimeMinutes = "reading_time_minutes"
+        case bookDescription = "description"
+        case averageRating = "average_rating"
+        case ratingsCount = "ratings_count"
     }
 
     init(from decoder: Decoder) throws {
@@ -191,6 +211,9 @@ struct SuggestionDTO: Decodable, Identifiable {
         nytBestseller = (try? c.decode(Bool.self, forKey: .nytBestseller)) ?? false
         nytWeeksOnList = try? c.decodeIfPresent(Int.self, forKey: .nytWeeksOnList)
         readingTimeMinutes = try? c.decodeIfPresent(Int.self, forKey: .readingTimeMinutes)
+        bookDescription = (try? c.decode(String.self, forKey: .bookDescription)) ?? ""
+        averageRating = try? c.decodeIfPresent(Double.self, forKey: .averageRating)
+        ratingsCount = try? c.decodeIfPresent(Int.self, forKey: .ratingsCount)
     }
 }
 

@@ -29,6 +29,11 @@ final class CachedRecommendation {
     // Seed book most responsible for this pick (Phase 2 attribution).
     // Empty when Claude returned no attribution or the value didn't match a seed.
     var becauseOf: String = ""
+    // Phase 3 PDP enrichment (all defaulted → no SwiftData migration needed).
+    var becauseOfReason: String = ""   // short, specific clause: why this follows from the seed
+    var bookDescription: String = ""   // full Google Books description (expandable in the PDP)
+    var averageRating: Double? = nil
+    var ratingsCount: Int? = nil
     // Frequency cap: incremented at launch when isSeen flips from true.
     // Eliminated (marked reacted) once viewCount >= 2.
     var viewCount: Int = 0
@@ -50,7 +55,11 @@ final class CachedRecommendation {
         nytBestseller: Bool = false,
         nytWeeksOnList: Int? = nil,
         readingTimeMinutes: Int? = nil,
-        becauseOf: String = ""
+        becauseOf: String = "",
+        becauseOfReason: String = "",
+        bookDescription: String = "",
+        averageRating: Double? = nil,
+        ratingsCount: Int? = nil
     ) {
         self.id = id
         self.title = title
@@ -72,6 +81,10 @@ final class CachedRecommendation {
         self.nytWeeksOnList = nytWeeksOnList
         self.readingTimeMinutes = readingTimeMinutes
         self.becauseOf = becauseOf
+        self.becauseOfReason = becauseOfReason
+        self.bookDescription = bookDescription
+        self.averageRating = averageRating
+        self.ratingsCount = ratingsCount
     }
 }
 
