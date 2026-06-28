@@ -87,6 +87,9 @@ app.add_middleware(
 # Auth helper
 # ---------------------------------------------------------------------------
 MAX_EXCLUSION_LIST = 150  # cap to keep prompts bounded
+FEED_DELIVERY_LIMIT = 50  # Phase 4: deliver up to this many undelivered recs per
+                          # /v1/recommendations call, so a queue accumulated while
+                          # the user was away drains in one open (was 10).
 
 # Sampling temperatures (tunable). For You uses a moderate temperature to move
 # off the conservative, "obvious" default picks without drifting off-taste. The
@@ -318,7 +321,7 @@ def get_recommendations(user_id: UserID, domain: str = "books", force: bool = Fa
         recommendation_col(user_id)
         .where("domain", "==", domain)
         .where("delivered", "==", False)
-        .limit(10)
+        .limit(FEED_DELIVERY_LIMIT)
         .stream()
     )
     if unseen_docs:
@@ -356,21 +359,36 @@ def _generate_recommendations(user_id: str, domain: str, mark_delivered: bool = 
     # Stream the user's full recommendation history once and reuse it for both
     # the exclusion list and the Phase B recent-mix histogram below.
     all_recs = [r.to_dict() for r in recommendation_col(user_id).stream()]
-    exclude_set: set[str] = set()
+    # Phase 4: build the exclusion list ordered by RECENCY (newest first), capped
+    # at MAX_EXCLUSION_LIST. The old alphabetical cap could push a heavy reader's
+    # most recent titles past the cutoff, letting them be re-recommended and then
+    # silently dropped by the client's dedup — a concrete feed-starvation cause.
+    _epoch = datetime(1970, 1, 1, tzinfo=timezone.utc)
+    exclude_candidates: list[tuple] = []  # (created_at, "Title by Author")
+
+    def _exc_entry(title, author, created_at) -> None:
+        t, a = (title or "").strip(), (author or "").strip()
+        if not t:
+            return
+        exclude_candidates.append((created_at or _epoch, f"{t} by {a}" if a else t))
+
     for d in all_recs:
-        t, a = (d.get("title") or "").strip(), (d.get("author") or "").strip()
-        if t:
-            exclude_set.add(f"{t} by {a}" if a else t)
+        _exc_entry(d.get("title"), d.get("author"), d.get("created_at"))
     for s in seeds:
-        t, a = (s.get("title") or "").strip(), (s.get("author") or "").strip()
-        if t:
-            exclude_set.add(f"{t} by {a}" if a else t)
+        _exc_entry(s.get("title"), s.get("author"), s.get("created_at"))
     for rxn in reaction_col(user_id).stream():
         d = rxn.to_dict()
-        t, a = (d.get("title") or "").strip(), (d.get("author") or "").strip()
-        if t:
-            exclude_set.add(f"{t} by {a}" if a else t)
-    exclude_list = sorted(exclude_set)[:MAX_EXCLUSION_LIST]
+        _exc_entry(d.get("title"), d.get("author"), d.get("created_at"))
+
+    exclude_candidates.sort(key=lambda x: x[0], reverse=True)
+    _seen_exc: set[str] = set()
+    exclude_list: list[str] = []
+    for _, label in exclude_candidates:
+        if label not in _seen_exc:
+            _seen_exc.add(label)
+            exclude_list.append(label)
+        if len(exclude_list) >= MAX_EXCLUSION_LIST:
+            break
 
     # Positive / negative taste signals
     liked = [

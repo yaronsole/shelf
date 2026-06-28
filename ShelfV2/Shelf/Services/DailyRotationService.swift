@@ -97,12 +97,14 @@ final class DailyRotationService {
                 if inserted >= Self.rotationCount { break }
             }
 
-            // Only retire old ones if we got at least some new ones
+            // Phase 4: retire only as many as we actually inserted, so rotation
+            // freshens the top of the feed without ever net-shrinking it.
             if inserted > 0 {
-                for rec in toRetire {
+                for rec in toRetire.prefix(inserted) {
                     rec.isReacted = true
                 }
             }
+            ForYouViewModel.enforceFeedCap(modelContext)
 
             UserDefaults.standard.set(todayString(), forKey: Self.lastRotationKey)
             didCompleteRotationThisSession = true

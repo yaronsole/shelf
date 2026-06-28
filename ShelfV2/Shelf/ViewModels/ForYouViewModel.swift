@@ -123,6 +123,7 @@ final class ForYouViewModel {
                     modelContext.insert(rec)
                     insertedCount += 1
                 }
+                Self.enforceFeedCap(modelContext)
                 self.isLoading = false
                 if isForegrounded && insertedCount > 0 {
                     self.showNewBatchBanner = true
@@ -277,5 +278,23 @@ final class ForYouViewModel {
     // Canonical dedup key — same logic the backend uses for exclude lists.
     static func bookKey(title: String, author: String) -> String {
         "\(title.lowercased().trimmingCharacters(in: .whitespaces))|\(author.lowercased().trimmingCharacters(in: .whitespaces))"
+    }
+
+    // Phase 4: keep only the freshest `feedCap` unreacted recs; evict the oldest
+    // beyond that. Bounds both the visible feed and the local store (previously
+    // unbounded). The server retains full history for de-dup.
+    static let feedCap = 50
+    @MainActor
+    static func enforceFeedCap(_ modelContext: ModelContext) {
+        let unreacted = (try? modelContext.fetch(
+            FetchDescriptor<CachedRecommendation>(
+                predicate: #Predicate { !$0.isReacted },
+                sortBy: [SortDescriptor(\CachedRecommendation.fetchedAt, order: .reverse)]
+            )
+        )) ?? []
+        guard unreacted.count > feedCap else { return }
+        for rec in unreacted[feedCap...] {
+            modelContext.delete(rec)
+        }
     }
 }
