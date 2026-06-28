@@ -191,14 +191,11 @@ def _enrich_book(b: dict, client: httpx.Client) -> None:
     page_count = meta.get("page_count")
     b["reading_time_minutes"] = round(page_count * 1.7) if isinstance(page_count, int) and page_count > 0 else None
 
-    # Phase 3: store the full Google Books description + ratings so the PDP can
-    # show an expandable description and conditional ratings — captured here at
-    # build time, never fetched per-open. Claude's picks carry no description, so
-    # the Google Books value is authoritative.
+    # Phase 3: store the full Google Books description so the PDP can show an
+    # expandable description — captured here at build time, never fetched per-open.
+    # Claude's picks carry no description, so the Google Books value is authoritative.
     if not b.get("description"):
         b["description"] = meta.get("description", "") or ""
-    b["average_rating"] = meta.get("average_rating")
-    b["ratings_count"] = meta.get("ratings_count")
 
     # NYT bestseller status — check current lists first, then historical archive
     bs = lookup_bestseller(title, author)

@@ -96,8 +96,6 @@ class RecommendationResponse(BaseModel):
     because_of: Optional[str] = None  # exact title of the seed book driving this pick, validated against seeds
     because_of_reason: str = ""       # Phase 3: short, specific clause on why this pick follows from the seed
     description: str = ""             # Phase 3: full Google Books description (expandable in the PDP)
-    average_rating: float | None = None  # Phase 3: Google Books averageRating (PDP shows only when ratings_count >= threshold)
-    ratings_count: int | None = None     # Phase 3: Google Books ratingsCount
 
 
 class SuggestionResponse(BaseModel):
@@ -115,8 +113,6 @@ class SuggestionResponse(BaseModel):
     nyt_weeks_on_list: int | None = None
     reading_time_minutes: int | None = None
     description: str = ""             # Phase 3: full Google Books description (expandable in the PDP)
-    average_rating: float | None = None
-    ratings_count: int | None = None
 
 
 class DebugInfoResponse(BaseModel):

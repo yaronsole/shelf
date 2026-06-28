@@ -21,8 +21,6 @@ struct BookDisplay {
     // Phase 3 PDP enrichment
     let becauseOfReason: String
     let bookDescription: String
-    let averageRating: Double?
-    let ratingsCount: Int?
 }
 
 extension BookDisplay {
@@ -34,8 +32,7 @@ extension BookDisplay {
             contextTag: rec.contextTag, becauseOf: rec.becauseOf,
             nytBestseller: rec.nytBestseller, nytWeeksOnList: rec.nytWeeksOnList,
             readingTimeMinutes: rec.readingTimeMinutes,
-            becauseOfReason: rec.becauseOfReason, bookDescription: rec.bookDescription,
-            averageRating: rec.averageRating, ratingsCount: rec.ratingsCount
+            becauseOfReason: rec.becauseOfReason, bookDescription: rec.bookDescription
         )
     }
 
@@ -47,8 +44,7 @@ extension BookDisplay {
             contextTag: s.contextTag, becauseOf: becauseOf,
             nytBestseller: s.nytBestseller, nytWeeksOnList: s.nytWeeksOnList,
             readingTimeMinutes: s.readingTimeMinutes,
-            becauseOfReason: "", bookDescription: s.bookDescription ?? "",
-            averageRating: s.averageRating, ratingsCount: s.ratingsCount
+            becauseOfReason: "", bookDescription: s.bookDescription ?? ""
         )
     }
 
@@ -60,8 +56,7 @@ extension BookDisplay {
             contextTag: s.contextTag, becauseOf: becauseOf,
             nytBestseller: s.nytBestseller, nytWeeksOnList: s.nytWeeksOnList,
             readingTimeMinutes: s.readingTimeMinutes,
-            becauseOfReason: "", bookDescription: s.bookDescription,
-            averageRating: s.averageRating, ratingsCount: s.ratingsCount
+            becauseOfReason: "", bookDescription: s.bookDescription
         )
     }
 }
@@ -83,8 +78,6 @@ struct BookDetailView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var inSentimentMode: Bool = false
     @State private var descExpanded: Bool = false
-    // Phase 3: only show ratings when the sample is large enough to be meaningful.
-    private let ratingsThreshold = 100
 
     // Back-compat init that accepts CachedRecommendation directly.
     init(
@@ -139,21 +132,6 @@ struct BookDetailView: View {
                         readingTimeMinutes: display.readingTimeMinutes
                     )
                     .padding(.horizontal, 16)
-
-                    if showRatings, let avg = display.averageRating, let count = display.ratingsCount {
-                        HStack(spacing: 6) {
-                            Image(systemName: "star.fill")
-                                .font(.caption)
-                                .foregroundStyle(Color(hexString: "E0A23B"))
-                            Text(String(format: "%.1f", avg))
-                                .font(.subheadline.weight(.semibold))
-                            Text("(\(count.formatted()) ratings)")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                        }
-                        .frame(maxWidth: .infinity, alignment: .center)
-                        .padding(.horizontal, 16)
-                    }
 
                     FlowingTagsDetail(
                         genre: display.genre,
@@ -232,10 +210,6 @@ struct BookDetailView: View {
         display.becauseOfReason.isEmpty
             ? "Because you loved \(display.becauseOf)"
             : "Because you loved \(display.becauseOf) — \(display.becauseOfReason)"
-    }
-
-    private var showRatings: Bool {
-        (display.ratingsCount ?? 0) >= ratingsThreshold && display.averageRating != nil
     }
 
     private var isDescriptionLong: Bool { display.bookDescription.count > 220 }

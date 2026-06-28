@@ -18,8 +18,6 @@ struct CachedSuggestion: Codable, Identifiable {
     let readingTimeMinutes: Int?
     // Phase 3 PDP enrichment (optional → older cached blobs decode fine as nil)
     let bookDescription: String?
-    let averageRating: Double?
-    let ratingsCount: Int?
 }
 
 extension CachedSuggestion {
@@ -37,8 +35,6 @@ extension CachedSuggestion {
         nytWeeksOnList = dto.nytWeeksOnList
         readingTimeMinutes = dto.readingTimeMinutes
         bookDescription = dto.bookDescription
-        averageRating = dto.averageRating
-        ratingsCount = dto.ratingsCount
     }
 }
 
