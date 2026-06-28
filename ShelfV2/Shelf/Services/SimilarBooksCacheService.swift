@@ -134,7 +134,7 @@ enum SimilarBooksCacheService {
         ) else { return }
 
         // Apply cover-image filter (regression guard)
-        let filtered = results.filter { !$0.coverURL.isEmpty }
+        let filtered = results.filter { BookCoverView.hasValidCover($0.coverURL) }
         guard !filtered.isEmpty else { return }
 
         let candidates = filtered.map { CachedSuggestion(from: $0) }

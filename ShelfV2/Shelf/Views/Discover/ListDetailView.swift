@@ -27,7 +27,9 @@ struct ListDetailView: View {
                     VStack(alignment: .leading, spacing: 16) {
                         header(detail.metadata)
                         LazyVGrid(columns: columns, spacing: 16) {
-                            ForEach(detail.books) { book in
+                            // Phase 2 backstop: backend already filters cover-less books
+                            // from lists; guard here too so none can slip through.
+                            ForEach(detail.books.filter { BookCoverView.hasValidCover($0.coverURL) }) { book in
                                 ListBookTile(
                                     book: book,
                                     status: vm.status(for: book.bookId),

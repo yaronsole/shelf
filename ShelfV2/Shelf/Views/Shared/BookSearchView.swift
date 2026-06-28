@@ -141,6 +141,8 @@ struct BookSearchView<Idle: View>: View {
             if found.isEmpty {
                 found = (try? await GoogleBooksService.shared.search(query: trimmed)) ?? []
             }
+            // Phase 2: drop cover-less results so search never shows a placeholder row.
+            found = found.filter { BookCoverView.hasValidCover($0.coverURL) }
             if Task.isCancelled { return }
             await MainActor.run {
                 self.results = found

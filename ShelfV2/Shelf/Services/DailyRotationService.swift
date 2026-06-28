@@ -73,7 +73,7 @@ final class DailyRotationService {
 
             for dto in newDtos {
                 if byId[dto.id] != nil { continue }
-                guard !dto.coverURL.isEmpty else { continue }
+                guard BookCoverView.hasValidCover(dto.coverURL) else { continue }
                 let key = ForYouViewModel.bookKey(title: dto.title, author: dto.author)
                 guard !existingKeys.contains(key), !seenThisBatch.contains(key) else { continue }
                 seenThisBatch.insert(key)

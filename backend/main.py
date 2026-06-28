@@ -164,6 +164,15 @@ def recommendation_col(user_id: str):
     return user_ref(user_id).collection("recommendations")
 
 
+def _has_valid_cover(cover_url: str | None) -> bool:
+    """Single source of truth for 'does this book have a usable cover?'.
+    Valid iff the URL is a non-empty string after trimming. Applied at rec
+    generation, suggestion generation, and list build so a cover-less book
+    (which renders as a blank placeholder on iOS) is filtered out before it ever
+    reaches the client. The iOS client keeps an identical guard as a backstop."""
+    return bool((cover_url or "").strip())
+
+
 def _enrich_book(b: dict, client: httpx.Client) -> None:
     """Add cover_url, NYT bestseller status, reading time, normalized fields
     to a book dict in-place. Used by both /v1/recommendations and
@@ -442,6 +451,11 @@ def _generate_recommendations(user_id: str, domain: str, mark_delivered: bool = 
         for b in books:
             _enrich_book(b, client=client)
 
+    # Phase 2: drop any book whose cover couldn't be resolved, so a blank
+    # placeholder never reaches the feed. Earliest line of defense — these are
+    # never persisted or served. (iOS guards again on insert as a backstop.)
+    books = [b for b in books if _has_valid_cover(b.get("cover_url"))]
+
     batch_id = str(uuid.uuid4())
     now = datetime.now(timezone.utc)
     results: list[RecommendationResponse] = []
@@ -523,6 +537,10 @@ def get_suggestions(body: SuggestionsRequest, user_id: UserID):
     with httpx.Client(timeout=5.0) as client:
         for b in books:
             _enrich_book(b, client=client)
+
+    # Phase 2: never surface cover-less suggestions (parity with the feed and the
+    # client-side guard in SimilarBooksSheet / the cache write).
+    books = [b for b in books if _has_valid_cover(b.get("cover_url"))]
 
     return [SuggestionResponse(id=str(uuid.uuid4()), **b) for b in books]
 
@@ -759,13 +777,19 @@ def get_list_detail(slug: str, user_id: UserID, domain: str = "books"):
 
     decorated = []
     for b in books:
+        cover_url = covers.get(b["book_id"], "")
+        # Phase 2: omit books whose cover didn't resolve so a list never shows a
+        # blank placeholder tile. (Community-list books are already cover-filtered
+        # at compute time; this is the guard for the curated-list path.)
+        if not _has_valid_cover(cover_url):
+            continue
         key = (b["title"].lower().strip(), b["author"].lower().strip())
         decorated.append(ListBookResponse(
             book_id=b["book_id"],
             title=b["title"],
             author=b["author"],
             year=b.get("year"),
-            cover_url=covers.get(b["book_id"], ""),
+            cover_url=cover_url,
             user_status=user_status.get(key),
             description=b.get("description", ""),
         ))
@@ -968,7 +992,7 @@ def _compute_loved_by_readers(dry_run: bool = False) -> dict:
         if len(books) >= COMMUNITY_LIST_SIZE:
             break
         cover = covers.get(c["book_id"], "")
-        if not cover or c["book_id"] in seen:
+        if not _has_valid_cover(cover) or c["book_id"] in seen:
             continue
         seen.add(c["book_id"])
         books.append({**c, "cover_url": cover})

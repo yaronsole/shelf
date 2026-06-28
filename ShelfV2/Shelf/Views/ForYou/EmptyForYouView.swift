@@ -273,7 +273,9 @@ struct EmptyForYouView: View {
             try? await Task.sleep(for: .milliseconds(300))
             if Task.isCancelled { return }
             await MainActor.run { self.isSearching = true }
+            // Phase 2: drop cover-less results so search never shows a placeholder row.
             let results = await OpenLibraryService.shared.search(query: trimmed)
+                .filter { BookCoverView.hasValidCover($0.coverURL) }
             if Task.isCancelled { return }
             await MainActor.run {
                 self.searchResults = results
@@ -380,7 +382,8 @@ final class PopularPicksStore {
                         if let cover = await OpenLibraryService.shared.lookupCoverURL(title: entry.title, author: entry.author) {
                             return (index, PopularPickItem(title: entry.title, author: entry.author, coverURL: cover))
                         }
-                        if let result = await GoogleBooksService.shared.lookup(title: entry.title, author: entry.author) {
+                        if let result = await GoogleBooksService.shared.lookup(title: entry.title, author: entry.author),
+                           BookCoverView.hasValidCover(result.coverURL) {
                             return (index, PopularPickItem(title: result.title, author: result.author, coverURL: result.coverURL ?? ""))
                         }
                         return (index, nil)

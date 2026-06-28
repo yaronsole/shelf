@@ -87,7 +87,7 @@ final class ForYouViewModel {
                         continue
                     }
                     // Filter books without resolvable cover for *new* inserts (RG-04)
-                    guard !dto.coverURL.isEmpty else { continue }
+                    guard BookCoverView.hasValidCover(dto.coverURL) else { continue }
                     // Cross-batch dedup: skip books already in cache OR earlier
                     // in this same response with the same title|author
                     let key = Self.bookKey(title: dto.title, author: dto.author)
