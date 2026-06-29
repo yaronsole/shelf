@@ -78,6 +78,7 @@ struct BookDetailView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var inSentimentMode: Bool = false
     @State private var overview: BookOverviewDTO? = nil
+    @State private var overviewLoaded = false
 
     // Back-compat init that accepts CachedRecommendation directly.
     init(
@@ -216,16 +217,32 @@ struct BookDetailView: View {
             StructuredOverview(synopsis: overview.synopsis,
                                pullQuotes: overview.pullQuotes,
                                accolades: overview.accolades)
+        } else if !overviewLoaded {
+            overviewLoadingRow
         } else if !display.bookDescription.isEmpty {
-            ExpandableOverview(text: display.bookDescription)   // fallback while structuring loads
+            ExpandableOverview(text: display.bookDescription)   // last resort if structuring returned empty
         }
     }
 
-    @MainActor private func loadOverview() async {
-        if let o = try? await APIClient.shared.fetchBookOverview(
-            title: display.title, author: display.author), !o.isEmpty {
-            overview = o
+    private var overviewLoadingRow: some View {
+        HStack(spacing: 8) {
+            Text("OVERVIEW")
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(.tertiary)
+                .tracking(0.8)
+            ProgressView().controlSize(.small)
+            Spacer(minLength: 0)
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    @MainActor private func loadOverview() async {
+        // Pass the rec's stored description so structuring needs no Google Books
+        // call (works even during a GB quota crunch).
+        let o = try? await APIClient.shared.fetchBookOverview(
+            title: display.title, author: display.author, description: display.bookDescription)
+        if let o, !o.isEmpty { overview = o }
+        overviewLoaded = true
     }
 
     private var primaryCtaBar: some View {

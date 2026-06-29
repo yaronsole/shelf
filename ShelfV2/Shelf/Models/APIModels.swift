@@ -219,6 +219,12 @@ struct DebugInfoDTO: Decodable {
 
 // MARK: Book Overview (structured: synopsis + pull-quotes + accolade badges)
 
+struct BookOverviewRequest: Encodable {
+    let title: String
+    let author: String
+    let description: String
+}
+
 struct PullQuoteDTO: Decodable, Identifiable {
     let text: String
     let source: String

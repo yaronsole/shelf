@@ -19,6 +19,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from google.cloud import firestore
 
 from models import (
+    BookOverviewRequest,
     DebugInfoResponse,
     ListBookResponse,
     ListCatalogResponse,
@@ -512,6 +513,16 @@ def _generate_recommendations(user_id: str, domain: str, mark_delivered: bool = 
         merge=True,
     )
     firestore_batch.commit()
+
+    # Pre-structure overviews for cron-generated batches so their PDPs open with no
+    # structuring latency. Cron-only (mark_delivered=False) — the inline path is
+    # already slow and would risk the client timeout. Best-effort.
+    if not mark_delivered:
+        try:
+            _prewarm_overviews(books)
+        except Exception as exc:
+            log.warning("overview prewarm failed: %s", exc)
+
     return results
 
 
@@ -614,30 +625,61 @@ def _structure_overview(raw: str) -> dict:
         return {"synopsis": raw, "pull_quotes": [], "accolades": []}
 
 
-@app.get("/v1/book-overview")
-def get_book_overview(user_id: UserID, title: str, author: str = ""):
-    """Return a STRUCTURED overview for a book — {synopsis, pull_quotes:[{text,
-    source}], accolades:[]} — split from the messy Google Books description by one
-    Claude call, cached per book_id and shared across all users (computed at most
-    once per book, lazily on first PDP open). Falls back to raw text as synopsis."""
-    book_id = book_id_hash(title, author)
+def _has_overview_content(d: dict) -> bool:
+    return bool(d.get("synopsis") or d.get("pull_quotes") or d.get("accolades"))
+
+
+@app.post("/v1/book-overview")
+def get_book_overview(body: BookOverviewRequest, user_id: UserID):
+    """Return a STRUCTURED overview {synopsis, pull_quotes:[{text,source}],
+    accolades:[]}, cached shared per book_id. If the caller passes `description`
+    (For You recs already store it), structure THAT and skip Google Books — so it
+    works even when the GB quota is exhausted. Empty results are NOT cached, so a
+    book self-heals once a description becomes available (e.g. GB quota resets)."""
+    book_id = book_id_hash(body.title, body.author)
     ref = db.collection("book_overview_cache").document(book_id)
     snap = ref.get()
     if snap.exists:
         d = snap.to_dict() or {}
-        if "synopsis" in d:   # already structured
+        if _has_overview_content(d):   # only a non-empty structured cache counts
             return {"synopsis": d.get("synopsis", ""),
                     "pull_quotes": d.get("pull_quotes", []),
                     "accolades": d.get("accolades", [])}
-        raw = d.get("description", "")   # legacy raw-only cache → structure it now
-    else:
+
+    raw = (body.description or "").strip()
+    if not raw:
         with httpx.Client(timeout=5.0) as client:
-            raw = lookup_metadata(title, author, client=client).get("description", "") or ""
+            raw = lookup_metadata(body.title, body.author, client=client).get("description", "") or ""
 
     structured = _structure_overview(raw)
-    ref.set({**structured, "title": title, "author": author,
-             "cached_at": datetime.now(timezone.utc)})
+    if _has_overview_content(structured):   # never cache empties → they self-heal
+        ref.set({**structured, "title": body.title, "author": body.author,
+                 "cached_at": datetime.now(timezone.utc)})
     return structured
+
+
+def _prewarm_overviews(books: list[dict]) -> None:
+    """Pre-structure + cache overviews for a freshly-generated (cron) batch so
+    their PDPs open with no structuring latency. Skips already-cached + empty
+    descriptions; never caches empty results. Concurrent; best-effort. Cron-only
+    (the inline generation path is already slow enough to risk the client timeout)."""
+    targets = [b for b in books if (b.get("description") or "").strip()]
+    if not targets:
+        return
+
+    def _one(b: dict) -> None:
+        book_id = book_id_hash(b["title"], b["author"])
+        ref = db.collection("book_overview_cache").document(book_id)
+        snap = ref.get()
+        if snap.exists and _has_overview_content(snap.to_dict() or {}):
+            return
+        structured = _structure_overview(b["description"])
+        if _has_overview_content(structured):
+            ref.set({**structured, "title": b["title"], "author": b["author"],
+                     "cached_at": datetime.now(timezone.utc)})
+
+    with ThreadPoolExecutor(max_workers=4) as pool:
+        list(pool.map(_one, targets))
 
 
 # ---------------------------------------------------------------------------

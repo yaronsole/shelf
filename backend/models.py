@@ -55,6 +55,14 @@ class SeenBooksRequest(BaseModel):
     domain: str = "books"
 
 
+class BookOverviewRequest(BaseModel):
+    title: str
+    author: str = ""
+    # Optional caller-provided description to structure (For You recs already have
+    # it). When present, the server skips the Google Books fetch entirely.
+    description: str = ""
+
+
 class SuggestionsRequest(BaseModel):
     seed_book_title: str
     seed_book_author: str
