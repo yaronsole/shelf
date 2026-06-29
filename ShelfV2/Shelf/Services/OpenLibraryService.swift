@@ -10,19 +10,21 @@ struct OpenLibraryService {
 
     /// Free-text search — returns up to 10 results as BookSearchResult.
     /// Used in place of Google Books search (which has a 1000/day quota).
-    func search(query: String) async -> [BookSearchResult] {
+    static let pageSize = 20
+
+    func search(query: String, limit: Int = OpenLibraryService.pageSize) async -> [BookSearchResult] {
         guard query.count >= 2 else { return [] }
         // Genre-aware: a recognized genre term returns subject-filtered results
         // (Open Library subject search — no API quota). Falls through to the normal
         // title/author/keyword search when it's not a known genre or returns nothing.
         if let subject = Self.genreSubject(for: query) {
-            let genreResults = await searchBySubject(subject)
+            let genreResults = await searchBySubject(subject, limit: limit)
             if !genreResults.isEmpty { return genreResults }
         }
         var components = URLComponents(string: searchURL)!
         components.queryItems = [
             URLQueryItem(name: "q", value: query),
-            URLQueryItem(name: "limit", value: "10"),
+            URLQueryItem(name: "limit", value: "\(limit)"),
             URLQueryItem(name: "fields", value: "key,title,author_name,cover_i"),
         ]
         guard let url = components.url else { return [] }
@@ -44,11 +46,11 @@ struct OpenLibraryService {
         genreMap[query.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)]
     }
 
-    private func searchBySubject(_ subject: String) async -> [BookSearchResult] {
+    private func searchBySubject(_ subject: String, limit: Int = OpenLibraryService.pageSize) async -> [BookSearchResult] {
         var components = URLComponents(string: searchURL)!
         components.queryItems = [
             URLQueryItem(name: "subject", value: subject),
-            URLQueryItem(name: "limit", value: "20"),
+            URLQueryItem(name: "limit", value: "\(limit)"),
             URLQueryItem(name: "fields", value: "key,title,author_name,cover_i"),
         ]
         guard let url = components.url else { return [] }

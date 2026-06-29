@@ -26,6 +26,9 @@ struct BookSearchView<Idle: View>: View {
     @State private var addedIds: Set<String> = []
     @State private var savedIds: Set<String> = []
     @State private var pendingRead: PendingReadBook? = nil
+    @State private var currentLimit = OpenLibraryService.pageSize
+    @State private var canLoadMore = false
+    @State private var isLoadingMore = false
 
     init(placeholder: String = "Search for a book…", @ViewBuilder idle: () -> Idle) {
         self.placeholder = placeholder
@@ -80,6 +83,7 @@ struct BookSearchView<Idle: View>: View {
                     query = ""
                     results = []
                     isSearching = false
+                    canLoadMore = false
                     searchTask?.cancel()
                 }
                 .font(.subheadline)
@@ -116,6 +120,19 @@ struct BookSearchView<Idle: View>: View {
                         .padding(.vertical, 8)
                         Divider().padding(.leading, 16)
                     }
+                    if canLoadMore {
+                        Button(action: loadMore) {
+                            HStack(spacing: 8) {
+                                if isLoadingMore { ProgressView().controlSize(.small) }
+                                Text(isLoadingMore ? "Loading…" : "See more results")
+                                    .font(.subheadline.weight(.semibold))
+                            }
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 16)
+                        }
+                        .buttonStyle(.plain)
+                        .disabled(isLoadingMore)
+                    }
                 }
             }
             .padding(.top, 4)
@@ -130,24 +147,53 @@ struct BookSearchView<Idle: View>: View {
         guard trimmed.count >= 2 else {
             results = []
             isSearching = false
+            canLoadMore = false
             return
         }
         searchTask = Task {
             // 300ms debounce: if the user keeps typing, this Task is cancelled.
             try? await Task.sleep(for: .milliseconds(300))
             if Task.isCancelled { return }
-            await MainActor.run { self.isSearching = true }
-            var found = await OpenLibraryService.shared.search(query: trimmed)
-            if found.isEmpty {
-                found = (try? await GoogleBooksService.shared.search(query: trimmed)) ?? []
-            }
-            // Phase 2: drop cover-less results so search never shows a placeholder row.
-            found = found.filter { BookCoverView.hasValidCover($0.coverURL) }
-            if Task.isCancelled { return }
             await MainActor.run {
-                self.results = found
-                self.isSearching = false
+                self.isSearching = true
+                self.currentLimit = OpenLibraryService.pageSize
             }
+            await runSearch(trimmed, limit: OpenLibraryService.pageSize, checkCancel: true)
+        }
+    }
+
+    private func loadMore() {
+        guard canLoadMore, !isLoadingMore else { return }
+        let trimmed = query.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard trimmed.count >= 2 else { return }
+        let newLimit = currentLimit + OpenLibraryService.pageSize
+        isLoadingMore = true
+        Task {
+            await runSearch(trimmed, limit: newLimit, checkCancel: false)
+            await MainActor.run {
+                self.currentLimit = newLimit
+                self.isLoadingMore = false
+            }
+        }
+    }
+
+    /// Fetch up to `limit` results (Open Library, genre-aware; the Google Books
+    /// fallback isn't paginated). "See more" simply refetches with a larger limit,
+    /// so existing rows stay put while new ones append.
+    private func runSearch(_ trimmed: String, limit: Int, checkCancel: Bool) async {
+        var found = await OpenLibraryService.shared.search(query: trimmed, limit: limit)
+        var paginatable = true
+        if found.isEmpty {
+            found = (try? await GoogleBooksService.shared.search(query: trimmed)) ?? []
+            paginatable = false
+        }
+        let rawCount = found.count
+        found = found.filter { BookCoverView.hasValidCover($0.coverURL) }
+        if checkCancel && Task.isCancelled { return }
+        await MainActor.run {
+            self.results = found
+            self.canLoadMore = paginatable && rawCount >= limit
+            self.isSearching = false
         }
     }
 
