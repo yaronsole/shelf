@@ -77,7 +77,6 @@ struct BookDetailView: View {
 
     @Environment(\.dismiss) private var dismiss
     @State private var inSentimentMode: Bool = false
-    @State private var descExpanded: Bool = false
 
     // Back-compat init that accepts CachedRecommendation directly.
     init(
@@ -164,7 +163,7 @@ struct BookDetailView: View {
                         .padding(.horizontal, 16)
 
                     if !display.bookDescription.isEmpty {
-                        expandableDescription
+                        ExpandableOverview(text: display.bookDescription)
                             .padding(.horizontal, 16)
                             .padding(.top, 4)
                     }
@@ -210,32 +209,6 @@ struct BookDetailView: View {
         display.becauseOfReason.isEmpty
             ? "Because you loved \(display.becauseOf)"
             : "Because you loved \(display.becauseOf) — \(display.becauseOfReason)"
-    }
-
-    private var isDescriptionLong: Bool { display.bookDescription.count > 220 }
-
-    private var expandableDescription: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text("OVERVIEW")
-                .font(.caption.weight(.semibold))
-                .foregroundStyle(.tertiary)
-                .tracking(0.8)
-            Text(display.bookDescription)
-                .font(.subheadline)
-                .foregroundStyle(Color(.secondaryLabel))
-                .multilineTextAlignment(.leading)
-                .fixedSize(horizontal: false, vertical: true)
-                .lineSpacing(3)
-                .lineLimit(descExpanded || !isDescriptionLong ? nil : 4)
-            if isDescriptionLong {
-                Button(descExpanded ? "Read less" : "Read more") {
-                    withAnimation(.easeInOut(duration: 0.2)) { descExpanded.toggle() }
-                }
-                .font(.subheadline.weight(.semibold))
-                .foregroundStyle(Color(hexString: "4D3388"))
-            }
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     private var primaryCtaBar: some View {
@@ -421,5 +394,92 @@ private struct DetailTag: View {
                                ? Color(.systemOrange).opacity(0.12)
                                : Color(.secondarySystemFill))
             )
+    }
+}
+
+// MARK: - Expandable, readable book overview (shared by For You + Discover PDPs)
+
+/// Renders a book's long description for readability: primary-color text at body
+/// size, generous line spacing, a bold lead sentence as a visual anchor, real
+/// paragraph breaks (HTML + whitespace cleaned), and a Read more / Read less
+/// toggle when the text is long.
+struct ExpandableOverview: View {
+    private let paragraphs: [String]
+    @State private var expanded = false
+
+    private static let longThreshold = 450
+
+    init(text: String) {
+        self.paragraphs = ExpandableOverview.clean(text)
+    }
+
+    private var joined: String { paragraphs.joined(separator: "\n\n") }
+    private var isLong: Bool { joined.count > Self.longThreshold }
+
+    var body: some View {
+        if paragraphs.isEmpty {
+            EmptyView()
+        } else {
+            VStack(alignment: .leading, spacing: 10) {
+                Text("OVERVIEW")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(.secondary)
+                    .tracking(0.8)
+
+                Text(styled)
+                    .font(.body)
+                    .foregroundStyle(Color(.label))
+                    .multilineTextAlignment(.leading)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .lineSpacing(6)
+                    .lineLimit(expanded || !isLong ? nil : 7)
+
+                if isLong {
+                    Button(expanded ? "Read less" : "Read more") {
+                        withAnimation(.easeInOut(duration: 0.2)) { expanded.toggle() }
+                    }
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(Color(hexString: "4D3388"))
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+        }
+    }
+
+    // Bold the first sentence as a lead-in; the rest renders in regular weight.
+    private var styled: AttributedString {
+        let text = joined
+        guard text.count > 40,
+              let punct = text.firstIndex(where: { $0 == "." || $0 == "!" || $0 == "?" }) else {
+            return AttributedString(text)
+        }
+        let end = text.index(after: punct)
+        let lead = String(text[..<end])
+        guard lead.count <= 200 else { return AttributedString(text) }
+        var leadAttr = AttributedString(lead)
+        leadAttr.font = .body.weight(.semibold)
+        return leadAttr + AttributedString(String(text[end...]))
+    }
+
+    // Strip HTML tags, decode common entities, and split into clean paragraphs.
+    // Real paragraph breaks (</p>, <br><br>, blank lines) are preserved; soft
+    // single newlines and runs of whitespace are collapsed to single spaces.
+    private static func clean(_ raw: String) -> [String] {
+        let mark = "\u{0001}"
+        var t = raw
+        for tag in ["</p>", "<br><br>", "<br/><br/>", "<br>", "<br/>", "<br />"] {
+            t = t.replacingOccurrences(of: tag, with: mark, options: .caseInsensitive)
+        }
+        t = t.replacingOccurrences(of: "<[^>]+>", with: "", options: .regularExpression)
+        let entities = ["&amp;": "&", "&quot;": "\"", "&#39;": "'", "&apos;": "'",
+                        "&nbsp;": " ", "&mdash;": "—", "&ndash;": "–", "&hellip;": "…",
+                        "&lt;": "<", "&gt;": ">"]
+        for (k, v) in entities { t = t.replacingOccurrences(of: k, with: v) }
+        t = t.replacingOccurrences(of: "\r\n", with: "\n")
+        t = t.replacingOccurrences(of: "\n\n", with: mark)
+        t = t.replacingOccurrences(of: "[ \\t\\n]+", with: " ", options: .regularExpression)
+        return t.components(separatedBy: mark)
+            .map { $0.trimmingCharacters(in: .whitespaces) }
+            .filter { !$0.isEmpty }
     }
 }

@@ -241,12 +241,7 @@ private struct ListBookDetailSheet: View {
                     .padding(.horizontal, 16)
 
                     if !book.description.isEmpty {
-                        Text(book.description)
-                            .font(.subheadline)
-                            .foregroundStyle(Color(.label))
-                            .multilineTextAlignment(.leading)
-                            .fixedSize(horizontal: false, vertical: true)
-                            .lineSpacing(3)
+                        ExpandableOverview(text: book.description)
                             .padding(.horizontal, 16)
                     }
                 }
