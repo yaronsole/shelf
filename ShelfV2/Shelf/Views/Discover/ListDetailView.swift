@@ -210,6 +210,7 @@ private struct ListBookDetailSheet: View {
 
     @Environment(\.dismiss) private var dismiss
     @State private var inSentimentMode = false
+    @State private var fullOverview: String? = nil   // lazy full GB description (fetched on open)
 
     private var contextLine: String {
         if let year = book.year {
@@ -240,8 +241,8 @@ private struct ListBookDetailSheet: View {
                     }
                     .padding(.horizontal, 16)
 
-                    if !book.description.isEmpty {
-                        ExpandableOverview(text: book.description)
+                    if !overviewText.isEmpty {
+                        ExpandableOverview(text: overviewText)
                             .padding(.horizontal, 16)
                     }
                 }
@@ -276,6 +277,22 @@ private struct ListBookDetailSheet: View {
                 }
             }
             .animation(.easeInOut(duration: 0.22), value: inSentimentMode)
+            .task { await loadFullOverview() }
+        }
+    }
+
+    // Prefer the full Google Books description (fetched lazily on open, cached
+    // server-side per book) over the short curated blurb when it's longer.
+    private var overviewText: String {
+        if let full = fullOverview, full.count > book.description.count { return full }
+        return book.description
+    }
+
+    @MainActor
+    private func loadFullOverview() async {
+        if let o = try? await APIClient.shared.fetchBookOverview(title: book.title, author: book.author),
+           !o.isEmpty {
+            fullOverview = o
         }
     }
 

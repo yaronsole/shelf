@@ -111,6 +111,21 @@ final class APIClient {
         return try await postForResponse(url: url, body: body)
     }
 
+    // MARK: - Book Overview (lazy full description for list / Discover PDPs)
+
+    func fetchBookOverview(title: String, author: String) async throws -> String {
+        var components = URLComponents(
+            url: APIConfig.baseURL.appendingPathComponent(APIConfig.Endpoints.bookOverview),
+            resolvingAgainstBaseURL: false
+        )!
+        components.queryItems = [
+            URLQueryItem(name: "title", value: title),
+            URLQueryItem(name: "author", value: author),
+        ]
+        let dto: BookOverviewDTO = try await get(url: components.url!)
+        return dto.description
+    }
+
     // MARK: - Debug
 
     func fetchDebugInfo() async throws -> DebugInfoDTO {

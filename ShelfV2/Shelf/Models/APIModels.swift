@@ -217,6 +217,17 @@ struct DebugInfoDTO: Decodable {
     }
 }
 
+// MARK: Book Overview (lazy full description for list / Discover PDPs)
+
+struct BookOverviewDTO: Decodable {
+    let description: String
+    enum CodingKeys: String, CodingKey { case description }
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        description = (try? c.decode(String.self, forKey: .description)) ?? ""
+    }
+}
+
 // MARK: - Curated Lists (Phase 6)
 
 struct ListMetadataDTO: Decodable, Identifiable {

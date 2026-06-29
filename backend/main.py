@@ -574,6 +574,33 @@ def get_suggestions(body: SuggestionsRequest, user_id: UserID):
 
 
 # ---------------------------------------------------------------------------
+# GET /v1/book-overview  (lazy full Google Books description for list PDPs)
+# ---------------------------------------------------------------------------
+@app.get("/v1/book-overview")
+def get_book_overview(user_id: UserID, title: str, author: str = ""):
+    """Return the full Google Books description for a book, cached per book_id and
+    shared across users so each book is fetched at most once. Fetched lazily when
+    a Discover/list PDP opens (curated lists only carry short editorial blurbs).
+    No LLM. Returns {"description": "..."} (empty string if none found)."""
+    book_id = book_id_hash(title, author)
+    ref = db.collection("book_overview_cache").document(book_id)
+    snap = ref.get()
+    if snap.exists:
+        return {"description": (snap.to_dict() or {}).get("description", "")}
+
+    with httpx.Client(timeout=5.0) as client:
+        meta = lookup_metadata(title, author, client=client)
+    desc = meta.get("description", "") or ""
+    ref.set({
+        "description": desc,
+        "title": title,
+        "author": author,
+        "cached_at": datetime.now(timezone.utc),
+    })
+    return {"description": desc}
+
+
+# ---------------------------------------------------------------------------
 # GET /v1/debug/generation-info
 # ---------------------------------------------------------------------------
 @app.get("/v1/debug/generation-info", response_model=DebugInfoResponse)
