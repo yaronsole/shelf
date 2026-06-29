@@ -28,6 +28,7 @@ struct BookSearchView<Idle: View>: View {
     @State private var savedIds: Set<String> = []
     @State private var pendingRead: PendingReadBook? = nil
     @State private var selectedBook: ListBookDTO? = nil   // tapped result → detail page (PDP)
+    @FocusState private var searchFocused: Bool           // drives keyboard show/hide
     @State private var currentLimit = OpenLibraryService.pageSize
     @State private var canLoadMore = false
     @State private var isLoadingMore = false
@@ -108,6 +109,9 @@ struct BookSearchView<Idle: View>: View {
                 .foregroundStyle(.secondary)
             TextField(placeholder, text: $query)
                 .autocorrectionDisabled()
+                .focused($searchFocused)
+                .submitLabel(.search)
+                .onSubmit { searchFocused = false }   // return/search key collapses the keyboard
                 .onChange(of: query) { _, newValue in performSearch(query: newValue) }
             if isSearchingMode {
                 Button("Cancel") {
@@ -116,6 +120,7 @@ struct BookSearchView<Idle: View>: View {
                     isSearching = false
                     canLoadMore = false
                     searchTask?.cancel()
+                    searchFocused = false
                 }
                 .font(.subheadline)
             }
@@ -144,7 +149,7 @@ struct BookSearchView<Idle: View>: View {
                             book: result,
                             isAdded: addedIds.contains(result.id),
                             isSaved: savedIds.contains(result.id),
-                            onOpen: { selectedBook = detailDTO(for: result) },
+                            onOpen: { searchFocused = false; selectedBook = detailDTO(for: result) },
                             onMarkRead: { markRead(result) },
                             onSave: { save(result) }
                         )
@@ -169,6 +174,9 @@ struct BookSearchView<Idle: View>: View {
             }
             .padding(.top, 4)
         }
+        // Scrolling the results swipes the keyboard away (and lets the user
+        // collapse it deliberately with a downward drag).
+        .scrollDismissesKeyboard(.immediately)
     }
 
     // MARK: - Search
