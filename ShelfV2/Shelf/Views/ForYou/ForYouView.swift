@@ -7,11 +7,20 @@ struct ForYouView: View {
     @Environment(AppState.self) private var appState
 
     @Query(
-        filter: #Predicate<CachedRecommendation> { !$0.isReacted },
+        filter: #Predicate<CachedRecommendation> { !$0.isReacted && $0.isSurfaced },
         sort: \CachedRecommendation.fetchedAt,
         order: .reverse
     )
     private var feed: [CachedRecommendation]
+
+    // Staged "new picks" that arrived mid-session — held out of the feed until
+    // the user taps the banner, so the feed never reshuffles under them.
+    @Query(
+        filter: #Predicate<CachedRecommendation> { !$0.isReacted && !$0.isSurfaced },
+        sort: \CachedRecommendation.fetchedAt,
+        order: .reverse
+    )
+    private var stagedRecs: [CachedRecommendation]
 
     @Query private var seedBooks: [LocalSeedBook]
     private let seedThreshold = 3
@@ -137,8 +146,8 @@ struct ForYouView: View {
                 }
             }
 
-            if vm.showNewBatchBanner {
-                newBatchBanner
+            if !stagedRecs.isEmpty {
+                newPicksBanner
                     .transition(.move(edge: .top).combined(with: .opacity))
                     .zIndex(10)
             }
@@ -198,23 +207,23 @@ struct ForYouView: View {
 
     // MARK: - New Batch Banner
 
-    private var newBatchBanner: some View {
-        HStack {
-            Image(systemName: "sparkles")
-            Text(Strings.ForYou.newBatchBanner)
-                .font(.subheadline.weight(.medium))
-            Spacer()
-            Button(Strings.ForYou.refreshAction) {
-                vm.dismissNewBatchBanner()
+    private var newPicksBanner: some View {
+        Button {
+            Haptics.light()
+            vm.surfaceStaged(modelContext: modelContext)
+        } label: {
+            HStack(spacing: 6) {
+                Image(systemName: "arrow.up")
+                Text("\(stagedRecs.count) new pick\(stagedRecs.count == 1 ? "" : "s")")
+                    .font(.subheadline.weight(.semibold))
             }
-            .font(.subheadline.weight(.semibold))
+            .padding(.horizontal, 18)
+            .padding(.vertical, 11)
+            .background(.regularMaterial)
+            .clipShape(Capsule())
+            .shadow(radius: 6)
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 12)
-        .background(.regularMaterial)
-        .clipShape(Capsule())
-        .shadow(radius: 6)
-        .padding(.horizontal, 24)
+        .buttonStyle(.plain)
         .padding(.top, 8)
     }
 
@@ -230,6 +239,7 @@ struct ForYouView: View {
     }
 
     private func refreshAsync() async {
+        vm.surfaceStaged(modelContext: modelContext)   // pull-to-refresh brings staged picks into the feed
         await withCheckedContinuation { continuation in
             Task {
                 vm.refreshIfNeeded(modelContext: modelContext)

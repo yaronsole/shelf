@@ -90,7 +90,8 @@ final class DailyRotationService {
                     readingTimeMinutes: dto.readingTimeMinutes,
                     becauseOf: dto.becauseOf,
                     becauseOfReason: dto.becauseOfReason,
-                    bookDescription: dto.bookDescription
+                    bookDescription: dto.bookDescription,
+                    isSurfaced: false
                 )
                 modelContext.insert(rec)
                 inserted += 1

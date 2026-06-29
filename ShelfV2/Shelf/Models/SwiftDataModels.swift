@@ -20,6 +20,9 @@ final class CachedRecommendation {
     var isSeen: Bool
     var seenAt: Date?
     var isReacted: Bool
+    // Staging: recs that arrive mid-session start unsurfaced so they don't
+    // reshuffle the feed under the user; surfaced via the "new picks" banner.
+    var isSurfaced: Bool = true
     var awards: [String] = []
     var contextTag: String = ""
     var acclaim: String = ""
@@ -55,7 +58,8 @@ final class CachedRecommendation {
         readingTimeMinutes: Int? = nil,
         becauseOf: String = "",
         becauseOfReason: String = "",
-        bookDescription: String = ""
+        bookDescription: String = "",
+        isSurfaced: Bool = true
     ) {
         self.id = id
         self.title = title
@@ -70,6 +74,7 @@ final class CachedRecommendation {
         self.domain = domain
         self.isSeen = false
         self.isReacted = false
+        self.isSurfaced = isSurfaced
         self.awards = awards
         self.contextTag = contextTag
         self.acclaim = acclaim

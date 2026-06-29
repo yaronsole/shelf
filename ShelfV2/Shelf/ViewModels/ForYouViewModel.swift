@@ -39,6 +39,17 @@ final class ForYouViewModel {
         }
     }
 
+    // Surface all staged ("new picks") recs into the feed and scroll to top.
+    @MainActor
+    func surfaceStaged(modelContext: ModelContext) {
+        let staged = (try? modelContext.fetch(
+            FetchDescriptor<CachedRecommendation>(predicate: #Predicate { !$0.isReacted && !$0.isSurfaced })
+        )) ?? []
+        guard !staged.isEmpty else { return }
+        for rec in staged { rec.isSurfaced = true }
+        scrollToTopTick += 1
+    }
+
     // MARK: - First-run rich feed (Phase 5)
 
     // Show the first batch fast, then keep generating in the background until the
@@ -93,6 +104,10 @@ final class ForYouViewModel {
                 let existing = (try? modelContext.fetch(FetchDescriptor<CachedRecommendation>())) ?? []
                 let byId = Dictionary(uniqueKeysWithValues: existing.map { ($0.id, $0) })
                 let existingKeys = Set(existing.map { Self.bookKey(title: $0.title, author: $0.author) })
+                // Staging: surface new recs immediately only when the feed is
+                // currently empty (nothing to disorient); otherwise stage them
+                // behind the "new picks" banner so the feed doesn't reshuffle.
+                let surfaceNew = !existing.contains { !$0.isReacted && $0.isSurfaced }
 
                 var insertedCount = 0
                 var seenKeysThisBatch = Set<String>()
@@ -155,7 +170,8 @@ final class ForYouViewModel {
                         readingTimeMinutes: dto.readingTimeMinutes,
                         becauseOf: dto.becauseOf,
                         becauseOfReason: dto.becauseOfReason,
-                        bookDescription: dto.bookDescription
+                        bookDescription: dto.bookDescription,
+                        isSurfaced: surfaceNew
                     )
                     modelContext.insert(rec)
                     insertedCount += 1
