@@ -77,6 +77,7 @@ struct BookDetailView: View {
 
     @Environment(\.dismiss) private var dismiss
     @State private var inSentimentMode: Bool = false
+    @State private var overview: BookOverviewDTO? = nil
 
     // Back-compat init that accepts CachedRecommendation directly.
     init(
@@ -162,11 +163,9 @@ struct BookDetailView: View {
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .padding(.horizontal, 16)
 
-                    if !display.bookDescription.isEmpty {
-                        ExpandableOverview(text: display.bookDescription)
-                            .padding(.horizontal, 16)
-                            .padding(.top, 4)
-                    }
+                    overviewSection
+                        .padding(.horizontal, 16)
+                        .padding(.top, 4)
 
                     Color.clear.frame(height: 120)   // clears the bottom CTA bar
                 }
@@ -200,6 +199,7 @@ struct BookDetailView: View {
                 }
             }
             .animation(.easeInOut(duration: 0.22), value: inSentimentMode)
+            .task { await loadOverview() }
         }
     }
 
@@ -209,6 +209,23 @@ struct BookDetailView: View {
         display.becauseOfReason.isEmpty
             ? "Because you loved \(display.becauseOf)"
             : "Because you loved \(display.becauseOf) — \(display.becauseOfReason)"
+    }
+
+    @ViewBuilder private var overviewSection: some View {
+        if let overview, !overview.isEmpty {
+            StructuredOverview(synopsis: overview.synopsis,
+                               pullQuotes: overview.pullQuotes,
+                               accolades: overview.accolades)
+        } else if !display.bookDescription.isEmpty {
+            ExpandableOverview(text: display.bookDescription)   // fallback while structuring loads
+        }
+    }
+
+    @MainActor private func loadOverview() async {
+        if let o = try? await APIClient.shared.fetchBookOverview(
+            title: display.title, author: display.author), !o.isEmpty {
+            overview = o
+        }
     }
 
     private var primaryCtaBar: some View {
@@ -481,5 +498,63 @@ struct ExpandableOverview: View {
         return t.components(separatedBy: mark)
             .map { $0.trimmingCharacters(in: .whitespaces) }
             .filter { !$0.isEmpty }
+    }
+}
+
+// MARK: - Structured overview (accolade badges + pull-quotes + clean synopsis)
+
+struct StructuredOverview: View {
+    let synopsis: String
+    let pullQuotes: [PullQuoteDTO]
+    let accolades: [String]
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            if !accolades.isEmpty {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 6) {
+                        ForEach(accolades, id: \.self) { badge in
+                            Text(badge)
+                                .font(.caption.weight(.semibold))
+                                .foregroundStyle(Color(hexString: "633806"))
+                                .padding(.horizontal, 10)
+                                .padding(.vertical, 5)
+                                .background(Capsule().fill(Color(hexString: "FAEEDA")))
+                        }
+                    }
+                }
+            }
+            ForEach(pullQuotes) { PullQuoteCard(quote: $0) }
+            if !synopsis.isEmpty {
+                ExpandableOverview(text: synopsis)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+}
+
+private struct PullQuoteCard: View {
+    let quote: PullQuoteDTO
+    var body: some View {
+        HStack(alignment: .top, spacing: 10) {
+            RoundedRectangle(cornerRadius: 2)
+                .fill(Color(hexString: "4D3388"))
+                .frame(width: 3)
+            VStack(alignment: .leading, spacing: 5) {
+                Text("“\(quote.text)”")
+                    .font(.callout)
+                    .italic()
+                    .foregroundStyle(Color(.label))
+                    .multilineTextAlignment(.leading)
+                    .fixedSize(horizontal: false, vertical: true)
+                if !quote.source.isEmpty {
+                    Text("— \(quote.source)")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(.secondary)
+                }
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.vertical, 2)
     }
 }

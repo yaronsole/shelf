@@ -210,7 +210,7 @@ private struct ListBookDetailSheet: View {
 
     @Environment(\.dismiss) private var dismiss
     @State private var inSentimentMode = false
-    @State private var fullOverview: String? = nil   // lazy full GB description (fetched on open)
+    @State private var overview: BookOverviewDTO? = nil   // structured overview (fetched on open)
 
     private var contextLine: String {
         if let year = book.year {
@@ -241,10 +241,8 @@ private struct ListBookDetailSheet: View {
                     }
                     .padding(.horizontal, 16)
 
-                    if !overviewText.isEmpty {
-                        ExpandableOverview(text: overviewText)
-                            .padding(.horizontal, 16)
-                    }
+                    overviewSection
+                        .padding(.horizontal, 16)
                 }
                 .padding(.bottom, 120)
             }
@@ -277,22 +275,25 @@ private struct ListBookDetailSheet: View {
                 }
             }
             .animation(.easeInOut(duration: 0.22), value: inSentimentMode)
-            .task { await loadFullOverview() }
+            .task { await loadOverview() }
         }
     }
 
-    // Prefer the full Google Books description (fetched lazily on open, cached
-    // server-side per book) over the short curated blurb when it's longer.
-    private var overviewText: String {
-        if let full = fullOverview, full.count > book.description.count { return full }
-        return book.description
+    @ViewBuilder private var overviewSection: some View {
+        if let overview, !overview.isEmpty {
+            StructuredOverview(synopsis: overview.synopsis,
+                               pullQuotes: overview.pullQuotes,
+                               accolades: overview.accolades)
+        } else if !book.description.isEmpty {
+            ExpandableOverview(text: book.description)   // fallback (curated blurb) while structuring loads
+        }
     }
 
     @MainActor
-    private func loadFullOverview() async {
+    private func loadOverview() async {
         if let o = try? await APIClient.shared.fetchBookOverview(title: book.title, author: book.author),
            !o.isEmpty {
-            fullOverview = o
+            overview = o
         }
     }
 

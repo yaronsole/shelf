@@ -217,14 +217,34 @@ struct DebugInfoDTO: Decodable {
     }
 }
 
-// MARK: Book Overview (lazy full description for list / Discover PDPs)
+// MARK: Book Overview (structured: synopsis + pull-quotes + accolade badges)
 
-struct BookOverviewDTO: Decodable {
-    let description: String
-    enum CodingKeys: String, CodingKey { case description }
+struct PullQuoteDTO: Decodable, Identifiable {
+    let text: String
+    let source: String
+    var id: String { text + "|" + source }
+    enum CodingKeys: String, CodingKey { case text, source }
     init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
-        description = (try? c.decode(String.self, forKey: .description)) ?? ""
+        text = (try? c.decode(String.self, forKey: .text)) ?? ""
+        source = (try? c.decode(String.self, forKey: .source)) ?? ""
+    }
+}
+
+struct BookOverviewDTO: Decodable {
+    let synopsis: String
+    let pullQuotes: [PullQuoteDTO]
+    let accolades: [String]
+    var isEmpty: Bool { synopsis.isEmpty && pullQuotes.isEmpty && accolades.isEmpty }
+    enum CodingKeys: String, CodingKey {
+        case synopsis, accolades
+        case pullQuotes = "pull_quotes"
+    }
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        synopsis = (try? c.decode(String.self, forKey: .synopsis)) ?? ""
+        pullQuotes = (try? c.decode([PullQuoteDTO].self, forKey: .pullQuotes)) ?? []
+        accolades = (try? c.decode([String].self, forKey: .accolades)) ?? []
     }
 }
 

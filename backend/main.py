@@ -37,7 +37,7 @@ from models import (
     UserSettingsRequest,
     UserSettingsResponse,
 )
-from prompts import build_recommendations_prompt, build_suggestions_prompt
+from prompts import build_recommendations_prompt, build_suggestions_prompt, build_overview_structure_prompt
 from google_books import lookup_cover, lookup_metadata
 from open_library import lookup_cover as open_library_lookup_cover
 from nyt_bestsellers import lookup_bestseller
@@ -576,28 +576,68 @@ def get_suggestions(body: SuggestionsRequest, user_id: UserID):
 # ---------------------------------------------------------------------------
 # GET /v1/book-overview  (lazy full Google Books description for list PDPs)
 # ---------------------------------------------------------------------------
+def _structure_overview(raw: str) -> dict:
+    """Split a messy publisher description into {synopsis, pull_quotes, accolades}
+    via one Claude call. Best-effort: on any failure, fall back to the raw text as
+    the synopsis. Called at most once per book (result cached in Firestore)."""
+    raw = (raw or "").strip()
+    if not raw:
+        return {"synopsis": "", "pull_quotes": [], "accolades": []}
+    try:
+        message = claude.messages.create(
+            model="claude-opus-4-5",
+            max_tokens=1500,
+            temperature=0.2,
+            messages=[{"role": "user", "content": build_overview_structure_prompt(raw)}],
+        )
+        text = message.content[0].text.strip()
+        if text.startswith("```"):
+            nl = text.find("\n")
+            if nl != -1:
+                text = text[nl + 1:]
+            if text.rstrip().endswith("```"):
+                text = text.rstrip()[:-3]
+        start, end = text.find("{"), text.rfind("}")
+        data = json.loads(text[start:end + 1]) if (start != -1 and end > start) else {}
+        synopsis = (data.get("synopsis") or raw).strip()
+        quotes = []
+        for q in (data.get("pull_quotes") or [])[:3]:
+            if isinstance(q, dict):
+                t = (q.get("text") or "").strip().strip('"').strip("“”").strip()
+                s = (q.get("source") or "").strip()
+                if t:
+                    quotes.append({"text": t[:400], "source": s[:80]})
+        accolades = [str(a).strip()[:60] for a in (data.get("accolades") or [])[:4] if str(a).strip()]
+        return {"synopsis": synopsis, "pull_quotes": quotes, "accolades": accolades}
+    except Exception as exc:
+        log.warning("overview structuring failed: %s", exc)
+        return {"synopsis": raw, "pull_quotes": [], "accolades": []}
+
+
 @app.get("/v1/book-overview")
 def get_book_overview(user_id: UserID, title: str, author: str = ""):
-    """Return the full Google Books description for a book, cached per book_id and
-    shared across users so each book is fetched at most once. Fetched lazily when
-    a Discover/list PDP opens (curated lists only carry short editorial blurbs).
-    No LLM. Returns {"description": "..."} (empty string if none found)."""
+    """Return a STRUCTURED overview for a book — {synopsis, pull_quotes:[{text,
+    source}], accolades:[]} — split from the messy Google Books description by one
+    Claude call, cached per book_id and shared across all users (computed at most
+    once per book, lazily on first PDP open). Falls back to raw text as synopsis."""
     book_id = book_id_hash(title, author)
     ref = db.collection("book_overview_cache").document(book_id)
     snap = ref.get()
     if snap.exists:
-        return {"description": (snap.to_dict() or {}).get("description", "")}
+        d = snap.to_dict() or {}
+        if "synopsis" in d:   # already structured
+            return {"synopsis": d.get("synopsis", ""),
+                    "pull_quotes": d.get("pull_quotes", []),
+                    "accolades": d.get("accolades", [])}
+        raw = d.get("description", "")   # legacy raw-only cache → structure it now
+    else:
+        with httpx.Client(timeout=5.0) as client:
+            raw = lookup_metadata(title, author, client=client).get("description", "") or ""
 
-    with httpx.Client(timeout=5.0) as client:
-        meta = lookup_metadata(title, author, client=client)
-    desc = meta.get("description", "") or ""
-    ref.set({
-        "description": desc,
-        "title": title,
-        "author": author,
-        "cached_at": datetime.now(timezone.utc),
-    })
-    return {"description": desc}
+    structured = _structure_overview(raw)
+    ref.set({**structured, "title": title, "author": author,
+             "cached_at": datetime.now(timezone.utc)})
+    return structured
 
 
 # ---------------------------------------------------------------------------
