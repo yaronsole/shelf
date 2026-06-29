@@ -219,9 +219,12 @@ struct BookDetailView: View {
                                accolades: overview.accolades)
         } else if !overviewLoaded {
             overviewLoadingRow
-        } else if !display.bookDescription.isEmpty {
-            ExpandableOverview(text: display.bookDescription)   // last resort if structuring returned empty
         }
+        // No raw last-resort: an empty structured overview means the relevance
+        // guard rejected a mismatched description (or none existed), so showing
+        // display.bookDescription would re-introduce the wrong-book text the guard
+        // just suppressed. The personalized blurb above always shows, so the PDP
+        // is never blank. (Matches the Discover PDP.)
     }
 
     private var overviewLoadingRow: some View {

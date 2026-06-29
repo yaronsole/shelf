@@ -107,6 +107,10 @@ RECENT_BATCH_LOOKBACK = 3
 # per book (served to all users; per-user `exclude` applied after the cache).
 SIMILAR_CACHE_POOL_SIZE = 18
 
+# Bump to invalidate ALL cached book overviews (re-structured lazily on next read)
+# — used when the structuring prompt/logic changes, e.g. the relevance guard.
+OVERVIEW_CACHE_VERSION = 3
+
 
 def _parse_json_array(raw: str) -> list[dict]:
     """Parse a JSON array from an LLM response, tolerating markdown code fences
@@ -166,6 +170,15 @@ def reaction_col(user_id: str):
 
 def recommendation_col(user_id: str):
     return user_ref(user_id).collection("recommendations")
+
+
+def _is_gb_catalog_url(url: str) -> bool:
+    """True for a Google Books 'catalog-only' cover (volume id ending in AAJ),
+    which serves an 'image not available' placeholder rather than a real cover."""
+    if "books.google.com" not in url:
+        return False
+    m = re.search(r"[?&]id=([^&]+)", url)
+    return bool(m and m.group(1).endswith("AAJ"))
 
 
 def _has_valid_cover(cover_url: str | None) -> bool:
@@ -587,10 +600,11 @@ def get_suggestions(body: SuggestionsRequest, user_id: UserID):
 # ---------------------------------------------------------------------------
 # GET /v1/book-overview  (lazy full Google Books description for list PDPs)
 # ---------------------------------------------------------------------------
-def _structure_overview(raw: str) -> dict:
+def _structure_overview(raw: str, title: str = "", author: str = "") -> dict:
     """Split a messy publisher description into {synopsis, pull_quotes, accolades}
-    via one Claude call. Best-effort: on any failure, fall back to the raw text as
-    the synopsis. Called at most once per book (result cached in Firestore)."""
+    via one Claude call. Passes title/author so the model can return EMPTY when the
+    description is clearly about a different book (guards against bad GB editions).
+    Best-effort: on failure, fall back to raw text. Cached at most once per book."""
     raw = (raw or "").strip()
     if not raw:
         return {"synopsis": "", "pull_quotes": [], "accolades": []}
@@ -599,7 +613,7 @@ def _structure_overview(raw: str) -> dict:
             model="claude-opus-4-5",
             max_tokens=1500,
             temperature=0.2,
-            messages=[{"role": "user", "content": build_overview_structure_prompt(raw)}],
+            messages=[{"role": "user", "content": build_overview_structure_prompt(raw, title, author)}],
         )
         text = message.content[0].text.strip()
         if text.startswith("```"):
@@ -609,8 +623,14 @@ def _structure_overview(raw: str) -> dict:
             if text.rstrip().endswith("```"):
                 text = text.rstrip()[:-3]
         start, end = text.find("{"), text.rfind("}")
-        data = json.loads(text[start:end + 1]) if (start != -1 and end > start) else {}
-        synopsis = (data.get("synopsis") or raw).strip()
+        if start == -1 or end <= start:
+            raise ValueError("no JSON object in overview response")
+        data = json.loads(text[start:end + 1])
+        # Trust the model's structure. An EMPTY synopsis here is INTENTIONAL — the
+        # relevance guard returns all-empty when the text is clearly about a different
+        # book — so never substitute the raw (wrong) text back in. Only a genuine
+        # API/parse failure (the except: below) falls back to raw.
+        synopsis = (data.get("synopsis") or "").strip()
         quotes = []
         for q in (data.get("pull_quotes") or [])[:3]:
             if isinstance(q, dict):
@@ -641,7 +661,9 @@ def get_book_overview(body: BookOverviewRequest, user_id: UserID):
     snap = ref.get()
     if snap.exists:
         d = snap.to_dict() or {}
-        if _has_overview_content(d):   # only a non-empty structured cache counts
+        # Only a current-version, non-empty structured cache counts; older/empty
+        # entries fall through and re-structure (so stale-wrong overviews heal).
+        if d.get("v") == OVERVIEW_CACHE_VERSION and _has_overview_content(d):
             return {"synopsis": d.get("synopsis", ""),
                     "pull_quotes": d.get("pull_quotes", []),
                     "accolades": d.get("accolades", [])}
@@ -651,10 +673,10 @@ def get_book_overview(body: BookOverviewRequest, user_id: UserID):
         with httpx.Client(timeout=5.0) as client:
             raw = lookup_metadata(body.title, body.author, client=client).get("description", "") or ""
 
-    structured = _structure_overview(raw)
+    structured = _structure_overview(raw, body.title, body.author)
     if _has_overview_content(structured):   # never cache empties → they self-heal
-        ref.set({**structured, "title": body.title, "author": body.author,
-                 "cached_at": datetime.now(timezone.utc)})
+        ref.set({**structured, "v": OVERVIEW_CACHE_VERSION, "title": body.title,
+                 "author": body.author, "cached_at": datetime.now(timezone.utc)})
     return structured
 
 
@@ -670,13 +692,13 @@ def _prewarm_overviews(books: list[dict]) -> None:
     def _one(b: dict) -> None:
         book_id = book_id_hash(b["title"], b["author"])
         ref = db.collection("book_overview_cache").document(book_id)
-        snap = ref.get()
-        if snap.exists and _has_overview_content(snap.to_dict() or {}):
+        d = ref.get().to_dict() or {}
+        if d.get("v") == OVERVIEW_CACHE_VERSION and _has_overview_content(d):
             return
-        structured = _structure_overview(b["description"])
+        structured = _structure_overview(b["description"], b["title"], b["author"])
         if _has_overview_content(structured):
-            ref.set({**structured, "title": b["title"], "author": b["author"],
-                     "cached_at": datetime.now(timezone.utc)})
+            ref.set({**structured, "v": OVERVIEW_CACHE_VERSION, "title": b["title"],
+                     "author": b["author"], "cached_at": datetime.now(timezone.utc)})
 
     with ThreadPoolExecutor(max_workers=4) as pool:
         list(pool.map(_one, targets))
@@ -802,8 +824,11 @@ def _resolve_list_covers(books: list[dict]) -> dict[str, str]:
     for snap in snapshots:
         if snap.exists:
             d = snap.to_dict() or {}
-            if d.get("cover_url"):
-                cached[snap.id] = d["cover_url"]
+            url = d.get("cover_url", "")
+            # Ignore cached Google Books catalog-only placeholders ("image not
+            # available") so they re-resolve (and the book is dropped if no real cover).
+            if url and not _is_gb_catalog_url(url):
+                cached[snap.id] = url
 
     misses = [b for b in books if b["book_id"] not in cached]
     resolved: dict[str, str] = dict(cached)

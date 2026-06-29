@@ -105,13 +105,16 @@ Respond with ONLY a JSON array. No markdown, no explanation. Each object must ha
 """
 
 
-def build_overview_structure_prompt(raw: str) -> str:
+def build_overview_structure_prompt(raw: str, title: str = "", author: str = "") -> str:
     """Prompt to split a messy publisher description into clean structured parts.
     Used once per book (cached) so the detail page can show a clean synopsis,
     distinct pull-quotes, and accolade badges instead of one dense blob."""
-    return f"""You are formatting a book's description for a clean app detail page. The raw publisher text below mixes the actual synopsis together with marketing taglines, bestseller/award accolades, and review quotes.
+    book_id = f'"{title}" by {author}' if title else "the book below"
+    return f"""You are formatting the description for {book_id} for a clean app detail page. The raw publisher text below mixes the actual synopsis together with marketing taglines, bestseller/award accolades, and review quotes.
 
-Separate it into a JSON object with EXACTLY these keys:
+CRITICAL: If the text below is clearly NOT about {book_id} — e.g. it describes a different, unrelated book (wrong title, wrong subject) — return {{"synopsis": "", "pull_quotes": [], "accolades": []}} with everything empty. Never attach another book's content to this one.
+
+Otherwise, separate it into a JSON object with EXACTLY these keys:
 - "synopsis": the actual story / subject matter, as clean prose in 1-3 short paragraphs separated by "\\n\\n". EXCLUDE marketing taglines, bestseller/award mentions, adaptation notes, and review quotes. Do NOT invent or embellish — only rephrase/condense what is actually in the text.
 - "pull_quotes": an array of the strongest review/praise quotes, each {{"text": "<the quote, without surrounding quotation marks>", "source": "<reviewer or publication>"}}. At most 3. Only include a quote when an attribution/source is present. Empty array if there are none.
 - "accolades": an array of SHORT badge strings for notable status — bestseller, awards, adaptations (e.g. "#1 New York Times Bestseller", "Pulitzer Prize Winner", "Now a major motion picture"). At most 4, each max ~6 words. Empty array if none.

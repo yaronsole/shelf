@@ -214,10 +214,12 @@ private struct ListBookDetailSheet: View {
     @State private var overviewLoaded = false
 
     private var contextLine: String {
-        if let year = book.year {
-            return listTitle.isEmpty ? "\(year)" : "\(listTitle) · \(year)"
-        }
-        return listTitle
+        guard let year = book.year else { return listTitle }
+        let y = "\(year)"
+        if listTitle.isEmpty { return y }
+        // Avoid "NYT Notable Books 2024 · 2024" when the list title already has the year.
+        if listTitle.contains(y) { return listTitle }
+        return "\(listTitle) · \(y)"
     }
 
     var body: some View {
@@ -241,6 +243,18 @@ private struct ListBookDetailSheet: View {
                         }
                     }
                     .padding(.horizontal, 16)
+
+                    if !book.description.isEmpty {
+                        Text(book.description)
+                            .font(.subheadline)
+                            .foregroundStyle(Color(.label))
+                            .multilineTextAlignment(.leading)
+                            .lineLimit(4)
+                            .fixedSize(horizontal: false, vertical: true)
+                            .lineSpacing(3)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(.horizontal, 16)
+                    }
 
                     overviewSection
                         .padding(.horizontal, 16)
@@ -295,9 +309,8 @@ private struct ListBookDetailSheet: View {
                 Spacer(minLength: 0)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
-        } else if !book.description.isEmpty {
-            ExpandableOverview(text: book.description)   // last resort (curated blurb)
         }
+        // (No raw last-resort here — the curated blurb above already shows immediately.)
     }
 
     @MainActor
