@@ -330,6 +330,20 @@ struct ListBookDTO: Decodable, Identifiable {
         userStatus = try? c.decodeIfPresent(ListUserStatus.self, forKey: .userStatus)
         description = (try? c.decode(String.self, forKey: .description)) ?? ""
     }
+
+    /// Memberwise init for building a DTO outside of decoding — lets `BookSearchView`
+    /// reuse `BookDetailSheet` for a tapped search result (which has no list context,
+    /// so year/userStatus are nil and description is empty until the overview loads).
+    init(bookId: String, title: String, author: String, year: Int?,
+         coverURL: String, userStatus: ListUserStatus?, description: String) {
+        self.bookId = bookId
+        self.title = title
+        self.author = author
+        self.year = year
+        self.coverURL = coverURL
+        self.userStatus = userStatus
+        self.description = description
+    }
 }
 
 struct ListDetailDTO: Decodable {

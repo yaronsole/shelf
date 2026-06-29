@@ -15,6 +15,7 @@ import SwiftData
 /// recreated — same as the For You grid.
 struct BookSearchView<Idle: View>: View {
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.openURL) private var openURL
 
     private let placeholder: String
     private let idle: Idle
@@ -26,6 +27,7 @@ struct BookSearchView<Idle: View>: View {
     @State private var addedIds: Set<String> = []
     @State private var savedIds: Set<String> = []
     @State private var pendingRead: PendingReadBook? = nil
+    @State private var selectedBook: ListBookDTO? = nil   // tapped result → detail page (PDP)
     @State private var currentLimit = OpenLibraryService.pageSize
     @State private var canLoadMore = false
     @State private var isLoadingMore = false
@@ -65,6 +67,35 @@ struct BookSearchView<Idle: View>: View {
                 title: pending.title,
                 onLoved: { confirmRead(pending, liked: true) },
                 onDidntLike: { confirmRead(pending, liked: false) }
+            )
+        }
+        // Tapping a result opens the same PDP used on Discover/For You. There's no
+        // list context, so it loads the structured overview by title/author (a few
+        // seconds of latency, since search results can't be pre-warmed).
+        .sheet(item: $selectedBook) { book in
+            BookDetailSheet(
+                book: book,
+                listTitle: "",
+                onReadLoved: {
+                    recordRead(id: book.bookId, title: book.title, author: book.author,
+                               coverURL: book.coverURL, liked: true)
+                    ToastManager.shared.show(.reactedRead)
+                },
+                onReadDisliked: {
+                    recordRead(id: book.bookId, title: book.title, author: book.author,
+                               coverURL: book.coverURL, liked: false)
+                    ToastManager.shared.show(.reactedPass)
+                },
+                onSave: {
+                    saveBook(id: book.bookId, title: book.title, author: book.author,
+                             coverURL: book.coverURL)
+                    ToastManager.shared.show(.savedToShelf)
+                },
+                onBuy: {
+                    if let url = AmazonLinkService.searchURL(title: book.title, author: book.author) {
+                        openURL(url)
+                    }
+                }
             )
         }
     }
@@ -113,6 +144,7 @@ struct BookSearchView<Idle: View>: View {
                             book: result,
                             isAdded: addedIds.contains(result.id),
                             isSaved: savedIds.contains(result.id),
+                            onOpen: { selectedBook = detailDTO(for: result) },
                             onMarkRead: { markRead(result) },
                             onSave: { save(result) }
                         )
@@ -210,32 +242,51 @@ struct BookSearchView<Idle: View>: View {
     }
 
     private func confirmRead(_ pending: PendingReadBook, liked: Bool) {
-        guard !addedIds.contains(pending.id) else { return }
-        addedIds.insert(pending.id)
+        recordRead(id: pending.id, title: pending.title, author: pending.author,
+                   coverURL: pending.coverURL, liked: liked)
+    }
+
+    /// Record an already-read book (loved → seed, disliked → negative reaction only)
+    /// and reflect it in the row's checkmark. Shared by the row's "read it" flow and
+    /// the detail sheet's sentiment overlay.
+    private func recordRead(id: String, title: String, author: String, coverURL: String, liked: Bool) {
+        guard !addedIds.contains(id) else { return }
+        addedIds.insert(id)
         Task { @MainActor in
             let ok = await SeedWriter.recordAlreadyRead(
-                title: pending.title,
-                author: pending.author,
-                coverURL: pending.coverURL,
-                liked: liked,
-                modelContext: modelContext
+                title: title, author: author, coverURL: coverURL,
+                liked: liked, modelContext: modelContext
             )
-            if !ok { addedIds.remove(pending.id) }
+            if !ok { addedIds.remove(id) }
         }
     }
 
     private func save(_ book: BookSearchResult) {
-        guard !savedIds.contains(book.id) else { return }
+        saveBook(id: book.id, title: book.title, author: book.author, coverURL: book.coverURL ?? "")
+    }
+
+    /// Save to the reading list and reflect it in the row's bookmark. Shared by the
+    /// row's "save" button and the detail sheet's save CTA.
+    private func saveBook(id: String, title: String, author: String, coverURL: String) {
+        guard !savedIds.contains(id) else { return }
         Haptics.medium()
-        savedIds.insert(book.id)
+        savedIds.insert(id)
         let item = ReadingListItem(
             id: UUID().uuidString,
-            title: book.title,
-            author: book.author,
-            coverURL: book.coverURL ?? "",
+            title: title,
+            author: author,
+            coverURL: coverURL,
             blurb: "Saved from search."
         )
         modelContext.insert(item)
+    }
+
+    /// Build a detail DTO from a search result so a tap opens the shared PDP.
+    /// No list context: year/userStatus are nil and description is empty (the
+    /// overview loads by title/author inside the sheet).
+    private func detailDTO(for r: BookSearchResult) -> ListBookDTO {
+        ListBookDTO(bookId: r.id, title: r.title, author: r.author, year: nil,
+                    coverURL: r.coverURL ?? "", userStatus: nil, description: "")
     }
 }
 
@@ -258,29 +309,42 @@ struct PendingReadBook: Identifiable {
 
 // MARK: - Result Row
 
-/// Canonical search-result row: 36pt cover + title/author, with trailing
-/// "read it" (loved/disliked) and "save" buttons. Shared so search looks the
-/// same on Discover, the Taste tab, and (visually) the For You grid.
+/// Canonical search-result row: 36pt cover + title/author (tap to open the
+/// detail page), with trailing "read it" (loved/disliked) and "save" quick
+/// buttons. Shared so search looks the same on Discover, the Taste tab, and
+/// (visually) the For You grid.
 struct BookSearchResultRow: View {
     let book: BookSearchResult
     let isAdded: Bool
     let isSaved: Bool
+    let onOpen: () -> Void
     let onMarkRead: () -> Void
     let onSave: () -> Void
 
     var body: some View {
         HStack(spacing: 12) {
-            BookCoverView(url: book.coverURL ?? "", width: 36)
-            VStack(alignment: .leading, spacing: 2) {
-                Text(book.title)
-                    .font(.subheadline.bold())
-                    .lineLimit(2)
-                Text(book.author)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .lineLimit(1)
+            // Tapping the cover/title opens the detail page (PDP). The trailing
+            // quick-action buttons keep their own taps.
+            Button(action: onOpen) {
+                HStack(spacing: 12) {
+                    BookCoverView(url: book.coverURL ?? "", width: 36)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(book.title)
+                            .font(.subheadline.bold())
+                            .multilineTextAlignment(.leading)
+                            .lineLimit(2)
+                        Text(book.author)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .lineLimit(1)
+                    }
+                    Spacer(minLength: 8)
+                }
+                .contentShape(Rectangle())
             }
-            Spacer(minLength: 8)
+            .buttonStyle(.plain)
+            .accessibilityLabel("View details for \(book.title)")
+
             Button(action: onMarkRead) {
                 Image(systemName: isAdded ? "checkmark.circle.fill" : "checkmark.circle")
                     .font(.title2)

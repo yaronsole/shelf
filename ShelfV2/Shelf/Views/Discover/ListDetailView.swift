@@ -80,7 +80,7 @@ struct ListDetailView: View {
             }
         }
         .sheet(item: $selectedBook) { book in
-            ListBookDetailSheet(
+            BookDetailSheet(
                 book: book,
                 listTitle: vm.detail?.metadata.title ?? "",
                 onReadLoved: {
@@ -195,12 +195,16 @@ private struct StatusBadge: View {
 
 // MARK: - Book detail sheet
 
-/// Presented when a cover is tapped. Mirrors the For You / Similar Books PDP
-/// (BookDetailView): cover + metadata + description, three equal-weight pill
-/// CTAs pinned to the bottom, and an inline "did you like it?" sentiment overlay.
-/// The only difference from that PDP is the first CTA: instead of "pass" we
-/// surface "amazon" (Buy on Amazon), since a curated-list book can't be passed.
-private struct ListBookDetailSheet: View {
+/// Shared book PDP. Originally the Discover list detail sheet; also reused by
+/// `BookSearchView` so a tapped search result opens the same page. Self-contained:
+/// takes a book + four action closures and loads the structured overview by
+/// title/author (with no list context, year/description are simply absent).
+///
+/// Mirrors the For You / Similar Books PDP (BookDetailView): cover + metadata +
+/// description, three equal-weight pill CTAs pinned to the bottom, and an inline
+/// "did you like it?" sentiment overlay. The only difference from that PDP is the
+/// first CTA: instead of "pass" we surface "amazon" (Buy on Amazon).
+struct BookDetailSheet: View {
     let book: ListBookDTO
     let listTitle: String
     let onReadLoved: () -> Void
