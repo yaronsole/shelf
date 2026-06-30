@@ -18,6 +18,9 @@ struct BookDisplay {
     let nytBestseller: Bool
     let nytWeeksOnList: Int?
     let readingTimeMinutes: Int?
+    // Phase 3 PDP enrichment
+    let becauseOfReason: String
+    let bookDescription: String
 }
 
 extension BookDisplay {
@@ -28,7 +31,8 @@ extension BookDisplay {
             isComfortZonePush: rec.isComfortZonePush, awards: rec.awards,
             contextTag: rec.contextTag, becauseOf: rec.becauseOf,
             nytBestseller: rec.nytBestseller, nytWeeksOnList: rec.nytWeeksOnList,
-            readingTimeMinutes: rec.readingTimeMinutes
+            readingTimeMinutes: rec.readingTimeMinutes,
+            becauseOfReason: rec.becauseOfReason, bookDescription: rec.bookDescription
         )
     }
 
@@ -39,7 +43,8 @@ extension BookDisplay {
             isComfortZonePush: false, awards: s.awards,
             contextTag: s.contextTag, becauseOf: becauseOf,
             nytBestseller: s.nytBestseller, nytWeeksOnList: s.nytWeeksOnList,
-            readingTimeMinutes: s.readingTimeMinutes
+            readingTimeMinutes: s.readingTimeMinutes,
+            becauseOfReason: "", bookDescription: s.bookDescription ?? ""
         )
     }
 
@@ -50,7 +55,8 @@ extension BookDisplay {
             isComfortZonePush: false, awards: s.awards,
             contextTag: s.contextTag, becauseOf: becauseOf,
             nytBestseller: s.nytBestseller, nytWeeksOnList: s.nytWeeksOnList,
-            readingTimeMinutes: s.readingTimeMinutes
+            readingTimeMinutes: s.readingTimeMinutes,
+            becauseOfReason: "", bookDescription: s.bookDescription
         )
     }
 }
@@ -71,6 +77,8 @@ struct BookDetailView: View {
 
     @Environment(\.dismiss) private var dismiss
     @State private var inSentimentMode: Bool = false
+    @State private var overview: BookOverviewDTO? = nil
+    @State private var overviewLoaded = false
 
     // Back-compat init that accepts CachedRecommendation directly.
     init(
@@ -134,9 +142,11 @@ struct BookDetailView: View {
                     .padding(.horizontal, 16)
 
                     if !display.becauseOf.isEmpty {
-                        Label("Because you loved \(display.becauseOf)", systemImage: "sparkle")
+                        Label(becauseLine, systemImage: "sparkle")
                             .font(.subheadline.weight(.medium))
                             .foregroundStyle(Color(hexString: "4D3388"))
+                            .multilineTextAlignment(.leading)
+                            .frame(maxWidth: .infinity, alignment: .leading)
                             .padding(.horizontal, 16)
                     } else if !display.contextTag.isEmpty {
                         Label(display.contextTag, systemImage: "sparkle")
@@ -151,8 +161,14 @@ struct BookDetailView: View {
                         .multilineTextAlignment(.leading)
                         .fixedSize(horizontal: false, vertical: true)
                         .lineSpacing(3)
+                        .frame(maxWidth: .infinity, alignment: .leading)
                         .padding(.horizontal, 16)
-                        .padding(.bottom, 120)
+
+                    overviewSection
+                        .padding(.horizontal, 16)
+                        .padding(.top, 4)
+
+                    Color.clear.frame(height: 120)   // clears the bottom CTA bar
                 }
             }
             .navigationBarTitleDisplayMode(.inline)
@@ -184,7 +200,52 @@ struct BookDetailView: View {
                 }
             }
             .animation(.easeInOut(duration: 0.22), value: inSentimentMode)
+            .task { await loadOverview() }
         }
+    }
+
+    // MARK: - Phase 3 helpers
+
+    private var becauseLine: String {
+        display.becauseOfReason.isEmpty
+            ? "Because you loved \(display.becauseOf)"
+            : "Because you loved \(display.becauseOf) — \(display.becauseOfReason)"
+    }
+
+    @ViewBuilder private var overviewSection: some View {
+        if let overview, !overview.isEmpty {
+            StructuredOverview(synopsis: overview.synopsis,
+                               pullQuotes: overview.pullQuotes,
+                               accolades: overview.accolades)
+        } else if !overviewLoaded {
+            overviewLoadingRow
+        }
+        // No raw last-resort: an empty structured overview means the relevance
+        // guard rejected a mismatched description (or none existed), so showing
+        // display.bookDescription would re-introduce the wrong-book text the guard
+        // just suppressed. The personalized blurb above always shows, so the PDP
+        // is never blank. (Matches the Discover PDP.)
+    }
+
+    private var overviewLoadingRow: some View {
+        HStack(spacing: 8) {
+            Text("OVERVIEW")
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(.tertiary)
+                .tracking(0.8)
+            ProgressView().controlSize(.small)
+            Spacer(minLength: 0)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    @MainActor private func loadOverview() async {
+        // Pass the rec's stored description so structuring needs no Google Books
+        // call (works even during a GB quota crunch).
+        let o = try? await APIClient.shared.fetchBookOverview(
+            title: display.title, author: display.author, description: display.bookDescription)
+        if let o, !o.isEmpty { overview = o }
+        overviewLoaded = true
     }
 
     private var primaryCtaBar: some View {
@@ -370,5 +431,150 @@ private struct DetailTag: View {
                                ? Color(.systemOrange).opacity(0.12)
                                : Color(.secondarySystemFill))
             )
+    }
+}
+
+// MARK: - Expandable, readable book overview (shared by For You + Discover PDPs)
+
+/// Renders a book's long description for readability: primary-color text at body
+/// size, generous line spacing, a bold lead sentence as a visual anchor, real
+/// paragraph breaks (HTML + whitespace cleaned), and a Read more / Read less
+/// toggle when the text is long.
+struct ExpandableOverview: View {
+    private let paragraphs: [String]
+    @State private var expanded = false
+
+    private static let longThreshold = 450
+
+    init(text: String) {
+        self.paragraphs = ExpandableOverview.clean(text)
+    }
+
+    private var joined: String { paragraphs.joined(separator: "\n\n") }
+    private var isLong: Bool { joined.count > Self.longThreshold }
+
+    var body: some View {
+        if paragraphs.isEmpty {
+            EmptyView()
+        } else {
+            VStack(alignment: .leading, spacing: 10) {
+                Text("OVERVIEW")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(.secondary)
+                    .tracking(0.8)
+
+                Text(styled)
+                    .font(.body)
+                    .foregroundStyle(Color(.label))
+                    .multilineTextAlignment(.leading)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .lineSpacing(6)
+                    .lineLimit(expanded || !isLong ? nil : 7)
+
+                if isLong {
+                    Button(expanded ? "Read less" : "Read more") {
+                        withAnimation(.easeInOut(duration: 0.2)) { expanded.toggle() }
+                    }
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(Color(hexString: "4D3388"))
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+        }
+    }
+
+    // Bold the first sentence as a lead-in; the rest renders in regular weight.
+    private var styled: AttributedString {
+        let text = joined
+        guard text.count > 40,
+              let punct = text.firstIndex(where: { $0 == "." || $0 == "!" || $0 == "?" }) else {
+            return AttributedString(text)
+        }
+        let end = text.index(after: punct)
+        let lead = String(text[..<end])
+        guard lead.count <= 200 else { return AttributedString(text) }
+        var leadAttr = AttributedString(lead)
+        leadAttr.font = .body.weight(.semibold)
+        return leadAttr + AttributedString(String(text[end...]))
+    }
+
+    // Strip HTML tags, decode common entities, and split into clean paragraphs.
+    // Real paragraph breaks (</p>, <br><br>, blank lines) are preserved; soft
+    // single newlines and runs of whitespace are collapsed to single spaces.
+    private static func clean(_ raw: String) -> [String] {
+        let mark = "\u{0001}"
+        var t = raw
+        for tag in ["</p>", "<br><br>", "<br/><br/>", "<br>", "<br/>", "<br />"] {
+            t = t.replacingOccurrences(of: tag, with: mark, options: .caseInsensitive)
+        }
+        t = t.replacingOccurrences(of: "<[^>]+>", with: "", options: .regularExpression)
+        let entities = ["&amp;": "&", "&quot;": "\"", "&#39;": "'", "&apos;": "'",
+                        "&nbsp;": " ", "&mdash;": "—", "&ndash;": "–", "&hellip;": "…",
+                        "&lt;": "<", "&gt;": ">"]
+        for (k, v) in entities { t = t.replacingOccurrences(of: k, with: v) }
+        t = t.replacingOccurrences(of: "\r\n", with: "\n")
+        t = t.replacingOccurrences(of: "\n\n", with: mark)
+        t = t.replacingOccurrences(of: "[ \\t\\n]+", with: " ", options: .regularExpression)
+        return t.components(separatedBy: mark)
+            .map { $0.trimmingCharacters(in: .whitespaces) }
+            .filter { !$0.isEmpty }
+    }
+}
+
+// MARK: - Structured overview (accolade badges + pull-quotes + clean synopsis)
+
+struct StructuredOverview: View {
+    let synopsis: String
+    let pullQuotes: [PullQuoteDTO]
+    let accolades: [String]
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            if !accolades.isEmpty {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 6) {
+                        ForEach(accolades, id: \.self) { badge in
+                            Text(badge)
+                                .font(.caption.weight(.semibold))
+                                .foregroundStyle(Color(hexString: "633806"))
+                                .padding(.horizontal, 10)
+                                .padding(.vertical, 5)
+                                .background(Capsule().fill(Color(hexString: "FAEEDA")))
+                        }
+                    }
+                }
+            }
+            ForEach(pullQuotes) { PullQuoteCard(quote: $0) }
+            if !synopsis.isEmpty {
+                ExpandableOverview(text: synopsis)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+}
+
+private struct PullQuoteCard: View {
+    let quote: PullQuoteDTO
+    var body: some View {
+        HStack(alignment: .top, spacing: 10) {
+            RoundedRectangle(cornerRadius: 2)
+                .fill(Color(hexString: "4D3388"))
+                .frame(width: 3)
+            VStack(alignment: .leading, spacing: 5) {
+                Text("“\(quote.text)”")
+                    .font(.callout)
+                    .italic()
+                    .foregroundStyle(Color(.label))
+                    .multilineTextAlignment(.leading)
+                    .fixedSize(horizontal: false, vertical: true)
+                if !quote.source.isEmpty {
+                    Text("— \(quote.source)")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(.secondary)
+                }
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.vertical, 2)
     }
 }

@@ -19,6 +19,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from google.cloud import firestore
 
 from models import (
+    BookOverviewRequest,
     DebugInfoResponse,
     ListBookResponse,
     ListCatalogResponse,
@@ -37,7 +38,7 @@ from models import (
     UserSettingsRequest,
     UserSettingsResponse,
 )
-from prompts import build_recommendations_prompt, build_suggestions_prompt
+from prompts import build_recommendations_prompt, build_suggestions_prompt, build_overview_structure_prompt
 from google_books import lookup_cover, lookup_metadata
 from open_library import lookup_cover as open_library_lookup_cover
 from nyt_bestsellers import lookup_bestseller
@@ -87,6 +88,9 @@ app.add_middleware(
 # Auth helper
 # ---------------------------------------------------------------------------
 MAX_EXCLUSION_LIST = 150  # cap to keep prompts bounded
+FEED_DELIVERY_LIMIT = 50  # Phase 4: deliver up to this many undelivered recs per
+                          # /v1/recommendations call, so a queue accumulated while
+                          # the user was away drains in one open (was 10).
 
 # Sampling temperatures (tunable). For You uses a moderate temperature to move
 # off the conservative, "obvious" default picks without drifting off-taste. The
@@ -99,9 +103,13 @@ SIMILAR_TEMPERATURE = 0.4
 # the cross-session genre/era counterbalance histogram. Bounded for token cost.
 RECENT_BATCH_LOOKBACK = 3
 
-# Phase C cap: max liked/disliked reactions fed into the similar-books prompt as
-# secondary taste context. Bounded so the seed book stays the primary signal.
-SIMILAR_TASTE_CAP = 25
+# Phase 6: size of the shared, taste-blind similar-books pool generated and cached
+# per book (served to all users; per-user `exclude` applied after the cache).
+SIMILAR_CACHE_POOL_SIZE = 18
+
+# Bump to invalidate ALL cached book overviews (re-structured lazily on next read)
+# — used when the structuring prompt/logic changes, e.g. the relevance guard.
+OVERVIEW_CACHE_VERSION = 4
 
 
 def _parse_json_array(raw: str) -> list[dict]:
@@ -164,6 +172,24 @@ def recommendation_col(user_id: str):
     return user_ref(user_id).collection("recommendations")
 
 
+def _is_gb_catalog_url(url: str) -> bool:
+    """True for a Google Books 'catalog-only' cover (volume id ending in AAJ),
+    which serves an 'image not available' placeholder rather than a real cover."""
+    if "books.google.com" not in url:
+        return False
+    m = re.search(r"[?&]id=([^&]+)", url)
+    return bool(m and m.group(1).endswith("AAJ"))
+
+
+def _has_valid_cover(cover_url: str | None) -> bool:
+    """Single source of truth for 'does this book have a usable cover?'.
+    Valid iff the URL is a non-empty string after trimming. Applied at rec
+    generation, suggestion generation, and list build so a cover-less book
+    (which renders as a blank placeholder on iOS) is filtered out before it ever
+    reaches the client. The iOS client keeps an identical guard as a backstop."""
+    return bool((cover_url or "").strip())
+
+
 def _enrich_book(b: dict, client: httpx.Client) -> None:
     """Add cover_url, NYT bestseller status, reading time, normalized fields
     to a book dict in-place. Used by both /v1/recommendations and
@@ -181,6 +207,12 @@ def _enrich_book(b: dict, client: httpx.Client) -> None:
     # Reading time: ~1.7 min per page on average (200wpm, ~340 words/page)
     page_count = meta.get("page_count")
     b["reading_time_minutes"] = round(page_count * 1.7) if isinstance(page_count, int) and page_count > 0 else None
+
+    # Phase 3: store the full Google Books description so the PDP can show an
+    # expandable description — captured here at build time, never fetched per-open.
+    # Claude's picks carry no description, so the Google Books value is authoritative.
+    if not b.get("description"):
+        b["description"] = meta.get("description", "") or ""
 
     # NYT bestseller status — check current lists first, then historical archive
     bs = lookup_bestseller(title, author)
@@ -303,7 +335,7 @@ def get_recommendations(user_id: UserID, domain: str = "books", force: bool = Fa
         recommendation_col(user_id)
         .where("domain", "==", domain)
         .where("delivered", "==", False)
-        .limit(10)
+        .limit(FEED_DELIVERY_LIMIT)
         .stream()
     )
     if unseen_docs:
@@ -341,21 +373,36 @@ def _generate_recommendations(user_id: str, domain: str, mark_delivered: bool = 
     # Stream the user's full recommendation history once and reuse it for both
     # the exclusion list and the Phase B recent-mix histogram below.
     all_recs = [r.to_dict() for r in recommendation_col(user_id).stream()]
-    exclude_set: set[str] = set()
+    # Phase 4: build the exclusion list ordered by RECENCY (newest first), capped
+    # at MAX_EXCLUSION_LIST. The old alphabetical cap could push a heavy reader's
+    # most recent titles past the cutoff, letting them be re-recommended and then
+    # silently dropped by the client's dedup — a concrete feed-starvation cause.
+    _epoch = datetime(1970, 1, 1, tzinfo=timezone.utc)
+    exclude_candidates: list[tuple] = []  # (created_at, "Title by Author")
+
+    def _exc_entry(title, author, created_at) -> None:
+        t, a = (title or "").strip(), (author or "").strip()
+        if not t:
+            return
+        exclude_candidates.append((created_at or _epoch, f"{t} by {a}" if a else t))
+
     for d in all_recs:
-        t, a = (d.get("title") or "").strip(), (d.get("author") or "").strip()
-        if t:
-            exclude_set.add(f"{t} by {a}" if a else t)
+        _exc_entry(d.get("title"), d.get("author"), d.get("created_at"))
     for s in seeds:
-        t, a = (s.get("title") or "").strip(), (s.get("author") or "").strip()
-        if t:
-            exclude_set.add(f"{t} by {a}" if a else t)
+        _exc_entry(s.get("title"), s.get("author"), s.get("created_at"))
     for rxn in reaction_col(user_id).stream():
         d = rxn.to_dict()
-        t, a = (d.get("title") or "").strip(), (d.get("author") or "").strip()
-        if t:
-            exclude_set.add(f"{t} by {a}" if a else t)
-    exclude_list = sorted(exclude_set)[:MAX_EXCLUSION_LIST]
+        _exc_entry(d.get("title"), d.get("author"), d.get("created_at"))
+
+    exclude_candidates.sort(key=lambda x: x[0], reverse=True)
+    _seen_exc: set[str] = set()
+    exclude_list: list[str] = []
+    for _, label in exclude_candidates:
+        if label not in _seen_exc:
+            _seen_exc.add(label)
+            exclude_list.append(label)
+        if len(exclude_list) >= MAX_EXCLUSION_LIST:
+            break
 
     # Positive / negative taste signals
     liked = [
@@ -436,11 +483,23 @@ def _generate_recommendations(user_id: str, domain: str, mark_delivered: bool = 
             b["because_of"] = seed_title_lookup.get(raw_because.strip().lower())
         else:
             b["because_of"] = None
+        # Phase 3: the reason clause is only meaningful next to a valid because_of.
+        # Drop it if the attribution didn't validate; cap length defensively.
+        raw_reason = b.get("because_of_reason")
+        if b["because_of"] and isinstance(raw_reason, str) and raw_reason.strip():
+            b["because_of_reason"] = raw_reason.strip()[:120]
+        else:
+            b["because_of_reason"] = ""
 
     # Enrich with Google Books cover + NYT bestseller + reading time
     with httpx.Client(timeout=5.0) as client:
         for b in books:
             _enrich_book(b, client=client)
+
+    # Phase 2: drop any book whose cover couldn't be resolved, so a blank
+    # placeholder never reaches the feed. Earliest line of defense — these are
+    # never persisted or served. (iOS guards again on insert as a backstop.)
+    books = [b for b in books if _has_valid_cover(b.get("cover_url"))]
 
     batch_id = str(uuid.uuid4())
     now = datetime.now(timezone.utc)
@@ -467,6 +526,16 @@ def _generate_recommendations(user_id: str, domain: str, mark_delivered: bool = 
         merge=True,
     )
     firestore_batch.commit()
+
+    # Pre-structure overviews for cron-generated batches so their PDPs open with no
+    # structuring latency. Cron-only (mark_delivered=False) — the inline path is
+    # already slow and would risk the client timeout. Best-effort.
+    if not mark_delivered:
+        try:
+            _prewarm_overviews(books)
+        except Exception as exc:
+            log.warning("overview prewarm failed: %s", exc)
+
     return results
 
 
@@ -475,56 +544,188 @@ def _generate_recommendations(user_id: str, domain: str, mark_delivered: bool = 
 # ---------------------------------------------------------------------------
 @app.post("/v1/onboarding/suggestions", response_model=list[SuggestionResponse])
 def get_suggestions(body: SuggestionsRequest, user_id: UserID):
-    # Phase C: gather the reader's taste signals (same source as For You) so the
-    # similar-books picks can lean toward their positives and away from their
-    # dislike patterns while staying anchored to the seed book. Bounded by
-    # SIMILAR_TASTE_CAP to keep the prompt small. Empty for new users → the
-    # prompt falls back to its original taste-blind behavior.
-    liked = [
-        d.to_dict()
-        for d in reaction_col(user_id)
-        .where("kind", "in", [ReactionKind.save, ReactionKind.already_read_liked])
-        .limit(SIMILAR_TASTE_CAP)
-        .stream()
-    ]
-    disliked = [
-        d.to_dict()
-        for d in reaction_col(user_id)
-        .where("kind", "in", [ReactionKind.already_read_disliked, ReactionKind.dismiss])
-        .limit(SIMILAR_TASTE_CAP)
-        .stream()
-    ]
+    # Phase 6: shared, taste-blind, per-book cache. Similar-books are computed once
+    # per seed book and served to EVERY user (keyed by book_id, not by user) — the
+    # seed book is the anchor and per-user taste is intentionally not applied. The
+    # per-user `exclude` list is applied AFTER the cache so each reader still avoids
+    # books they've already been shown. No LLM call on a cache hit.
+    book_id = book_id_hash(body.seed_book_title, body.seed_book_author)
+    cache_ref = db.collection("similar_books_cache").document(book_id)
+    snap = cache_ref.get()
 
-    prompt = build_suggestions_prompt(
-        seed_title=body.seed_book_title,
-        seed_author=body.seed_book_author,
-        domain=body.domain,
-        count=body.count,
-        exclude=body.exclude,
-        liked=liked,
-        disliked=disliked,
-    )
-    message = claude.messages.create(
-        model="claude-opus-4-5",
-        max_tokens=2048,  # bumped — blurbs need more tokens
-        temperature=SIMILAR_TEMPERATURE,
-        messages=[{"role": "user", "content": prompt}],
-    )
-    raw = message.content[0].text
-    books: list[dict] = _parse_json_array(raw)
+    if snap.exists:
+        pool = (snap.to_dict() or {}).get("books", [])
+    else:
+        prompt = build_suggestions_prompt(
+            seed_title=body.seed_book_title,
+            seed_author=body.seed_book_author,
+            domain=body.domain,
+            count=SIMILAR_CACHE_POOL_SIZE,
+            exclude=None,   # user-agnostic pool — no per-user exclude baked in
+            liked=None,
+            disliked=None,
+        )
+        message = claude.messages.create(
+            model="claude-opus-4-5",
+            max_tokens=4096,  # a full pool needs more tokens than a single small ask
+            temperature=SIMILAR_TEMPERATURE,
+            messages=[{"role": "user", "content": prompt}],
+        )
+        pool = _parse_json_array(message.content[0].text)
+        # Enrich (cover + NYT + reading time + description) then drop cover-less so a
+        # cover-less book is never cached or served (Phase 2 parity).
+        with httpx.Client(timeout=5.0) as client:
+            for b in pool:
+                _enrich_book(b, client=client)
+        pool = [b for b in pool if _has_valid_cover(b.get("cover_url"))]
+        cache_ref.set({
+            "books": pool,
+            "seed_title": body.seed_book_title,
+            "seed_author": body.seed_book_author,
+            "cached_at": datetime.now(timezone.utc),
+        })
 
-    # Server-side dedup against the supplied exclude list (lowercased title|author)
+    # Per-user dedup against the supplied exclude list (lowercased title|author).
     exclude_keys = {item.lower().strip() for item in (body.exclude or [])}
     def _key(b: dict) -> str:
         return f"{b.get('title','').lower().strip()}|{b.get('author','').lower().strip()}"
-    books = [b for b in books if _key(b) not in exclude_keys]
+    filtered = [b for b in pool if _key(b) not in exclude_keys]
 
-    # Enrich with Google Books cover + NYT bestseller + reading time
-    with httpx.Client(timeout=5.0) as client:
-        for b in books:
-            _enrich_book(b, client=client)
+    return [
+        SuggestionResponse(id=str(uuid.uuid4()), **{k: v for k, v in b.items() if k != "id"})
+        for b in filtered[: body.count]
+    ]
 
-    return [SuggestionResponse(id=str(uuid.uuid4()), **b) for b in books]
+
+# ---------------------------------------------------------------------------
+# GET /v1/book-overview  (lazy full Google Books description for list PDPs)
+# ---------------------------------------------------------------------------
+def _structure_overview(raw: str, title: str = "", author: str = "") -> dict:
+    """Split a messy publisher description into {synopsis, pull_quotes, accolades}
+    via one Claude call. Passes title/author so the model can return EMPTY when the
+    description is clearly about a different book (guards against bad GB editions).
+    Best-effort: on failure, fall back to raw text. Cached at most once per book."""
+    raw = (raw or "").strip()
+    if not raw:
+        return {"synopsis": "", "pull_quotes": [], "accolades": []}
+    try:
+        message = claude.messages.create(
+            model="claude-opus-4-5",
+            max_tokens=1500,
+            temperature=0.2,
+            messages=[{"role": "user", "content": build_overview_structure_prompt(raw, title, author)}],
+        )
+        text = message.content[0].text.strip()
+        if text.startswith("```"):
+            nl = text.find("\n")
+            if nl != -1:
+                text = text[nl + 1:]
+            if text.rstrip().endswith("```"):
+                text = text.rstrip()[:-3]
+        start, end = text.find("{"), text.rfind("}")
+        if start == -1 or end <= start:
+            raise ValueError("no JSON object in overview response")
+        data = json.loads(text[start:end + 1])
+        # Trust the model's structure. An EMPTY synopsis here is INTENTIONAL — the
+        # relevance guard returns all-empty when the text is clearly about a different
+        # book — so never substitute the raw (wrong) text back in. Only a genuine
+        # API/parse failure (the except: below) falls back to raw.
+        synopsis = (data.get("synopsis") or "").strip()
+        quotes = []
+        for q in (data.get("pull_quotes") or [])[:3]:
+            if isinstance(q, dict):
+                t = (q.get("text") or "").strip().strip('"').strip("“”").strip()
+                s = (q.get("source") or "").strip()
+                if t:
+                    quotes.append({"text": t[:400], "source": s[:80]})
+        accolades = [str(a).strip()[:60] for a in (data.get("accolades") or [])[:4] if str(a).strip()]
+        return {"synopsis": synopsis, "pull_quotes": quotes, "accolades": accolades}
+    except Exception as exc:
+        log.warning("overview structuring failed: %s", exc)
+        # Mark the failure so the caller doesn't cache it (self-heals once Claude
+        # recovers) and can avoid showing unverified text. The relevance guard runs
+        # inside this call, so on failure the text is NOT guard-checked.
+        return {"synopsis": raw, "pull_quotes": [], "accolades": [], "_failed": True}
+
+
+def _has_overview_content(d: dict) -> bool:
+    return bool(d.get("synopsis") or d.get("pull_quotes") or d.get("accolades"))
+
+
+@app.post("/v1/book-overview")
+def get_book_overview(body: BookOverviewRequest, user_id: UserID):
+    """Return a STRUCTURED overview {synopsis, pull_quotes:[{text,source}],
+    accolades:[]}, cached shared per book_id. If the caller passes `description`
+    (For You recs already store it), structure THAT and skip Google Books — so it
+    works even when the GB quota is exhausted. Empty results are NOT cached, so a
+    book self-heals once a description becomes available (e.g. GB quota resets)."""
+    book_id = book_id_hash(body.title, body.author)
+    ref = db.collection("book_overview_cache").document(book_id)
+    snap = ref.get()
+    if snap.exists:
+        d = snap.to_dict() or {}
+        # Only a current-version, non-empty structured cache counts; older/empty
+        # entries fall through and re-structure (so stale-wrong overviews heal).
+        if d.get("v") == OVERVIEW_CACHE_VERSION and _has_overview_content(d):
+            return {"synopsis": d.get("synopsis", ""),
+                    "pull_quotes": d.get("pull_quotes", []),
+                    "accolades": d.get("accolades", [])}
+
+    raw = (body.description or "").strip()
+    gb_sourced = False
+    # Prefer Google Books (richer: quotes/accolades) when the caller passed no
+    # description, or when the description is only a fallback (e.g. a short curated
+    # list blurb from Discover). A provided non-fallback description is
+    # authoritative (For You recs carry the full description) — skip GB.
+    if body.description_is_fallback or not raw:
+        with httpx.Client(timeout=5.0) as client:
+            gb = (lookup_metadata(body.title, body.author, client=client).get("description") or "").strip()
+        if gb:
+            raw = gb
+            gb_sourced = True
+
+    structured = _structure_overview(raw, body.title, body.author)
+    if structured.pop("_failed", False):
+        # Claude was unavailable (e.g. out of credits / rate-limited). Do NOT cache,
+        # so the book self-heals once Claude recovers. And never show unverified
+        # Google Books text on failure — the relevance guard didn't run, so it may be
+        # a wrong-book match; blank it. An authoritative/curated caller description is
+        # at least the right book, so return that raw rather than nothing.
+        return {"synopsis": "", "pull_quotes": [], "accolades": []} if gb_sourced else structured
+
+    # Cache GB-sourced overviews and authoritative caller descriptions. Never cache a
+    # fallback used only because GB was empty/over quota — leaving it uncached lets
+    # the book upgrade to the richer GB overview once quota returns, instead of
+    # freezing in the short curated text.
+    cacheable = _has_overview_content(structured) and (gb_sourced or not body.description_is_fallback)
+    if cacheable:
+        ref.set({**structured, "v": OVERVIEW_CACHE_VERSION, "title": body.title,
+                 "author": body.author, "cached_at": datetime.now(timezone.utc)})
+    return structured
+
+
+def _prewarm_overviews(books: list[dict]) -> None:
+    """Pre-structure + cache overviews for a freshly-generated (cron) batch so
+    their PDPs open with no structuring latency. Skips already-cached + empty
+    descriptions; never caches empty results. Concurrent; best-effort. Cron-only
+    (the inline generation path is already slow enough to risk the client timeout)."""
+    targets = [b for b in books if (b.get("description") or "").strip()]
+    if not targets:
+        return
+
+    def _one(b: dict) -> None:
+        book_id = book_id_hash(b["title"], b["author"])
+        ref = db.collection("book_overview_cache").document(book_id)
+        d = ref.get().to_dict() or {}
+        if d.get("v") == OVERVIEW_CACHE_VERSION and _has_overview_content(d):
+            return
+        structured = _structure_overview(b["description"], b["title"], b["author"])
+        if _has_overview_content(structured):
+            ref.set({**structured, "v": OVERVIEW_CACHE_VERSION, "title": b["title"],
+                     "author": b["author"], "cached_at": datetime.now(timezone.utc)})
+
+    with ThreadPoolExecutor(max_workers=4) as pool:
+        list(pool.map(_one, targets))
 
 
 # ---------------------------------------------------------------------------
@@ -647,8 +848,11 @@ def _resolve_list_covers(books: list[dict]) -> dict[str, str]:
     for snap in snapshots:
         if snap.exists:
             d = snap.to_dict() or {}
-            if d.get("cover_url"):
-                cached[snap.id] = d["cover_url"]
+            url = d.get("cover_url", "")
+            # Ignore cached Google Books catalog-only placeholders ("image not
+            # available") so they re-resolve (and the book is dropped if no real cover).
+            if url and not _is_gb_catalog_url(url):
+                cached[snap.id] = url
 
     misses = [b for b in books if b["book_id"] not in cached]
     resolved: dict[str, str] = dict(cached)
@@ -759,13 +963,19 @@ def get_list_detail(slug: str, user_id: UserID, domain: str = "books"):
 
     decorated = []
     for b in books:
+        cover_url = covers.get(b["book_id"], "")
+        # Phase 2: omit books whose cover didn't resolve so a list never shows a
+        # blank placeholder tile. (Community-list books are already cover-filtered
+        # at compute time; this is the guard for the curated-list path.)
+        if not _has_valid_cover(cover_url):
+            continue
         key = (b["title"].lower().strip(), b["author"].lower().strip())
         decorated.append(ListBookResponse(
             book_id=b["book_id"],
             title=b["title"],
             author=b["author"],
             year=b.get("year"),
-            cover_url=covers.get(b["book_id"], ""),
+            cover_url=cover_url,
             user_status=user_status.get(key),
             description=b.get("description", ""),
         ))
@@ -968,7 +1178,7 @@ def _compute_loved_by_readers(dry_run: bool = False) -> dict:
         if len(books) >= COMMUNITY_LIST_SIZE:
             break
         cover = covers.get(c["book_id"], "")
-        if not cover or c["book_id"] in seen:
+        if not _has_valid_cover(cover) or c["book_id"] in seen:
             continue
         seen.add(c["book_id"])
         books.append({**c, "cover_url": cover})

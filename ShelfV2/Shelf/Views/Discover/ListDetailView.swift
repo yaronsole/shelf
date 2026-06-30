@@ -27,7 +27,9 @@ struct ListDetailView: View {
                     VStack(alignment: .leading, spacing: 16) {
                         header(detail.metadata)
                         LazyVGrid(columns: columns, spacing: 16) {
-                            ForEach(detail.books) { book in
+                            // Phase 2 backstop: backend already filters cover-less books
+                            // from lists; guard here too so none can slip through.
+                            ForEach(detail.books.filter { BookCoverView.hasValidCover($0.coverURL) }) { book in
                                 ListBookTile(
                                     book: book,
                                     status: vm.status(for: book.bookId),
@@ -78,7 +80,7 @@ struct ListDetailView: View {
             }
         }
         .sheet(item: $selectedBook) { book in
-            ListBookDetailSheet(
+            BookDetailSheet(
                 book: book,
                 listTitle: vm.detail?.metadata.title ?? "",
                 onReadLoved: {
@@ -193,12 +195,16 @@ private struct StatusBadge: View {
 
 // MARK: - Book detail sheet
 
-/// Presented when a cover is tapped. Mirrors the For You / Similar Books PDP
-/// (BookDetailView): cover + metadata + description, three equal-weight pill
-/// CTAs pinned to the bottom, and an inline "did you like it?" sentiment overlay.
-/// The only difference from that PDP is the first CTA: instead of "pass" we
-/// surface "amazon" (Buy on Amazon), since a curated-list book can't be passed.
-private struct ListBookDetailSheet: View {
+/// Shared book PDP. Originally the Discover list detail sheet; also reused by
+/// `BookSearchView` so a tapped search result opens the same page. Self-contained:
+/// takes a book + four action closures and loads the structured overview by
+/// title/author (with no list context, year/description are simply absent).
+///
+/// Mirrors the For You / Similar Books PDP (BookDetailView): cover + metadata +
+/// description, three equal-weight pill CTAs pinned to the bottom, and an inline
+/// "did you like it?" sentiment overlay. The only difference from that PDP is the
+/// first CTA: instead of "pass" we surface "amazon" (Buy on Amazon).
+struct BookDetailSheet: View {
     let book: ListBookDTO
     let listTitle: String
     let onReadLoved: () -> Void
@@ -208,12 +214,16 @@ private struct ListBookDetailSheet: View {
 
     @Environment(\.dismiss) private var dismiss
     @State private var inSentimentMode = false
+    @State private var overview: BookOverviewDTO? = nil   // structured overview (fetched on open)
+    @State private var overviewLoaded = false
 
     private var contextLine: String {
-        if let year = book.year {
-            return listTitle.isEmpty ? "\(year)" : "\(listTitle) · \(year)"
-        }
-        return listTitle
+        guard let year = book.year else { return listTitle }
+        let y = "\(year)"
+        if listTitle.isEmpty { return y }
+        // Avoid "NYT Notable Books 2024 · 2024" when the list title already has the year.
+        if listTitle.contains(y) { return listTitle }
+        return "\(listTitle) · \(y)"
     }
 
     var body: some View {
@@ -238,15 +248,8 @@ private struct ListBookDetailSheet: View {
                     }
                     .padding(.horizontal, 16)
 
-                    if !book.description.isEmpty {
-                        Text(book.description)
-                            .font(.subheadline)
-                            .foregroundStyle(Color(.label))
-                            .multilineTextAlignment(.leading)
-                            .fixedSize(horizontal: false, vertical: true)
-                            .lineSpacing(3)
-                            .padding(.horizontal, 16)
-                    }
+                    overviewSection
+                        .padding(.horizontal, 16)
                 }
                 .padding(.bottom, 120)
             }
@@ -279,7 +282,44 @@ private struct ListBookDetailSheet: View {
                 }
             }
             .animation(.easeInOut(duration: 0.22), value: inSentimentMode)
+            .task { await loadOverview() }
         }
+    }
+
+    @ViewBuilder private var overviewSection: some View {
+        if let overview, !overview.isEmpty {
+            StructuredOverview(synopsis: overview.synopsis,
+                               pullQuotes: overview.pullQuotes,
+                               accolades: overview.accolades)
+        } else if !book.description.isEmpty {
+            // Show the curated list description immediately as the overview. When
+            // loadOverview() returns, this upgrades to the Google Books-enriched
+            // version (quotes/accolades); if GB is unavailable it falls back to this
+            // same text, so the overview is never blank.
+            StructuredOverview(synopsis: book.description, pullQuotes: [], accolades: [])
+        } else if !overviewLoaded {
+            HStack(spacing: 8) {
+                Text("OVERVIEW")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(.tertiary)
+                    .tracking(0.8)
+                ProgressView().controlSize(.small)
+                Spacer(minLength: 0)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+        }
+    }
+
+    @MainActor
+    private func loadOverview() async {
+        // Pass the curated list description as a FALLBACK: the server enriches via
+        // Google Books when it can, but uses this text when GB is empty/over quota,
+        // so Discover overviews are never blank.
+        let o = try? await APIClient.shared.fetchBookOverview(
+            title: book.title, author: book.author,
+            description: book.description, descriptionIsFallback: true)
+        if let o, !o.isEmpty { overview = o }
+        overviewLoaded = true
     }
 
     private var primaryCtaBar: some View {

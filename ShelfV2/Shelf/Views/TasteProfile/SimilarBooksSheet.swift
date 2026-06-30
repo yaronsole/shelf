@@ -331,7 +331,7 @@ struct SimilarBooksSheet: View {
         let request = BookSearchResult(id: seed.id, title: seed.title, author: seed.author, coverURL: seed.coverURL)
         let results = (try? await APIClient.shared.fetchSuggestions(for: request, count: count, exclude: exclude)) ?? []
         // Cover-image regression guard: never surface cover-less books (parity with the cache write).
-        return results.filter { !$0.coverURL.isEmpty }
+        return results.filter { BookCoverView.hasValidCover($0.coverURL) }
     }
 
     // MARK: - History persistence

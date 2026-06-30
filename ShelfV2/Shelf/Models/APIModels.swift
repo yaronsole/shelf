@@ -23,6 +23,9 @@ struct RecommendationDTO: Decodable, Identifiable {
     let nytWeeksOnList: Int?
     let readingTimeMinutes: Int?
     let becauseOf: String  // Phase 2 attribution; empty when none
+    // Phase 3 PDP enrichment
+    let becauseOfReason: String
+    let bookDescription: String
 
     enum CodingKeys: String, CodingKey {
         case id, title, author, blurb, genre, era, domain, awards, acclaim
@@ -34,6 +37,8 @@ struct RecommendationDTO: Decodable, Identifiable {
         case nytWeeksOnList = "nyt_weeks_on_list"
         case readingTimeMinutes = "reading_time_minutes"
         case becauseOf = "because_of"
+        case becauseOfReason = "because_of_reason"
+        case bookDescription = "description"
     }
 
     init(from decoder: Decoder) throws {
@@ -56,6 +61,8 @@ struct RecommendationDTO: Decodable, Identifiable {
         nytWeeksOnList = try? c.decodeIfPresent(Int.self, forKey: .nytWeeksOnList)
         readingTimeMinutes = try? c.decodeIfPresent(Int.self, forKey: .readingTimeMinutes)
         becauseOf = (try? c.decodeIfPresent(String.self, forKey: .becauseOf)) ?? ""
+        becauseOfReason = (try? c.decodeIfPresent(String.self, forKey: .becauseOfReason)) ?? ""
+        bookDescription = (try? c.decode(String.self, forKey: .bookDescription)) ?? ""
     }
 }
 
@@ -166,6 +173,8 @@ struct SuggestionDTO: Decodable, Identifiable {
     let nytBestseller: Bool
     let nytWeeksOnList: Int?
     let readingTimeMinutes: Int?
+    // Phase 3 PDP enrichment
+    let bookDescription: String
 
     enum CodingKeys: String, CodingKey {
         case id, title, author, blurb, genre, era, awards, acclaim
@@ -174,6 +183,7 @@ struct SuggestionDTO: Decodable, Identifiable {
         case nytBestseller = "nyt_bestseller"
         case nytWeeksOnList = "nyt_weeks_on_list"
         case readingTimeMinutes = "reading_time_minutes"
+        case bookDescription = "description"
     }
 
     init(from decoder: Decoder) throws {
@@ -191,6 +201,7 @@ struct SuggestionDTO: Decodable, Identifiable {
         nytBestseller = (try? c.decode(Bool.self, forKey: .nytBestseller)) ?? false
         nytWeeksOnList = try? c.decodeIfPresent(Int.self, forKey: .nytWeeksOnList)
         readingTimeMinutes = try? c.decodeIfPresent(Int.self, forKey: .readingTimeMinutes)
+        bookDescription = (try? c.decode(String.self, forKey: .bookDescription)) ?? ""
     }
 }
 
@@ -203,6 +214,49 @@ struct DebugInfoDTO: Decodable {
     enum CodingKeys: String, CodingKey {
         case lastGenerationTimestamp = "last_generation_timestamp"
         case lastBatchSize = "last_batch_size"
+    }
+}
+
+// MARK: Book Overview (structured: synopsis + pull-quotes + accolade badges)
+
+struct BookOverviewRequest: Encodable {
+    let title: String
+    let author: String
+    let description: String
+    var descriptionIsFallback: Bool = false
+
+    enum CodingKeys: String, CodingKey {
+        case title, author, description
+        case descriptionIsFallback = "description_is_fallback"
+    }
+}
+
+struct PullQuoteDTO: Decodable, Identifiable {
+    let text: String
+    let source: String
+    var id: String { text + "|" + source }
+    enum CodingKeys: String, CodingKey { case text, source }
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        text = (try? c.decode(String.self, forKey: .text)) ?? ""
+        source = (try? c.decode(String.self, forKey: .source)) ?? ""
+    }
+}
+
+struct BookOverviewDTO: Decodable {
+    let synopsis: String
+    let pullQuotes: [PullQuoteDTO]
+    let accolades: [String]
+    var isEmpty: Bool { synopsis.isEmpty && pullQuotes.isEmpty && accolades.isEmpty }
+    enum CodingKeys: String, CodingKey {
+        case synopsis, accolades
+        case pullQuotes = "pull_quotes"
+    }
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        synopsis = (try? c.decode(String.self, forKey: .synopsis)) ?? ""
+        pullQuotes = (try? c.decode([PullQuoteDTO].self, forKey: .pullQuotes)) ?? []
+        accolades = (try? c.decode([String].self, forKey: .accolades)) ?? []
     }
 }
 
@@ -281,6 +335,20 @@ struct ListBookDTO: Decodable, Identifiable {
         coverURL = (try? c.decode(String.self, forKey: .coverURL)) ?? ""
         userStatus = try? c.decodeIfPresent(ListUserStatus.self, forKey: .userStatus)
         description = (try? c.decode(String.self, forKey: .description)) ?? ""
+    }
+
+    /// Memberwise init for building a DTO outside of decoding — lets `BookSearchView`
+    /// reuse `BookDetailSheet` for a tapped search result (which has no list context,
+    /// so year/userStatus are nil and description is empty until the overview loads).
+    init(bookId: String, title: String, author: String, year: Int?,
+         coverURL: String, userStatus: ListUserStatus?, description: String) {
+        self.bookId = bookId
+        self.title = title
+        self.author = author
+        self.year = year
+        self.coverURL = coverURL
+        self.userStatus = userStatus
+        self.description = description
     }
 }
 

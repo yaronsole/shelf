@@ -20,6 +20,9 @@ final class CachedRecommendation {
     var isSeen: Bool
     var seenAt: Date?
     var isReacted: Bool
+    // Staging: recs that arrive mid-session start unsurfaced so they don't
+    // reshuffle the feed under the user; surfaced via the "new picks" banner.
+    var isSurfaced: Bool = true
     var awards: [String] = []
     var contextTag: String = ""
     var acclaim: String = ""
@@ -29,6 +32,9 @@ final class CachedRecommendation {
     // Seed book most responsible for this pick (Phase 2 attribution).
     // Empty when Claude returned no attribution or the value didn't match a seed.
     var becauseOf: String = ""
+    // Phase 3 PDP enrichment (all defaulted → no SwiftData migration needed).
+    var becauseOfReason: String = ""   // short, specific clause: why this follows from the seed
+    var bookDescription: String = ""   // full Google Books description (expandable in the PDP)
     // Frequency cap: incremented at launch when isSeen flips from true.
     // Eliminated (marked reacted) once viewCount >= 2.
     var viewCount: Int = 0
@@ -50,7 +56,10 @@ final class CachedRecommendation {
         nytBestseller: Bool = false,
         nytWeeksOnList: Int? = nil,
         readingTimeMinutes: Int? = nil,
-        becauseOf: String = ""
+        becauseOf: String = "",
+        becauseOfReason: String = "",
+        bookDescription: String = "",
+        isSurfaced: Bool = true
     ) {
         self.id = id
         self.title = title
@@ -65,6 +74,7 @@ final class CachedRecommendation {
         self.domain = domain
         self.isSeen = false
         self.isReacted = false
+        self.isSurfaced = isSurfaced
         self.awards = awards
         self.contextTag = contextTag
         self.acclaim = acclaim
@@ -72,6 +82,8 @@ final class CachedRecommendation {
         self.nytWeeksOnList = nytWeeksOnList
         self.readingTimeMinutes = readingTimeMinutes
         self.becauseOf = becauseOf
+        self.becauseOfReason = becauseOfReason
+        self.bookDescription = bookDescription
     }
 }
 
