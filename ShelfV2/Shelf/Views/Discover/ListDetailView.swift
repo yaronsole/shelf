@@ -248,18 +248,6 @@ struct BookDetailSheet: View {
                     }
                     .padding(.horizontal, 16)
 
-                    if !book.description.isEmpty {
-                        Text(book.description)
-                            .font(.subheadline)
-                            .foregroundStyle(Color(.label))
-                            .multilineTextAlignment(.leading)
-                            .lineLimit(4)
-                            .fixedSize(horizontal: false, vertical: true)
-                            .lineSpacing(3)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .padding(.horizontal, 16)
-                    }
-
                     overviewSection
                         .padding(.horizontal, 16)
                 }
@@ -303,6 +291,12 @@ struct BookDetailSheet: View {
             StructuredOverview(synopsis: overview.synopsis,
                                pullQuotes: overview.pullQuotes,
                                accolades: overview.accolades)
+        } else if !book.description.isEmpty {
+            // Show the curated list description immediately as the overview. When
+            // loadOverview() returns, this upgrades to the Google Books-enriched
+            // version (quotes/accolades); if GB is unavailable it falls back to this
+            // same text, so the overview is never blank.
+            StructuredOverview(synopsis: book.description, pullQuotes: [], accolades: [])
         } else if !overviewLoaded {
             HStack(spacing: 8) {
                 Text("OVERVIEW")
@@ -314,12 +308,16 @@ struct BookDetailSheet: View {
             }
             .frame(maxWidth: .infinity, alignment: .leading)
         }
-        // (No raw last-resort here — the curated blurb above already shows immediately.)
     }
 
     @MainActor
     private func loadOverview() async {
-        let o = try? await APIClient.shared.fetchBookOverview(title: book.title, author: book.author)
+        // Pass the curated list description as a FALLBACK: the server enriches via
+        // Google Books when it can, but uses this text when GB is empty/over quota,
+        // so Discover overviews are never blank.
+        let o = try? await APIClient.shared.fetchBookOverview(
+            title: book.title, author: book.author,
+            description: book.description, descriptionIsFallback: true)
         if let o, !o.isEmpty { overview = o }
         overviewLoaded = true
     }

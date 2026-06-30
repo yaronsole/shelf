@@ -669,12 +669,25 @@ def get_book_overview(body: BookOverviewRequest, user_id: UserID):
                     "accolades": d.get("accolades", [])}
 
     raw = (body.description or "").strip()
-    if not raw:
+    gb_sourced = False
+    # Prefer Google Books (richer: quotes/accolades) when the caller passed no
+    # description, or when the description is only a fallback (e.g. a short curated
+    # list blurb from Discover). A provided non-fallback description is
+    # authoritative (For You recs carry the full description) — skip GB.
+    if body.description_is_fallback or not raw:
         with httpx.Client(timeout=5.0) as client:
-            raw = lookup_metadata(body.title, body.author, client=client).get("description", "") or ""
+            gb = (lookup_metadata(body.title, body.author, client=client).get("description") or "").strip()
+        if gb:
+            raw = gb
+            gb_sourced = True
 
     structured = _structure_overview(raw, body.title, body.author)
-    if _has_overview_content(structured):   # never cache empties → they self-heal
+    # Cache GB-sourced overviews and authoritative caller descriptions. Never cache a
+    # fallback used only because GB was empty/over quota — leaving it uncached lets
+    # the book upgrade to the richer GB overview once quota returns, instead of
+    # freezing in the short curated text.
+    cacheable = _has_overview_content(structured) and (gb_sourced or not body.description_is_fallback)
+    if cacheable:
         ref.set({**structured, "v": OVERVIEW_CACHE_VERSION, "title": body.title,
                  "author": body.author, "cached_at": datetime.now(timezone.utc)})
     return structured

@@ -223,6 +223,12 @@ struct BookOverviewRequest: Encodable {
     let title: String
     let author: String
     let description: String
+    var descriptionIsFallback: Bool = false
+
+    enum CodingKeys: String, CodingKey {
+        case title, author, description
+        case descriptionIsFallback = "description_is_fallback"
+    }
 }
 
 struct PullQuoteDTO: Decodable, Identifiable {

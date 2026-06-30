@@ -113,9 +113,11 @@ final class APIClient {
 
     // MARK: - Book Overview (lazy full description for list / Discover PDPs)
 
-    func fetchBookOverview(title: String, author: String, description: String = "") async throws -> BookOverviewDTO {
+    func fetchBookOverview(title: String, author: String, description: String = "",
+                           descriptionIsFallback: Bool = false) async throws -> BookOverviewDTO {
         let url = APIConfig.baseURL.appendingPathComponent(APIConfig.Endpoints.bookOverview)
-        let body = BookOverviewRequest(title: title, author: author, description: description)
+        let body = BookOverviewRequest(title: title, author: author, description: description,
+                                       descriptionIsFallback: descriptionIsFallback)
         return try await postForResponse(url: url, body: body)
     }
 

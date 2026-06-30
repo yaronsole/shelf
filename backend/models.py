@@ -59,8 +59,13 @@ class BookOverviewRequest(BaseModel):
     title: str
     author: str = ""
     # Optional caller-provided description to structure (For You recs already have
-    # it). When present, the server skips the Google Books fetch entirely.
+    # it). When present AND authoritative, the server skips the Google Books fetch.
     description: str = ""
+    # When True, `description` is only a FALLBACK (e.g. a short curated list blurb):
+    # the server prefers Google Books (richer — quotes/accolades) and uses this text
+    # only if GB is empty or over quota, so the overview is never blank. When False
+    # (default), a provided description is authoritative and GB is skipped.
+    description_is_fallback: bool = False
 
 
 class SuggestionsRequest(BaseModel):
