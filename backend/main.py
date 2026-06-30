@@ -109,7 +109,7 @@ SIMILAR_CACHE_POOL_SIZE = 18
 
 # Bump to invalidate ALL cached book overviews (re-structured lazily on next read)
 # — used when the structuring prompt/logic changes, e.g. the relevance guard.
-OVERVIEW_CACHE_VERSION = 3
+OVERVIEW_CACHE_VERSION = 4
 
 
 def _parse_json_array(raw: str) -> list[dict]:
@@ -642,7 +642,10 @@ def _structure_overview(raw: str, title: str = "", author: str = "") -> dict:
         return {"synopsis": synopsis, "pull_quotes": quotes, "accolades": accolades}
     except Exception as exc:
         log.warning("overview structuring failed: %s", exc)
-        return {"synopsis": raw, "pull_quotes": [], "accolades": []}
+        # Mark the failure so the caller doesn't cache it (self-heals once Claude
+        # recovers) and can avoid showing unverified text. The relevance guard runs
+        # inside this call, so on failure the text is NOT guard-checked.
+        return {"synopsis": raw, "pull_quotes": [], "accolades": [], "_failed": True}
 
 
 def _has_overview_content(d: dict) -> bool:
@@ -682,6 +685,14 @@ def get_book_overview(body: BookOverviewRequest, user_id: UserID):
             gb_sourced = True
 
     structured = _structure_overview(raw, body.title, body.author)
+    if structured.pop("_failed", False):
+        # Claude was unavailable (e.g. out of credits / rate-limited). Do NOT cache,
+        # so the book self-heals once Claude recovers. And never show unverified
+        # Google Books text on failure — the relevance guard didn't run, so it may be
+        # a wrong-book match; blank it. An authoritative/curated caller description is
+        # at least the right book, so return that raw rather than nothing.
+        return {"synopsis": "", "pull_quotes": [], "accolades": []} if gb_sourced else structured
+
     # Cache GB-sourced overviews and authoritative caller descriptions. Never cache a
     # fallback used only because GB was empty/over quota — leaving it uncached lets
     # the book upgrade to the richer GB overview once quota returns, instead of
