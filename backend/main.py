@@ -593,19 +593,41 @@ def cron_generate_all(
     processed = 0
     skipped = 0
     failed = 0
-    for user in db.collection("users").stream():
-        user_id = user.id
-        # Skip if user already has too many unseen (PRD REC-03 / REC-04)
-        unseen_count = sum(
-            1 for _ in recommendation_col(user_id)
-            .where("delivered", "==", False)
-            .limit(60)
-            .stream()
-        )
-        if unseen_count >= 60:
-            skipped += 1
-            continue
+    # Iterate the stream manually (instead of a plain `for`) so a mid-stream
+    # Firestore failure -- observed as both DeadlineExceeded and an
+    # AttributeError from a broken retry path on some client-library
+    # versions -- can be caught. A plain `for` loop lets that exception
+    # escape from `next()` unguarded, killing the whole nightly run. On such
+    # a failure we log what got through and stop for today; users not yet
+    # reached just self-heal by getting fresh recs on the next nightly run
+    # (mirrors the fail-safe/self-heal pattern used for overview generation
+    # elsewhere in this file).
+    users_stream = db.collection("users").stream()
+    while True:
         try:
+            user = next(users_stream)
+        except StopIteration:
+            break
+        except Exception as exc:
+            log.exception(
+                "cron generate-all: users stream failed mid-iteration "
+                "(processed=%d, skipped=%d, failed=%d so far): %s",
+                processed, skipped, failed, exc,
+            )
+            break
+
+        user_id = user.id
+        try:
+            # Skip if user already has too many unseen (PRD REC-03 / REC-04)
+            unseen_count = sum(
+                1 for _ in recommendation_col(user_id)
+                .where("delivered", "==", False)
+                .limit(60)
+                .stream()
+            )
+            if unseen_count >= 60:
+                skipped += 1
+                continue
             _generate_recommendations(user_id, "books", mark_delivered=False)
             processed += 1
         except Exception as exc:
