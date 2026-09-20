@@ -52,7 +52,7 @@ gcloud run deploy "$SERVICE_NAME" \
   --cpu 1 \
   --min-instances 0 \
   --max-instances 5 \
-  --timeout 60
+  --timeout 1800
 
 # Defensive: if traffic was ever pinned to a specific revision (e.g. a past
 # rollback via --to-revisions), `gcloud run deploy` creates a new revision but

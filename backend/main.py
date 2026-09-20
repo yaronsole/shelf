@@ -4,19 +4,20 @@ Python 3.12 / FastAPI / Firestore / Claude API
 """
 from __future__ import annotations
 
-import json
 import logging
 import os
 import re
+import time
 import uuid
 from collections import defaultdict
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from typing import Annotated
 
 import anthropic
 from fastapi import Depends, FastAPI, Header, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 from google.cloud import firestore
+from pydantic import ValidationError
 
 from models import (
     BookOverviewRequest,
@@ -29,10 +30,13 @@ from models import (
     ListReactionRequest,
     ReactionKind,
     ReactionRequest,
+    RecommendationBatchOut,
     RecommendationResponse,
     SeenBooksRequest,
     SeedBookRequest,
     SeedBookResponse,
+    StructuredOverviewOut,
+    SuggestionBatchOut,
     SuggestionResponse,
     SuggestionsRequest,
     UserSettingsRequest,
@@ -58,7 +62,10 @@ log = logging.getLogger(__name__)
 # Clients (module-level singletons, initialised once at cold start)
 # ---------------------------------------------------------------------------
 db = firestore.Client()
-claude = anthropic.Anthropic(api_key=os.environ["ANTHROPIC_API_KEY"])
+# Measured Claude calls run 15-40s. The SDK default (600s timeout, 2 retries) would
+# let one stalled call hold a request for ~30 min -- longer than the cron's whole
+# time budget -- so bound it tightly.
+claude = anthropic.Anthropic(api_key=os.environ["ANTHROPIC_API_KEY"], timeout=120.0, max_retries=1)
 
 # ---------------------------------------------------------------------------
 # Community list ("loved by readers") config
@@ -92,12 +99,27 @@ FEED_DELIVERY_LIMIT = 50  # Phase 4: deliver up to this many undelivered recs pe
                           # /v1/recommendations call, so a queue accumulated while
                           # the user was away drains in one open (was 10).
 
-# Sampling temperatures (tunable). For You uses a moderate temperature to move
-# off the conservative, "obvious" default picks without drifting off-taste. The
-# similar-books path stays lower because "closely related" wants less spread.
-# Tune toward 0 to make a path more conservative without a code revert.
-REC_TEMPERATURE = 0.7
-SIMILAR_TEMPERATURE = 0.4
+# Claude model + per-site effort. Opus 5 rejects sampling parameters, so effort is
+# the quality/latency lever; low and medium are unusually strong on it. Recs (taste
+# inference) run medium. Similar-books ("closely related to this one book") and the
+# mechanical overview split run low: the 18-book pool measured 39s at medium vs 34s
+# at low, and that endpoint sits right under the iOS 60s timeout.
+CLAUDE_MODEL = "claude-opus-5"
+REC_EFFORT = "medium"
+SIMILAR_EFFORT = "low"
+OVERVIEW_EFFORT = "low"
+
+# Seed context for the recs prompt: how many of the user's newest seeds get a
+# description/year attached, and how many Google Books lookups a single
+# generation may spend filling gaps (bounds new GB quota use; the rest of the
+# gaps are filled on later runs, one-time per seed).
+SEED_CONTEXT_MAX = 40
+SEED_ENRICH_PER_RUN = 5
+
+# Nightly cron: stop STARTING new users once this much wall time is spent, well
+# inside the Cloud Run request timeout (1800s in deploy.sh). Users left over are
+# ordered first the next night.
+CRON_TIME_BUDGET_SECONDS = 1500
 
 # Phase B lookback: how many of the user's most recent DELIVERED batches feed
 # the cross-session genre/era counterbalance histogram. Bounded for token cost.
@@ -111,37 +133,41 @@ SIMILAR_CACHE_POOL_SIZE = 18
 # — used when the structuring prompt/logic changes, e.g. the relevance guard.
 OVERVIEW_CACHE_VERSION = 4
 
+_EPOCH = datetime(1970, 1, 1, tzinfo=timezone.utc)
 
-def _parse_json_array(raw: str) -> list[dict]:
-    """Parse a JSON array from an LLM response, tolerating markdown code fences
-    and incidental preamble.
 
-    Despite the prompts instructing "raw JSON only, no markdown", Claude
-    intermittently wraps the array in a ```json … ``` fence (observed ~50% of
-    the time at the current sampling temperature). A bare json.loads() then
-    raises JSONDecodeError on the leading backticks and 500s the endpoint, so
-    we strip fences and, as a last resort, extract the outermost [...] span.
-    """
-    text = raw.strip()
-
-    # Strip a surrounding markdown code fence (```json … ``` or ``` … ```).
-    if text.startswith("```"):
-        newline = text.find("\n")
-        if newline != -1:
-            text = text[newline + 1:]
-        if text.rstrip().endswith("```"):
-            text = text.rstrip()[:-3]
-        text = text.strip()
-
+def _claude_parse(prompt: str, output_format, effort: str, max_tokens: int):
+    """One structured-output Claude call. Returns the validated `output_format`
+    instance, or None when there is nothing usable: the safety classifiers
+    declined (an HTTP 200 with stop_reason "refusal" — even after the server-side
+    fallback chain), or the output failed schema validation. The SDK validates
+    inside parse(), so a max_tokens truncation or a mid-output refusal surfaces
+    as ValidationError rather than through stop_reason. API errors propagate to
+    the caller exactly as before. max_tokens caps thinking plus text together on
+    Opus 5, so callers size it well above the JSON."""
     try:
-        return json.loads(text)
-    except json.JSONDecodeError:
-        # Last resort: salvage the outermost JSON array if the model added prose.
-        start, end = text.find("["), text.rfind("]")
-        if start != -1 and end > start:
-            return json.loads(text[start:end + 1])
-        log.error("Could not parse JSON array from model output: %.200r", raw)
-        raise
+        response = claude.beta.messages.parse(
+            model=CLAUDE_MODEL,
+            max_tokens=max_tokens,
+            messages=[{"role": "user", "content": prompt}],
+            output_format=output_format,
+            output_config={"effort": effort},
+            betas=["server-side-fallback-2026-07-01"],
+            fallbacks="default",
+        )
+    except ValidationError as exc:
+        log.warning("Claude %s output failed schema validation (truncated or mid-output refusal): %s",
+                    output_format.__name__, exc)
+        return None
+    if response.stop_reason == "refusal":
+        log.warning("Claude declined %s request: %s",
+                    output_format.__name__, getattr(response, "stop_details", None))
+        return None
+    if response.parsed_output is None:
+        log.warning("Claude %s request returned no parseable output (stop_reason=%s)",
+                    output_format.__name__, response.stop_reason)
+        return None
+    return response.parsed_output
 
 
 def get_user_id(authorization: Annotated[str | None, Header()] = None) -> str:
@@ -190,6 +216,65 @@ def _has_valid_cover(cover_url: str | None) -> bool:
     return bool((cover_url or "").strip())
 
 
+_META_KEYS = ("cover_url", "page_count", "description", "year")
+# How long an unresolved/partial Google Books result is trusted before one retry.
+_META_RECHECK = timedelta(days=7)
+
+
+def _meta_is_stale_partial(d: dict, now: datetime) -> bool:
+    """A cached entry with no description (Google Books returned only a cover or
+    page count) is retried after _META_RECHECK so a description GB starts serving
+    later is not frozen out forever. Fully empty results are never cached at all."""
+    if d.get("description"):
+        return False
+    ts = d.get("cached_at")
+    return not isinstance(ts, datetime) or (now - ts) > _META_RECHECK
+
+
+def _cached_lookup_metadata(title: str, author: str, client: httpx.Client) -> dict:
+    """google_books.lookup_metadata behind the shared book_meta_cache/{book_id}
+    collection, so a popular title costs one Google Books query across all users
+    (GB quota is 1000/day). Empty results are never cached, so a title self-heals
+    once quota returns. Best-effort: a cache failure degrades to the direct lookup."""
+    ref = db.collection("book_meta_cache").document(book_id_hash(title, author))
+    try:
+        snap = ref.get()
+        if snap.exists:
+            d = snap.to_dict() or {}
+            if not _meta_is_stale_partial(d, datetime.now(timezone.utc)):
+                return {"cover_url": d.get("cover_url") or "", "page_count": d.get("page_count"),
+                        "description": d.get("description") or "", "year": d.get("year")}
+    except Exception as exc:
+        log.warning("book_meta_cache read failed for %r: %s", title, exc)
+    meta = lookup_metadata(title, author, client=client)
+    if meta.get("description") or meta.get("page_count") or meta.get("cover_url"):
+        try:
+            ref.set({**{k: meta.get(k) for k in _META_KEYS}, "title": title, "author": author,
+                     "cached_at": datetime.now(timezone.utc)})
+        except Exception as exc:
+            log.warning("book_meta_cache write failed for %r: %s", title, exc)
+    return meta
+
+
+def _enrich_books(books: list[dict], client: httpx.Client) -> None:
+    """Enrich a whole batch concurrently (Google Books + Open Library + NYT per
+    book are all network wait). One book's failure must not discard a Claude
+    batch we already paid for: it is logged, left unenriched, and the cover
+    filter drops it. httpx.Client and the Firestore client are both
+    thread-safe; the NYT refresh is locked in its module."""
+    if not books:
+        return
+
+    def _one(b: dict) -> None:
+        try:
+            _enrich_book(b, client=client)
+        except Exception as exc:
+            log.warning("enrichment failed for %r: %s", b.get("title"), exc)
+
+    with ThreadPoolExecutor(max_workers=4) as pool:
+        list(pool.map(_one, books))
+
+
 def _enrich_book(b: dict, client: httpx.Client) -> None:
     """Add cover_url, NYT bestseller status, reading time, normalized fields
     to a book dict in-place. Used by both /v1/recommendations and
@@ -199,7 +284,7 @@ def _enrich_book(b: dict, client: httpx.Client) -> None:
 
     # Prefer Open Library for covers — far better data quality than Google Books.
     # Fall back to Google Books if Open Library has nothing.
-    meta = lookup_metadata(title, author, client=client)   # still need for pageCount
+    meta = _cached_lookup_metadata(title, author, client)   # still need for pageCount
     if not b.get("cover_url"):
         ol_cover = open_library_lookup_cover(title, author, client=client)
         b["cover_url"] = ol_cover or meta.get("cover_url", "")
@@ -232,6 +317,70 @@ def _enrich_book(b: dict, client: httpx.Client) -> None:
     b["awards"] = b.get("awards") or []
     b["context_tag"] = b.get("context_tag") or ""
     b["acclaim"] = b.get("acclaim") or ""
+
+
+def _resolve_seed_context(user_id: str, seeds: list[dict], spend_lookups: bool) -> None:
+    """Attach description/year (in-place) to the newest SEED_CONTEXT_MAX seeds so
+    the recs prompt can see what each seed IS instead of inferring taste from bare
+    titles. Sources, cheapest first: fields already on the seed doc; the shared
+    book_meta_cache (one batched read); then -- only when spend_lookups, i.e. the
+    nightly cron, never the user-facing inline path -- at most SEED_ENRICH_PER_RUN
+    Google Books lookups. Resolved fields are persisted onto the seed doc. A seed
+    that could not be resolved gets a meta_checked_at marker so it is not retried
+    (and does not hog the lookup slots ahead of older seeds) for _META_RECHECK.
+    Seeds past the cap or still unresolved stay title-only. Best-effort: never
+    blocks generation."""
+    now = datetime.now(timezone.utc)
+
+    def _recently_checked(s: dict) -> bool:
+        ts = s.get("meta_checked_at")
+        return isinstance(ts, datetime) and (now - ts) < _META_RECHECK
+
+    try:
+        targets = [s for s in seeds[:SEED_CONTEXT_MAX]
+                   if not (s.get("description") or s.get("year")) and not _recently_checked(s)]
+        if not targets:
+            return
+        refs = [db.collection("book_meta_cache").document(book_id_hash(s.get("title", ""), s.get("author", "")))
+                for s in targets]
+        cached = {snap.id: (snap.to_dict() or {}) for snap in db.get_all(refs) if snap.exists}
+
+        resolved: list[dict] = []
+        checked: list[dict] = []   # looked at, nothing usable yet -> marker only
+        misses: list[dict] = []
+        for s, ref in zip(targets, refs):
+            meta = cached.get(ref.id)
+            if meta is None or _meta_is_stale_partial(meta, now):
+                misses.append(s)
+            elif meta.get("description") or meta.get("year"):
+                s["description"], s["year"] = meta.get("description") or "", meta.get("year")
+                resolved.append(s)
+            else:
+                checked.append(s)
+
+        if misses and spend_lookups:
+            with httpx.Client(timeout=5.0) as client:
+                for s in misses[:SEED_ENRICH_PER_RUN]:
+                    meta = _cached_lookup_metadata(s.get("title", ""), s.get("author", ""), client)
+                    if meta.get("description") or meta.get("year"):
+                        s["description"], s["year"] = meta.get("description") or "", meta.get("year")
+                        resolved.append(s)
+                    else:
+                        checked.append(s)
+
+        batch = db.batch()
+        for s in resolved:
+            if s.get("id"):
+                batch.set(seed_col(user_id).document(s["id"]),
+                          {"description": s["description"], "year": s["year"], "meta_checked_at": now},
+                          merge=True)
+        for s in checked:
+            if s.get("id"):
+                batch.set(seed_col(user_id).document(s["id"]), {"meta_checked_at": now}, merge=True)
+        if resolved or checked:
+            batch.commit()
+    except Exception as exc:
+        log.warning("seed context enrichment failed for user %s: %s", user_id, exc)
 
 
 # ---------------------------------------------------------------------------
@@ -359,10 +508,15 @@ def _generate_recommendations(user_id: str, domain: str, mark_delivered: bool = 
     Cron-generated batches use mark_delivered=False so they're picked up by
     the next /v1/recommendations call.
     """
-    # Gather seed books
+    # Gather seed books, newest first — the seed-context cap below favors what the
+    # reader added most recently.
     seeds = [d.to_dict() for d in seed_col(user_id).where("domain", "==", domain).stream()]
     if not seeds:
         return []
+    seeds.sort(key=lambda s: s.get("created_at") or _EPOCH, reverse=True)
+    # Google Books lookups for seed context only on the cron path: the inline
+    # request is user-facing and already runs ~35-45s against a 60s client timeout.
+    _resolve_seed_context(user_id, seeds, spend_lookups=not mark_delivered)
 
     # Build exclude list as "Title by Author" strings — Claude needs human-readable
     # context, not opaque UUIDs. Include every rec we've EVER generated for this user
@@ -377,14 +531,13 @@ def _generate_recommendations(user_id: str, domain: str, mark_delivered: bool = 
     # at MAX_EXCLUSION_LIST. The old alphabetical cap could push a heavy reader's
     # most recent titles past the cutoff, letting them be re-recommended and then
     # silently dropped by the client's dedup — a concrete feed-starvation cause.
-    _epoch = datetime(1970, 1, 1, tzinfo=timezone.utc)
     exclude_candidates: list[tuple] = []  # (created_at, "Title by Author")
 
     def _exc_entry(title, author, created_at) -> None:
         t, a = (title or "").strip(), (author or "").strip()
         if not t:
             return
-        exclude_candidates.append((created_at or _epoch, f"{t} by {a}" if a else t))
+        exclude_candidates.append((created_at or _EPOCH, f"{t} by {a}" if a else t))
 
     for d in all_recs:
         _exc_entry(d.get("title"), d.get("author"), d.get("created_at"))
@@ -463,14 +616,12 @@ def _generate_recommendations(user_id: str, domain: str, mark_delivered: bool = 
         recent_mix=recent_mix,
     )
 
-    message = claude.messages.create(
-        model="claude-opus-4-5",
-        max_tokens=4096,
-        temperature=REC_TEMPERATURE,
-        messages=[{"role": "user", "content": prompt}],
-    )
-    raw = message.content[0].text
-    books: list[dict] = _parse_json_array(raw)
+    parsed = _claude_parse(prompt, RecommendationBatchOut, REC_EFFORT, max_tokens=16000)
+    if parsed is None:
+        raise RuntimeError(f"recommendation generation declined by Claude for user {user_id}")
+    books: list[dict] = [b.model_dump() for b in parsed.books]
+    for b in books:
+        b["cover_url"] = ""   # resolved by enrichment below
 
     # Validate `because_of` against the user's actual seed titles. If Claude
     # invents or distorts a title, drop the field rather than show a confusing
@@ -493,8 +644,7 @@ def _generate_recommendations(user_id: str, domain: str, mark_delivered: bool = 
 
     # Enrich with Google Books cover + NYT bestseller + reading time
     with httpx.Client(timeout=5.0) as client:
-        for b in books:
-            _enrich_book(b, client=client)
+        _enrich_books(books, client)
 
     # Phase 2: drop any book whose cover couldn't be resolved, so a blank
     # placeholder never reaches the feed. Earliest line of defense — these are
@@ -565,18 +715,16 @@ def get_suggestions(body: SuggestionsRequest, user_id: UserID):
             liked=None,
             disliked=None,
         )
-        message = claude.messages.create(
-            model="claude-opus-4-5",
-            max_tokens=4096,  # a full pool needs more tokens than a single small ask
-            temperature=SIMILAR_TEMPERATURE,
-            messages=[{"role": "user", "content": prompt}],
-        )
-        pool = _parse_json_array(message.content[0].text)
+        parsed = _claude_parse(prompt, SuggestionBatchOut, SIMILAR_EFFORT, max_tokens=16000)
+        if parsed is None:
+            raise RuntimeError(f"similar-books generation declined by Claude for {body.seed_book_title!r}")
+        pool = [b.model_dump() for b in parsed.books]
+        for b in pool:
+            b["cover_url"] = ""   # resolved by enrichment below
         # Enrich (cover + NYT + reading time + description) then drop cover-less so a
         # cover-less book is never cached or served (Phase 2 parity).
         with httpx.Client(timeout=5.0) as client:
-            for b in pool:
-                _enrich_book(b, client=client)
+            _enrich_books(pool, client)
         pool = [b for b in pool if _has_valid_cover(b.get("cover_url"))]
         cache_ref.set({
             "books": pool,
@@ -609,35 +757,22 @@ def _structure_overview(raw: str, title: str = "", author: str = "") -> dict:
     if not raw:
         return {"synopsis": "", "pull_quotes": [], "accolades": []}
     try:
-        message = claude.messages.create(
-            model="claude-opus-4-5",
-            max_tokens=1500,
-            temperature=0.2,
-            messages=[{"role": "user", "content": build_overview_structure_prompt(raw, title, author)}],
-        )
-        text = message.content[0].text.strip()
-        if text.startswith("```"):
-            nl = text.find("\n")
-            if nl != -1:
-                text = text[nl + 1:]
-            if text.rstrip().endswith("```"):
-                text = text.rstrip()[:-3]
-        start, end = text.find("{"), text.rfind("}")
-        if start == -1 or end <= start:
-            raise ValueError("no JSON object in overview response")
-        data = json.loads(text[start:end + 1])
+        parsed = _claude_parse(build_overview_structure_prompt(raw, title, author),
+                               StructuredOverviewOut, OVERVIEW_EFFORT, max_tokens=8000)
+        if parsed is None:
+            raise RuntimeError("overview structuring declined by Claude")
+        data = parsed.model_dump()
         # Trust the model's structure. An EMPTY synopsis here is INTENTIONAL — the
         # relevance guard returns all-empty when the text is clearly about a different
         # book — so never substitute the raw (wrong) text back in. Only a genuine
-        # API/parse failure (the except: below) falls back to raw.
+        # API failure (the except: below) falls back to raw.
         synopsis = (data.get("synopsis") or "").strip()
         quotes = []
         for q in (data.get("pull_quotes") or [])[:3]:
-            if isinstance(q, dict):
-                t = (q.get("text") or "").strip().strip('"').strip("“”").strip()
-                s = (q.get("source") or "").strip()
-                if t:
-                    quotes.append({"text": t[:400], "source": s[:80]})
+            t = (q.get("text") or "").strip().strip('"').strip("“”").strip()
+            s = (q.get("source") or "").strip()
+            if t:
+                quotes.append({"text": t[:400], "source": s[:80]})
         accolades = [str(a).strip()[:60] for a in (data.get("accolades") or [])[:4] if str(a).strip()]
         return {"synopsis": synopsis, "pull_quotes": quotes, "accolades": accolades}
     except Exception as exc:
@@ -791,18 +926,19 @@ def cron_generate_all(
     if not expected or x_cloud_scheduler_auth != expected:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="invalid cron secret")
 
+    started = time.monotonic()
     processed = 0
     skipped = 0
     failed = 0
-    # Iterate the stream manually (instead of a plain `for`) so a mid-stream
-    # Firestore failure -- observed as both DeadlineExceeded and an
-    # AttributeError from a broken retry path on some client-library
-    # versions -- can be caught. A plain `for` loop lets that exception
-    # escape from `next()` unguarded, killing the whole nightly run. On such
-    # a failure we log what got through and stop for today; users not yet
-    # reached just self-heal by getting fresh recs on the next nightly run
-    # (mirrors the fail-safe/self-heal pattern used for overview generation
-    # elsewhere in this file).
+
+    # Materialize the user list up front, iterating the stream manually (instead
+    # of a plain `for`) so a mid-stream Firestore failure -- observed as both
+    # DeadlineExceeded and an AttributeError from a broken retry path on some
+    # client-library versions -- can be caught. A plain `for` loop lets that
+    # exception escape from `next()` unguarded, killing the whole nightly run.
+    # On such a failure we log and carry on with the users we did get; anyone
+    # not reached self-heals on the next nightly run.
+    users: list[tuple[str, datetime | None]] = []
     users_stream = db.collection("users").stream()
     while True:
         try:
@@ -811,13 +947,27 @@ def cron_generate_all(
             break
         except Exception as exc:
             log.exception(
-                "cron generate-all: users stream failed mid-iteration "
-                "(processed=%d, skipped=%d, failed=%d so far): %s",
-                processed, skipped, failed, exc,
+                "cron generate-all: users stream failed after %d users; "
+                "continuing with those (processed=%d, skipped=%d, failed=%d so far): %s",
+                len(users), processed, skipped, failed, exc,
             )
             break
+        last_gen = (user.to_dict() or {}).get("last_generation_timestamp")
+        users.append((user.id, last_gen if isinstance(last_gen, datetime) else None))
 
-        user_id = user.id
+    # Least-recently generated first, users never generated for at the very
+    # front — so whoever the time budget cuts off tonight is first tomorrow.
+    users.sort(key=lambda u: (u[1] is not None, u[1] or _EPOCH))
+
+    remaining = 0
+    for i, (user_id, _) in enumerate(users):
+        elapsed = time.monotonic() - started
+        if elapsed >= CRON_TIME_BUDGET_SECONDS:
+            remaining = len(users) - i
+            log.warning("cron generate-all: time budget spent after %.0fs; %d of %d users left unprocessed",
+                        elapsed, remaining, len(users))
+            break
+        user_started = time.monotonic()
         try:
             # Skip if user already has too many unseen (PRD REC-03 / REC-04)
             unseen_count = sum(
@@ -834,7 +984,14 @@ def cron_generate_all(
         except Exception as exc:
             log.exception("cron generation failed for user %s: %s", user_id, exc)
             failed += 1
-    return {"processed": processed, "skipped": skipped, "failed": failed}
+        finally:
+            log.info("cron generate-all: user %s took %.1fs", user_id, time.monotonic() - user_started)
+
+    elapsed_seconds = round(time.monotonic() - started, 1)
+    log.info("cron generate-all: processed=%d skipped=%d failed=%d remaining=%d in %.1fs",
+             processed, skipped, failed, remaining, elapsed_seconds)
+    return {"processed": processed, "skipped": skipped, "failed": failed,
+            "remaining": remaining, "elapsed_seconds": elapsed_seconds}
 
 
 # ---------------------------------------------------------------------------
@@ -1209,7 +1366,7 @@ def _compute_loved_by_readers(dry_run: bool = False) -> dict:
     # (no LLM) so the detail sheet matches the curated lists instead of being bare.
     def _meta(book: dict) -> tuple[str, dict]:
         with httpx.Client(timeout=5.0) as cl:
-            return book["book_id"], lookup_metadata(book["title"], book["author"], client=cl)
+            return book["book_id"], _cached_lookup_metadata(book["title"], book["author"], cl)
     if books:
         with ThreadPoolExecutor(max_workers=8) as pool:
             metas = dict(f.result() for f in as_completed([pool.submit(_meta, b) for b in books]))

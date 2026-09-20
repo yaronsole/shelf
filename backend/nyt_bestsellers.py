@@ -15,6 +15,7 @@ from __future__ import annotations
 import logging
 import os
 import re
+import threading
 import time
 from typing import Optional
 
@@ -28,6 +29,14 @@ _OVERVIEW_URL = "https://api.nytimes.com/svc/books/v3/lists/full-overview.json"
 _CACHE: dict[str, dict] = {}   # normalized key → {list_name, rank, weeks_on_list}
 _CACHE_TS: float = 0.0
 _TTL = 24 * 60 * 60   # refresh once a day
+# After a failed refresh, wait this long before trying again. Without it an NYT
+# outage or 429 makes every enriched book re-download the ~1MB overview (10-18
+# fetches per batch) against NYT's 500 req/day quota.
+_FAIL_TS: float = 0.0
+_FAIL_BACKOFF = 300
+# Enrichment fans out across threads; without this, every worker that sees an
+# expired cache fetches the (large) overview at once and burns NYT quota.
+_REFRESH_LOCK = threading.Lock()
 
 
 def _normalize(s: str) -> str:
@@ -49,42 +58,52 @@ def _book_key(title: str, author: str) -> str:
 def _refresh_cache() -> None:
     """Pull NYT full-overview into _CACHE. Safe to call from request path —
     only hits the network when TTL has expired and the API key is set."""
-    global _CACHE, _CACHE_TS
+    global _CACHE, _CACHE_TS, _FAIL_TS
     if not _API_KEY:
         return
     if _CACHE and (time.time() - _CACHE_TS) < _TTL:
         return
+    if (time.time() - _FAIL_TS) < _FAIL_BACKOFF:
+        return
 
-    try:
-        with httpx.Client(timeout=8.0) as client:
-            resp = client.get(_OVERVIEW_URL, params={"api-key": _API_KEY})
-        if resp.status_code != 200:
-            log.warning("NYT overview returned %s: %s", resp.status_code, resp.text[:200])
+    with _REFRESH_LOCK:
+        # Re-check under the lock: a concurrent caller may have just refreshed.
+        if _CACHE and (time.time() - _CACHE_TS) < _TTL:
             return
-        data = resp.json()
-        new_cache: dict[str, dict] = {}
-        for lst in data.get("results", {}).get("lists", []):
-            list_name = lst.get("display_name", "")
-            for book in lst.get("books", []):
-                title = book.get("title", "")
-                author = book.get("author", "")
-                if not title or not author:
-                    continue
-                key = _book_key(title, author)
-                existing = new_cache.get(key)
-                # If a book is on multiple lists, keep the one with the most weeks
-                if existing and existing.get("weeks_on_list", 0) >= book.get("weeks_on_list", 0):
-                    continue
-                new_cache[key] = {
-                    "list_name": list_name,
-                    "rank": book.get("rank"),
-                    "weeks_on_list": book.get("weeks_on_list"),
-                }
-        _CACHE = new_cache
-        _CACHE_TS = time.time()
-        log.info("NYT bestseller cache refreshed — %d entries", len(_CACHE))
-    except Exception as exc:
-        log.warning("NYT cache refresh failed: %s", exc)
+        if (time.time() - _FAIL_TS) < _FAIL_BACKOFF:
+            return
+        try:
+            with httpx.Client(timeout=8.0) as client:
+                resp = client.get(_OVERVIEW_URL, params={"api-key": _API_KEY})
+            if resp.status_code != 200:
+                log.warning("NYT overview returned %s: %s", resp.status_code, resp.text[:200])
+                _FAIL_TS = time.time()
+                return
+            data = resp.json()
+            new_cache: dict[str, dict] = {}
+            for lst in data.get("results", {}).get("lists", []):
+                list_name = lst.get("display_name", "")
+                for book in lst.get("books", []):
+                    title = book.get("title", "")
+                    author = book.get("author", "")
+                    if not title or not author:
+                        continue
+                    key = _book_key(title, author)
+                    existing = new_cache.get(key)
+                    # If a book is on multiple lists, keep the one with the most weeks
+                    if existing and existing.get("weeks_on_list", 0) >= book.get("weeks_on_list", 0):
+                        continue
+                    new_cache[key] = {
+                        "list_name": list_name,
+                        "rank": book.get("rank"),
+                        "weeks_on_list": book.get("weeks_on_list"),
+                    }
+            _CACHE = new_cache
+            _CACHE_TS = time.time()
+            log.info("NYT bestseller cache refreshed — %d entries", len(_CACHE))
+        except Exception as exc:
+            _FAIL_TS = time.time()
+            log.warning("NYT cache refresh failed: %s", exc)
 
 
 def lookup_bestseller(title: str, author: str) -> Optional[dict]:
