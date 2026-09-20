@@ -36,9 +36,21 @@ final class ListDetailViewModel {
                 for b in result.books { seeded[b.bookId] = b.userStatus }
                 self.statusOverlay = seeded
                 self.isLoading = false
+                // Pre-warm overviews for the first books so their PDPs open instantly.
+                Self.prewarmOverviews(Array(result.books.prefix(12)))
             } catch {
                 self.errorMessage = error.localizedDescription
                 self.isLoading = false
+            }
+        }
+    }
+
+    // Fire-and-forget: warm the structured-overview cache for these books so their
+    // PDPs open instantly. Sequential + background to stay gentle on the backend/GB.
+    private static func prewarmOverviews(_ books: [ListBookDTO]) {
+        Task.detached(priority: .background) {
+            for b in books {
+                _ = try? await APIClient.shared.fetchBookOverview(title: b.title, author: b.author)
             }
         }
     }

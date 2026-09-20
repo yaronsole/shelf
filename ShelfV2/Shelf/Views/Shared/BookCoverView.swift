@@ -52,6 +52,17 @@ struct BookCoverView: View {
     }
 }
 
+extension BookCoverView {
+    /// Single source of truth for "does this book have a usable cover?".
+    /// Valid iff the URL string is non-empty after trimming. Surfaces filter
+    /// cover-less books with this instead of rendering the `book.closed`
+    /// placeholder (Phase 2 regression guard). Mirrors the backend's
+    /// `_has_valid_cover`.
+    static func hasValidCover(_ url: String?) -> Bool {
+        !(url ?? "").trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
+}
+
 // MARK: - Cached cover loader
 
 /// Process-wide in-memory cache of decoded cover images, keyed by hi-res URL.

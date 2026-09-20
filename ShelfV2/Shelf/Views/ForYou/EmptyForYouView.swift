@@ -40,6 +40,9 @@ struct EmptyForYouView: View {
     // "mark as read" tap now does; the actual seed/reaction write happens only
     // after the user picks a sentiment (see confirmRead).
     @State private var pendingRead: PendingRead? = nil
+    @State private var currentLimit = OpenLibraryService.pageSize
+    @State private var canLoadMore = false
+    @State private var isLoadingMore = false
 
     private let horizontalPadding: CGFloat = 16
     private let gridSpacing: CGFloat = 12
@@ -206,6 +209,19 @@ struct EmptyForYouView: View {
                     .padding(.vertical, 6)
                     Divider()
                 }
+                if canLoadMore {
+                    Button(action: loadMore) {
+                        HStack(spacing: 8) {
+                            if isLoadingMore { ProgressView().controlSize(.small) }
+                            Text(isLoadingMore ? "Loading…" : "See more results")
+                                .font(.subheadline.weight(.semibold))
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 16)
+                    }
+                    .buttonStyle(.plain)
+                    .disabled(isLoadingMore)
+                }
             }
         }
     }
@@ -266,19 +282,48 @@ struct EmptyForYouView: View {
         guard trimmed.count >= 2 else {
             searchResults = []
             isSearching = false
+            canLoadMore = false
             return
         }
         searchTask = Task {
             // 300ms debounce: if the user keeps typing, this Task gets cancelled
             try? await Task.sleep(for: .milliseconds(300))
             if Task.isCancelled { return }
-            await MainActor.run { self.isSearching = true }
-            let results = await OpenLibraryService.shared.search(query: trimmed)
-            if Task.isCancelled { return }
             await MainActor.run {
-                self.searchResults = results
-                self.isSearching = false
+                self.isSearching = true
+                self.currentLimit = OpenLibraryService.pageSize
             }
+            await runSearch(trimmed, limit: OpenLibraryService.pageSize, checkCancel: true)
+        }
+    }
+
+    private func loadMore() {
+        guard canLoadMore, !isLoadingMore else { return }
+        let trimmed = searchQuery.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard trimmed.count >= 2 else { return }
+        let newLimit = currentLimit + OpenLibraryService.pageSize
+        isLoadingMore = true
+        Task {
+            await runSearch(trimmed, limit: newLimit, checkCancel: false)
+            await MainActor.run {
+                self.currentLimit = newLimit
+                self.isLoadingMore = false
+            }
+        }
+    }
+
+    /// Fetch up to `limit` results (Open Library, genre-aware). "See more"
+    /// refetches with a larger limit, so existing rows stay put while new append.
+    private func runSearch(_ trimmed: String, limit: Int, checkCancel: Bool) async {
+        let raw = await OpenLibraryService.shared.search(query: trimmed, limit: limit)
+        let rawCount = raw.count
+        // Phase 2: drop cover-less results so search never shows a placeholder row.
+        let filtered = raw.filter { BookCoverView.hasValidCover($0.coverURL) }
+        if checkCancel && Task.isCancelled { return }
+        await MainActor.run {
+            self.searchResults = filtered
+            self.canLoadMore = rawCount >= limit
+            self.isSearching = false
         }
     }
 
@@ -380,7 +425,8 @@ final class PopularPicksStore {
                         if let cover = await OpenLibraryService.shared.lookupCoverURL(title: entry.title, author: entry.author) {
                             return (index, PopularPickItem(title: entry.title, author: entry.author, coverURL: cover))
                         }
-                        if let result = await GoogleBooksService.shared.lookup(title: entry.title, author: entry.author) {
+                        if let result = await GoogleBooksService.shared.lookup(title: entry.title, author: entry.author),
+                           BookCoverView.hasValidCover(result.coverURL) {
                             return (index, PopularPickItem(title: result.title, author: result.author, coverURL: result.coverURL ?? ""))
                         }
                         return (index, nil)

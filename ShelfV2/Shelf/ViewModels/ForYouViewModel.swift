@@ -39,6 +39,54 @@ final class ForYouViewModel {
         }
     }
 
+    // Surface all staged ("new picks") recs into the feed and scroll to top.
+    @MainActor
+    func surfaceStaged(modelContext: ModelContext) {
+        let staged = (try? modelContext.fetch(
+            FetchDescriptor<CachedRecommendation>(predicate: #Predicate { !$0.isReacted && !$0.isSurfaced })
+        )) ?? []
+        guard !staged.isEmpty else { return }
+        for rec in staged { rec.isSurfaced = true }
+        scrollToTopTick += 1
+    }
+
+    // MARK: - First-run rich feed (Phase 5)
+
+    // Show the first batch fast, then keep generating in the background until the
+    // feed reaches targetFirstFeed — so a brand-new user lands on a full feed
+    // instead of a handful of cards that run out. Cover filtering and the 50-cap
+    // still apply (each round goes through fetchLatestBatch / enforceFeedCap).
+    private static let targetFirstFeed = 40
+    private static let maxFirstFillRounds = 4
+    private var didStartFirstFill = false
+
+    func generateFirstFeed(modelContext: ModelContext) {
+        Task { @MainActor in
+            // First batch fast (shows the building/spinner state)…
+            await fetchLatestBatch(modelContext: modelContext, isForegrounded: false, force: false)
+            // …then fill the rest in the background.
+            startFirstRunFill(modelContext: modelContext)
+        }
+    }
+
+    private func startFirstRunFill(modelContext: ModelContext) {
+        guard !didStartFirstFill else { return }
+        didStartFirstFill = true
+        Task { @MainActor in
+            var rounds = 0
+            while rounds < Self.maxFirstFillRounds {
+                let count = (try? modelContext.fetch(
+                    FetchDescriptor<CachedRecommendation>(predicate: #Predicate { !$0.isReacted })
+                ))?.count ?? 0
+                if count >= Self.targetFirstFeed { break }
+                rounds += 1
+                // force:true generates a fresh distinct batch (recency exclusion);
+                // isForegrounded:false keeps it silent (no spinner, no banner).
+                await fetchLatestBatch(modelContext: modelContext, isForegrounded: false, force: true)
+            }
+        }
+    }
+
     private func fetchLatestBatch(modelContext: ModelContext, isForegrounded: Bool, force: Bool) async {
         // User-initiated force fetches (Generate more) bypass the in-flight guard —
         // otherwise an auto-refresh started by onAppear can block the explicit tap.
@@ -56,6 +104,10 @@ final class ForYouViewModel {
                 let existing = (try? modelContext.fetch(FetchDescriptor<CachedRecommendation>())) ?? []
                 let byId = Dictionary(uniqueKeysWithValues: existing.map { ($0.id, $0) })
                 let existingKeys = Set(existing.map { Self.bookKey(title: $0.title, author: $0.author) })
+                // Staging: surface new recs immediately only when the feed is
+                // currently empty (nothing to disorient); otherwise stage them
+                // behind the "new picks" banner so the feed doesn't reshuffle.
+                let surfaceNew = !existing.contains { !$0.isReacted && $0.isSurfaced }
 
                 var insertedCount = 0
                 var seenKeysThisBatch = Set<String>()
@@ -84,10 +136,16 @@ final class ForYouViewModel {
                         if rec.readingTimeMinutes == nil {
                             rec.readingTimeMinutes = dto.readingTimeMinutes
                         }
+                        if rec.becauseOfReason.isEmpty && !dto.becauseOfReason.isEmpty {
+                            rec.becauseOfReason = dto.becauseOfReason
+                        }
+                        if rec.bookDescription.isEmpty && !dto.bookDescription.isEmpty {
+                            rec.bookDescription = dto.bookDescription
+                        }
                         continue
                     }
                     // Filter books without resolvable cover for *new* inserts (RG-04)
-                    guard !dto.coverURL.isEmpty else { continue }
+                    guard BookCoverView.hasValidCover(dto.coverURL) else { continue }
                     // Cross-batch dedup: skip books already in cache OR earlier
                     // in this same response with the same title|author
                     let key = Self.bookKey(title: dto.title, author: dto.author)
@@ -110,11 +168,15 @@ final class ForYouViewModel {
                         nytBestseller: dto.nytBestseller,
                         nytWeeksOnList: dto.nytWeeksOnList,
                         readingTimeMinutes: dto.readingTimeMinutes,
-                        becauseOf: dto.becauseOf
+                        becauseOf: dto.becauseOf,
+                        becauseOfReason: dto.becauseOfReason,
+                        bookDescription: dto.bookDescription,
+                        isSurfaced: surfaceNew
                     )
                     modelContext.insert(rec)
                     insertedCount += 1
                 }
+                Self.enforceFeedCap(modelContext)
                 self.isLoading = false
                 if isForegrounded && insertedCount > 0 {
                     self.showNewBatchBanner = true
@@ -269,5 +331,23 @@ final class ForYouViewModel {
     // Canonical dedup key — same logic the backend uses for exclude lists.
     static func bookKey(title: String, author: String) -> String {
         "\(title.lowercased().trimmingCharacters(in: .whitespaces))|\(author.lowercased().trimmingCharacters(in: .whitespaces))"
+    }
+
+    // Phase 4: keep only the freshest `feedCap` unreacted recs; evict the oldest
+    // beyond that. Bounds both the visible feed and the local store (previously
+    // unbounded). The server retains full history for de-dup.
+    static let feedCap = 50
+    @MainActor
+    static func enforceFeedCap(_ modelContext: ModelContext) {
+        let unreacted = (try? modelContext.fetch(
+            FetchDescriptor<CachedRecommendation>(
+                predicate: #Predicate { !$0.isReacted },
+                sortBy: [SortDescriptor(\CachedRecommendation.fetchedAt, order: .reverse)]
+            )
+        )) ?? []
+        guard unreacted.count > feedCap else { return }
+        for rec in unreacted[feedCap...] {
+            modelContext.delete(rec)
+        }
     }
 }

@@ -16,6 +16,8 @@ struct CachedSuggestion: Codable, Identifiable {
     let nytBestseller: Bool
     let nytWeeksOnList: Int?
     let readingTimeMinutes: Int?
+    // Phase 3 PDP enrichment (optional → older cached blobs decode fine as nil)
+    let bookDescription: String?
 }
 
 extension CachedSuggestion {
@@ -32,6 +34,7 @@ extension CachedSuggestion {
         nytBestseller = dto.nytBestseller
         nytWeeksOnList = dto.nytWeeksOnList
         readingTimeMinutes = dto.readingTimeMinutes
+        bookDescription = dto.bookDescription
     }
 }
 
@@ -134,7 +137,7 @@ enum SimilarBooksCacheService {
         ) else { return }
 
         // Apply cover-image filter (regression guard)
-        let filtered = results.filter { !$0.coverURL.isEmpty }
+        let filtered = results.filter { BookCoverView.hasValidCover($0.coverURL) }
         guard !filtered.isEmpty else { return }
 
         let candidates = filtered.map { CachedSuggestion(from: $0) }

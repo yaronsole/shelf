@@ -73,7 +73,7 @@ final class DailyRotationService {
 
             for dto in newDtos {
                 if byId[dto.id] != nil { continue }
-                guard !dto.coverURL.isEmpty else { continue }
+                guard BookCoverView.hasValidCover(dto.coverURL) else { continue }
                 let key = ForYouViewModel.bookKey(title: dto.title, author: dto.author)
                 guard !existingKeys.contains(key), !seenThisBatch.contains(key) else { continue }
                 seenThisBatch.insert(key)
@@ -88,19 +88,24 @@ final class DailyRotationService {
                     acclaim: dto.acclaim, nytBestseller: dto.nytBestseller,
                     nytWeeksOnList: dto.nytWeeksOnList,
                     readingTimeMinutes: dto.readingTimeMinutes,
-                    becauseOf: dto.becauseOf
+                    becauseOf: dto.becauseOf,
+                    becauseOfReason: dto.becauseOfReason,
+                    bookDescription: dto.bookDescription,
+                    isSurfaced: false
                 )
                 modelContext.insert(rec)
                 inserted += 1
                 if inserted >= Self.rotationCount { break }
             }
 
-            // Only retire old ones if we got at least some new ones
+            // Phase 4: retire only as many as we actually inserted, so rotation
+            // freshens the top of the feed without ever net-shrinking it.
             if inserted > 0 {
-                for rec in toRetire {
+                for rec in toRetire.prefix(inserted) {
                     rec.isReacted = true
                 }
             }
+            ForYouViewModel.enforceFeedCap(modelContext)
 
             UserDefaults.standard.set(todayString(), forKey: Self.lastRotationKey)
             didCompleteRotationThisSession = true

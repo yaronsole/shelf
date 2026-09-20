@@ -55,12 +55,25 @@ class SeenBooksRequest(BaseModel):
     domain: str = "books"
 
 
+class BookOverviewRequest(BaseModel):
+    title: str
+    author: str = ""
+    # Optional caller-provided description to structure (For You recs already have
+    # it). When present AND authoritative, the server skips the Google Books fetch.
+    description: str = ""
+    # When True, `description` is only a FALLBACK (e.g. a short curated list blurb):
+    # the server prefers Google Books (richer — quotes/accolades) and uses this text
+    # only if GB is empty or over quota, so the overview is never blank. When False
+    # (default), a provided description is authoritative and GB is skipped.
+    description_is_fallback: bool = False
+
+
 class SuggestionsRequest(BaseModel):
     seed_book_title: str
     seed_book_author: str
     domain: str = "books"
-    count: int = Field(default=3, ge=1, le=10)
-    # "title|author" strings already shown to the user — Claude will avoid these
+    count: int = Field(default=3, ge=1, le=25)  # le raised for the cache-pool / refresh path
+    # "title|author" strings already shown to the user — filtered out after the cache
     exclude: list[str] = Field(default_factory=list)
 
 
@@ -94,6 +107,8 @@ class RecommendationResponse(BaseModel):
     nyt_weeks_on_list: int | None = None
     reading_time_minutes: int | None = None  # derived from Google Books pageCount
     because_of: Optional[str] = None  # exact title of the seed book driving this pick, validated against seeds
+    because_of_reason: str = ""       # Phase 3: short, specific clause on why this pick follows from the seed
+    description: str = ""             # Phase 3: full Google Books description (expandable in the PDP)
 
 
 class SuggestionResponse(BaseModel):
@@ -110,6 +125,7 @@ class SuggestionResponse(BaseModel):
     nyt_bestseller: bool = False
     nyt_weeks_on_list: int | None = None
     reading_time_minutes: int | None = None
+    description: str = ""             # Phase 3: full Google Books description (expandable in the PDP)
 
 
 class DebugInfoResponse(BaseModel):

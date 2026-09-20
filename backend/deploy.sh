@@ -97,7 +97,9 @@ fi
 # ── Recompute the community "loved by readers" list ──────────────────────────
 # Aggregates alreadyReadLiked reactions (+ the seed token's taste) into
 # computed_lists/loved_by_readers, which the /v1/lists endpoints then serve.
-if [[ -n "$CRON_SECRET" ]]; then
+# Skip with SKIP_COMMUNITY_RECOMPUTE=1 (e.g. when the Google Books quota is
+# exhausted, so the recompute doesn't overwrite good descriptions with empties).
+if [[ -n "$CRON_SECRET" && "${SKIP_COMMUNITY_RECOMPUTE:-}" != "1" ]]; then
   echo ""
   echo "▶ Recomputing community list (loved_by_readers)..."
   curl -s --max-time 120 -X POST "$SERVICE_URL/v1/cron/recompute-community" \

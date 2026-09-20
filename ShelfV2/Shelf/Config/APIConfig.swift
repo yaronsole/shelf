@@ -18,5 +18,6 @@ enum APIConfig {
         static let lists = "/v1/lists"
         static let userSettings = "/v1/user/settings"
         static let userData = "/v1/user/data"
+        static let bookOverview = "/v1/book-overview"
     }
 }

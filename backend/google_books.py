@@ -79,6 +79,11 @@ def _query_books(query: str, client: httpx.Client, expected_title: str = "") -> 
         log.warning("google_books non-200: %s %s", resp.status_code, resp.text[:200])
         return {}
     items = resp.json().get("items") or []
+    # Skip Google Books catalog-only editions (volume id ending "AAJ"): they serve
+    # an "image not available" placeholder cover and frequently carry a wrong or
+    # empty description. Prefer real (preview/ebook) editions; if only catalog
+    # editions exist, treat as no result (cover falls back / book is filtered).
+    items = [it for it in items if not (it.get("id") or "").endswith("AAJ")]
     if not items:
         return {}
 
