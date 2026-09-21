@@ -47,7 +47,7 @@ def build_recommendations_prompt(
     because_of_options = ", ".join(f'"{t}"' for t in seed_titles_only) or "(no seeds)"
     liked_list = "\n".join(line for r in liked[:30] if (line := _fmt(r))) or "none"
     disliked_list = "\n".join(line for r in disliked[:30] if (line := _fmt(r))) or "none"
-    exclude_lines = "\n".join(f"- {e}" for e in exclude_ids[:150]) or "(none)"
+    exclude_lines = "\n".join(f"- {e}" for e in exclude_ids) or "(none)"
 
     # Phase B: cross-session counterbalance. Only present when the reader has a
     # delivered history; describes what they've recently been shown so the model
@@ -82,10 +82,11 @@ Use both the seed list and the reaction history to refine your picks. The reacti
 CRITICAL: Do NOT recommend any of the following books — they have already been shown to this reader or are in their taste profile. Pick entirely new titles.
 {exclude_lines}
 
-Generate exactly {count} book recommendations for domain "{domain}".
+Generate exactly {count} book recommendations for domain "{domain}". If a loved author's backlist is exhausted or excluded, widen to close-in-voice authors and adjacent picks rather than returning fewer; a shorter list is acceptable only if you genuinely cannot find {count} books that fit this reader.
 For each book include roughly 80% books that clearly match their taste, and 20% that are a gentle stretch outside their comfort zone (set is_comfort_zone_push true for those).
+Settle each pick before you write it. The title and author fields must contain only the exact published title and author — never alternatives, corrections, or commentary.
 
-AUTHOR AFFINITY (a top-priority signal): First identify the authors this reader clearly loves — those recurring across their taste profile and positive signals above. Treat (a) OTHER books by those authors that they haven't already read, and (b) authors very close in voice and style, as among your STRONGEST candidates — ahead of generic genre matching. This is priority-weighted, NOT a quota: if a loved author has more eligible work, lead with it; if their backlist is thin or already shown, let the slot fall through to close-in-voice authors and other taste matches. Never invent books an author didn't write, never pad to hit a number, and never use an excluded title.
+AUTHOR AFFINITY (a top-priority signal): First identify the authors this reader clearly loves — those recurring across their taste profile and positive signals above. Treat (a) OTHER books by those authors that they haven't already read, and (b) authors very close in voice and style, as among your STRONGEST candidates — ahead of generic genre matching. This is priority-weighted, NOT a quota: if a loved author has more eligible work, lead with it; if their backlist is thin or already shown, let the slot fall through to close-in-voice authors and other taste matches. Never invent books an author didn't write, and never use an excluded title.
 
 Aim for some natural variety across the batch — try not to make every pick the same genre or era. This is a gentle nudge, NOT a quota: do NOT force breadth that isn't reflected in this reader's taste. If their profile is genuinely narrow, honor that and stay true to it. There is no required number of genres or eras; relevance to their taste always comes first, and a coherent on-taste batch beats a scattered one. This variety nudge applies ONLY to the non-author-driven picks — the author-affinity picks are exempt, since their genre/era similarity is the whole point.
 {recent_section}

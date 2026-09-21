@@ -203,8 +203,8 @@ class UserSettingsResponse(BaseModel):
 # required — the model always emits the full object.
 # ---------------------------------------------------------------------------
 class RecommendedBookOut(BaseModel):
-    title: str
-    author: str
+    title: str = Field(description="The exact published title only — no alternatives, corrections, or commentary.")
+    author: str = Field(description="The exact published author name only.")
     blurb: str = Field(description=(
         "1-2 sentences, personal and specific, like a well-read friend recommending it."))
     genre: str
@@ -242,8 +242,8 @@ class RecommendationBatchOut(BaseModel):
 
 
 class SuggestedBookOut(BaseModel):
-    title: str
-    author: str
+    title: str = Field(description="The exact published title only — no alternatives, corrections, or commentary.")
+    author: str = Field(description="The exact published author name only.")
     blurb: str = Field(description="1-2 sentences, specific to this book's appeal vs the seed book.")
     genre: str
     era: str = Field(description='e.g. "1990s", "Contemporary", "Classic".')

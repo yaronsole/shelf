@@ -49,7 +49,8 @@ from nyt_bestsellers import lookup_bestseller
 from nyt_history import fetch_next_pages as nyt_history_fetch_next_pages, lookup_bestseller_history
 from lists import book_id_hash, get_list_metadata, load_catalog, load_list_books
 
-from concurrent.futures import ThreadPoolExecutor, as_completed
+import threading
+from concurrent.futures import Future, ThreadPoolExecutor, as_completed
 import httpx
 
 # ---------------------------------------------------------------------------
@@ -94,7 +95,12 @@ app.add_middleware(
 # ---------------------------------------------------------------------------
 # Auth helper
 # ---------------------------------------------------------------------------
-MAX_EXCLUSION_LIST = 150  # cap to keep prompts bounded
+# Exclusion list: every seed and reaction is ALWAYS excluded (the reader's own
+# history; stays small), plus this many of their most recent distinct prior
+# recommendations. The old single cap of 150 let a heavy reader's older picks age
+# out and get re-recommended -- one reader had 1,987 recs over only 612 distinct
+# titles -- and the client silently discards repeats, which starved the feed.
+MAX_EXCLUSION_RECS = 600
 FEED_DELIVERY_LIMIT = 50  # Phase 4: deliver up to this many undelivered recs per
                           # /v1/recommendations call, so a queue accumulated while
                           # the user was away drains in one open (was 10).
@@ -134,6 +140,15 @@ SIMILAR_CACHE_POOL_SIZE = 18
 OVERVIEW_CACHE_VERSION = 4
 
 _EPOCH = datetime(1970, 1, 1, tzinfo=timezone.utc)
+
+# Deliberation leaking into a structured field, e.g. "The Tin Drum? no — The Late Show".
+_LEAK_RE = re.compile(r"(?:\?|\.\.\.|…)\s*no\s*[—-]|\breplaced:", re.I)
+
+
+def _exc_key(title, author) -> tuple[str, str] | None:
+    """Normalized title|author identity used for exclusion and repeat filtering."""
+    t, a = (title or "").strip(), (author or "").strip()
+    return (t.lower(), a.lower()) if t else None
 
 
 def _claude_parse(prompt: str, output_format, effort: str, max_tokens: int):
@@ -474,7 +489,7 @@ def get_recommendations(user_id: UserID, domain: str = "books", force: bool = Fa
     # If force=true, skip the cache and generate a fresh batch immediately
     # (used by the Discover feed's "Load more" CTA).
     if force:
-        return _generate_recommendations(user_id, domain)
+        return _generate_inline(user_id, domain)
 
     # Otherwise return any undelivered cached recommendations.
     # CRITICAL: mark them delivered=True as we return, so the SAME books aren't
@@ -497,7 +512,43 @@ def get_recommendations(user_id: UserID, domain: str = "books", force: bool = Fa
         return cached
 
     # No cached undelivered → generate a fresh batch
-    return _generate_recommendations(user_id, domain)
+    return _generate_inline(user_id, domain)
+
+
+_INFLIGHT: dict[tuple[str, str], Future] = {}
+_INFLIGHT_GUARD = threading.Lock()
+
+
+def _generate_inline(user_id: str, domain: str) -> list[RecommendationResponse]:
+    """Coalesce concurrent inline generations for one user onto a single Claude
+    call. The client fires several fetches at once (each seed added during
+    onboarding, foreground refresh, first-run fill, daily rotation) — one new
+    user triggered nine ~30s generations in two minutes, each paying for its own
+    call and, because none could see the others' picks, producing batches that
+    overlapped (111 recs, 81 distinct). Callers that arrive while a generation is
+    in flight wait for it and receive the same batch; the client dedups by id, so
+    they simply add nothing new. Sequential calls still each get a fresh batch.
+    Per-process only (best-effort across Cloud Run instances)."""
+    key = (user_id, domain)
+    with _INFLIGHT_GUARD:
+        fut = _INFLIGHT.get(key)
+        owner = fut is None
+        if owner:
+            fut = Future()
+            _INFLIGHT[key] = fut
+    if not owner:
+        return fut.result()
+    try:
+        results = _generate_recommendations(user_id, domain)
+    except BaseException as exc:
+        fut.set_exception(exc)
+        raise
+    else:
+        fut.set_result(results)
+        return results
+    finally:
+        with _INFLIGHT_GUARD:
+            _INFLIGHT.pop(key, None)
 
 
 def _generate_recommendations(user_id: str, domain: str, mark_delivered: bool = True) -> list[RecommendationResponse]:
@@ -527,35 +578,30 @@ def _generate_recommendations(user_id: str, domain: str, mark_delivered: bool = 
     # Stream the user's full recommendation history once and reuse it for both
     # the exclusion list and the Phase B recent-mix histogram below.
     all_recs = [r.to_dict() for r in recommendation_col(user_id).stream()]
-    # Phase 4: build the exclusion list ordered by RECENCY (newest first), capped
-    # at MAX_EXCLUSION_LIST. The old alphabetical cap could push a heavy reader's
-    # most recent titles past the cutoff, letting them be re-recommended and then
-    # silently dropped by the client's dedup — a concrete feed-starvation cause.
-    exclude_candidates: list[tuple] = []  # (created_at, "Title by Author")
+    # Exclusion list. Seeds and reactions are the reader's own history and are
+    # ALWAYS excluded; prior recommendations are excluded newest-first, distinct
+    # by title|author, up to MAX_EXCLUSION_RECS. exclude_keys also backs the
+    # post-parse repeat filter, so a pick the model repeats anyway is never
+    # persisted or served.
+    exclude_keys: set[tuple[str, str]] = set()
+    exclude_list: list[str] = []
 
-    def _exc_entry(title, author, created_at) -> None:
-        t, a = (title or "").strip(), (author or "").strip()
-        if not t:
-            return
-        exclude_candidates.append((created_at or _EPOCH, f"{t} by {a}" if a else t))
+    def _exclude(title, author) -> None:
+        k = _exc_key(title, author)
+        if k and k not in exclude_keys:
+            t, a = (title or "").strip(), (author or "").strip()
+            exclude_keys.add(k)
+            exclude_list.append(f"{t} by {a}" if a else t)
 
-    for d in all_recs:
-        _exc_entry(d.get("title"), d.get("author"), d.get("created_at"))
+    for d in sorted(all_recs, key=lambda r: r.get("created_at") or _EPOCH, reverse=True):
+        if len(exclude_list) >= MAX_EXCLUSION_RECS:
+            break
+        _exclude(d.get("title"), d.get("author"))
     for s in seeds:
-        _exc_entry(s.get("title"), s.get("author"), s.get("created_at"))
+        _exclude(s.get("title"), s.get("author"))
     for rxn in reaction_col(user_id).stream():
         d = rxn.to_dict()
-        _exc_entry(d.get("title"), d.get("author"), d.get("created_at"))
-
-    exclude_candidates.sort(key=lambda x: x[0], reverse=True)
-    _seen_exc: set[str] = set()
-    exclude_list: list[str] = []
-    for _, label in exclude_candidates:
-        if label not in _seen_exc:
-            _seen_exc.add(label)
-            exclude_list.append(label)
-        if len(exclude_list) >= MAX_EXCLUSION_LIST:
-            break
+        _exclude(d.get("title"), d.get("author"))
 
     # Positive / negative taste signals
     liked = [
@@ -641,6 +687,25 @@ def _generate_recommendations(user_id: str, domain: str, mark_delivered: bool = 
             b["because_of_reason"] = raw_reason.strip()[:120]
         else:
             b["because_of_reason"] = ""
+
+    # Drop picks the model should not have produced: titles/authors carrying
+    # leaked deliberation ("The Tin Drum? no — The Late Show"), and repeats of
+    # anything in the exclusion list (the client discards those anyway, so they
+    # were dead weight in every batch). Logged so the rate stays visible.
+    kept: list[dict] = []
+    dropped_leak = dropped_repeat = 0
+    for b in books:
+        if _LEAK_RE.search(b.get("title") or "") or _LEAK_RE.search(b.get("author") or ""):
+            dropped_leak += 1
+            continue
+        if _exc_key(b.get("title"), b.get("author")) in exclude_keys:
+            dropped_repeat += 1
+            continue
+        kept.append(b)
+    if dropped_leak or dropped_repeat:
+        log.warning("recs for user %s: dropped %d leaked-title and %d repeated picks of %d",
+                    user_id, dropped_leak, dropped_repeat, len(books))
+    books = kept
 
     # Enrich with Google Books cover + NYT bestseller + reading time
     with httpx.Client(timeout=5.0) as client:
