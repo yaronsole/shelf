@@ -96,24 +96,33 @@ app.add_middleware(
 # Auth helper
 # ---------------------------------------------------------------------------
 # Exclusion list: every seed and reaction is ALWAYS excluded (the reader's own
-# history; stays small), plus this many of their most recent distinct prior
+# history; stays small), plus up to this many of their most recent distinct prior
 # recommendations. The old single cap of 150 let a heavy reader's older picks age
 # out and get re-recommended -- one reader had 1,987 recs over only 612 distinct
 # titles -- and the client silently discards repeats, which starved the feed.
-MAX_EXCLUSION_RECS = 600
+# Inline stays shorter so the model answers fast and fully; the repeat filter
+# after parsing catches whatever the shorter list lets through.
+MAX_EXCLUSION_RECS_INLINE = 250
+MAX_EXCLUSION_RECS_CRON = 600
 FEED_DELIVERY_LIMIT = 50  # Phase 4: deliver up to this many undelivered recs per
                           # /v1/recommendations call, so a queue accumulated while
                           # the user was away drains in one open (was 10).
 
 # Claude model + per-site effort. Opus 5 rejects sampling parameters, so effort is
-# the quality/latency lever; low and medium are unusually strong on it. Recs (taste
-# inference) run medium. Similar-books ("closely related to this one book") and the
-# mechanical overview split run low: the 18-book pool measured 39s at medium vs 34s
-# at low, and that endpoint sits right under the iOS 60s timeout.
+# the quality/latency lever; low and medium are unusually strong on it. Inline recs
+# (a phone is waiting, 60s client timeout) run medium with the shorter exclusion
+# list — measured 31s for 10 fresh books. Cron recs run high with the long list:
+# no one is waiting, and medium against a 650-line list was a coin flip between a
+# 64s thinking run and a 10s four-book dud. Similar-books ("closely related to this
+# one book") and the mechanical overview split run low (the 18-book pool measured
+# 39s at medium vs 34s at low, right under the client timeout).
 CLAUDE_MODEL = "claude-opus-5"
-REC_EFFORT = "medium"
+REC_EFFORT_INLINE = "medium"
+REC_EFFORT_CRON = "high"
 SIMILAR_EFFORT = "low"
 OVERVIEW_EFFORT = "low"
+# Cron: a batch thinner than this after filtering gets one refill draw.
+CRON_MIN_BATCH = 8
 
 # Seed context for the recs prompt: how many of the user's newest seeds get a
 # description/year attached, and how many Google Books lookups a single
@@ -551,13 +560,17 @@ def _generate_inline(user_id: str, domain: str) -> list[RecommendationResponse]:
             _INFLIGHT.pop(key, None)
 
 
-def _generate_recommendations(user_id: str, domain: str, mark_delivered: bool = True) -> list[RecommendationResponse]:
-    """Generate a fresh batch and persist to Firestore.
+def _generate_recommendations(user_id: str, domain: str, is_cron: bool = False) -> list[RecommendationResponse]:
+    """Generate a fresh batch, persist it as undelivered, and return it.
 
-    mark_delivered=True (default) is used when the user is requesting recs right
-    now — those go straight to delivered=True so we don't re-serve them.
-    Cron-generated batches use mark_delivered=False so they're picked up by
-    the next /v1/recommendations call.
+    Batches are stored delivered=False on BOTH paths: the next plain
+    /v1/recommendations call serves and marks them, and the client dedups by id,
+    so an inline batch the phone did receive is re-served once harmlessly — while
+    a batch the phone gave up on (60s client timeout) is no longer lost.
+
+    is_cron: the nightly path. No one is waiting, so it spends Google Books
+    lookups on seed context, uses the long exclusion list at higher effort,
+    refills a thin batch with a second draw, and pre-structures overviews.
     """
     # Gather seed books, newest first — the seed-context cap below favors what the
     # reader added most recently.
@@ -566,8 +579,8 @@ def _generate_recommendations(user_id: str, domain: str, mark_delivered: bool = 
         return []
     seeds.sort(key=lambda s: s.get("created_at") or _EPOCH, reverse=True)
     # Google Books lookups for seed context only on the cron path: the inline
-    # request is user-facing and already runs ~35-45s against a 60s client timeout.
-    _resolve_seed_context(user_id, seeds, spend_lookups=not mark_delivered)
+    # request is user-facing and already runs ~30-40s against a 60s client timeout.
+    _resolve_seed_context(user_id, seeds, spend_lookups=is_cron)
 
     # Build exclude list as "Title by Author" strings — Claude needs human-readable
     # context, not opaque UUIDs. Include every rec we've EVER generated for this user
@@ -580,7 +593,7 @@ def _generate_recommendations(user_id: str, domain: str, mark_delivered: bool = 
     all_recs = [r.to_dict() for r in recommendation_col(user_id).stream()]
     # Exclusion list. Seeds and reactions are the reader's own history and are
     # ALWAYS excluded; prior recommendations are excluded newest-first, distinct
-    # by title|author, up to MAX_EXCLUSION_RECS. exclude_keys also backs the
+    # by title|author, up to the per-path MAX_EXCLUSION_RECS_*. exclude_keys also backs the
     # post-parse repeat filter, so a pick the model repeats anyway is never
     # persisted or served.
     exclude_keys: set[tuple[str, str]] = set()
@@ -593,8 +606,9 @@ def _generate_recommendations(user_id: str, domain: str, mark_delivered: bool = 
             exclude_keys.add(k)
             exclude_list.append(f"{t} by {a}" if a else t)
 
+    max_recs = MAX_EXCLUSION_RECS_CRON if is_cron else MAX_EXCLUSION_RECS_INLINE
     for d in sorted(all_recs, key=lambda r: r.get("created_at") or _EPOCH, reverse=True):
-        if len(exclude_list) >= MAX_EXCLUSION_RECS:
+        if len(exclude_list) >= max_recs:
             break
         _exclude(d.get("title"), d.get("author"))
     for s in seeds:
@@ -652,60 +666,71 @@ def _generate_recommendations(user_id: str, domain: str, mark_delivered: bool = 
         if genre_hist or era_hist:
             recent_mix = {"batches": len(recent_ids), "genres": genre_hist, "eras": era_hist}
 
-    prompt = build_recommendations_prompt(
-        seeds=seeds,
-        liked=liked,
-        disliked=disliked,
-        exclude_ids=exclude_list,
-        domain=domain,
-        count=10,
-        recent_mix=recent_mix,
-    )
-
-    parsed = _claude_parse(prompt, RecommendationBatchOut, REC_EFFORT, max_tokens=16000)
-    if parsed is None:
-        raise RuntimeError(f"recommendation generation declined by Claude for user {user_id}")
-    books: list[dict] = [b.model_dump() for b in parsed.books]
-    for b in books:
-        b["cover_url"] = ""   # resolved by enrichment below
-
-    # Validate `because_of` against the user's actual seed titles. If Claude
-    # invents or distorts a title, drop the field rather than show a confusing
-    # "Because you loved <book you don't own>" line in the UI. Also defensive
-    # against Claude returning a non-string value for the field.
     seed_title_lookup = {s["title"].strip().lower(): s["title"] for s in seeds if s.get("title")}
-    for b in books:
-        raw_because = b.get("because_of")
-        if isinstance(raw_because, str) and raw_because.strip():
-            b["because_of"] = seed_title_lookup.get(raw_because.strip().lower())
-        else:
-            b["because_of"] = None
-        # Phase 3: the reason clause is only meaningful next to a valid because_of.
-        # Drop it if the attribution didn't validate; cap length defensively.
-        raw_reason = b.get("because_of_reason")
-        if b["because_of"] and isinstance(raw_reason, str) and raw_reason.strip():
-            b["because_of_reason"] = raw_reason.strip()[:120]
-        else:
-            b["because_of_reason"] = ""
+    effort = REC_EFFORT_CRON if is_cron else REC_EFFORT_INLINE
 
-    # Drop picks the model should not have produced: titles/authors carrying
-    # leaked deliberation ("The Tin Drum? no — The Late Show"), and repeats of
-    # anything in the exclusion list (the client discards those anyway, so they
-    # were dead weight in every batch). Logged so the rate stays visible.
-    kept: list[dict] = []
-    dropped_leak = dropped_repeat = 0
-    for b in books:
-        if _LEAK_RE.search(b.get("title") or "") or _LEAK_RE.search(b.get("author") or ""):
-            dropped_leak += 1
-            continue
-        if _exc_key(b.get("title"), b.get("author")) in exclude_keys:
-            dropped_repeat += 1
-            continue
-        kept.append(b)
-    if dropped_leak or dropped_repeat:
-        log.warning("recs for user %s: dropped %d leaked-title and %d repeated picks of %d",
-                    user_id, dropped_leak, dropped_repeat, len(books))
-    books = kept
+    def _draw() -> list[dict] | None:
+        """One Claude draw: prompt -> parse -> validate -> filter. None if declined.
+        Kept picks are added to the exclusion set so a refill draw cannot repeat them."""
+        prompt = build_recommendations_prompt(
+            seeds=seeds,
+            liked=liked,
+            disliked=disliked,
+            exclude_ids=exclude_list,
+            domain=domain,
+            count=10,
+            recent_mix=recent_mix,
+        )
+        parsed = _claude_parse(prompt, RecommendationBatchOut, effort, max_tokens=16000)
+        if parsed is None:
+            return None
+        drawn: list[dict] = [b.model_dump() for b in parsed.books]
+        kept: list[dict] = []
+        dropped_junk = dropped_repeat = 0
+        for b in drawn:
+            b["cover_url"] = ""   # resolved by enrichment below
+            # Validate `because_of` against the user's actual seed titles. If Claude
+            # invents or distorts a title, drop the field rather than show a confusing
+            # "Because you loved <book you don't own>" line in the UI.
+            raw_because = b.get("because_of")
+            if isinstance(raw_because, str) and raw_because.strip():
+                b["because_of"] = seed_title_lookup.get(raw_because.strip().lower())
+            else:
+                b["because_of"] = None
+            # The reason clause is only meaningful next to a valid because_of.
+            raw_reason = b.get("because_of_reason")
+            if b["because_of"] and isinstance(raw_reason, str) and raw_reason.strip():
+                b["because_of_reason"] = raw_reason.strip()[:120]
+            else:
+                b["because_of_reason"] = ""
+            # Drop picks the model should not have produced: leaked deliberation in
+            # a title ("The Tin Drum? no — The Late Show"), placeholder fields, and
+            # repeats of anything excluded (the client discards those anyway, so
+            # they were dead weight in every batch).
+            title, author = b.get("title") or "", b.get("author") or ""
+            if (_LEAK_RE.search(title) or _LEAK_RE.search(author)
+                    or "placeholder" in (title + author).lower() or len(title.strip()) < 2):
+                dropped_junk += 1
+                continue
+            if _exc_key(title, author) in exclude_keys:
+                dropped_repeat += 1
+                continue
+            _exclude(title, author)
+            kept.append(b)
+        if dropped_junk or dropped_repeat:
+            log.warning("recs for user %s: dropped %d junk and %d repeated picks of %d",
+                        user_id, dropped_junk, dropped_repeat, len(drawn))
+        return kept
+
+    books = _draw()
+    if books is None:
+        raise RuntimeError(f"recommendation generation declined by Claude for user {user_id}")
+    # A thin batch on the cron path gets one more draw against the now-extended
+    # exclusion list. Inline can't afford the second call.
+    if is_cron and len(books) < CRON_MIN_BATCH:
+        more = _draw() or []
+        books.extend(more[:10 - len(books)])
+        log.info("cron refill for user %s: +%d -> %d books", user_id, len(more), len(books))
 
     # Enrich with Google Books cover + NYT bestseller + reading time
     with httpx.Client(timeout=5.0) as client:
@@ -727,7 +752,7 @@ def _generate_recommendations(user_id: str, domain: str, mark_delivered: bool = 
             "id": doc_id,
             "batch_id": batch_id,
             "domain": domain,
-            "delivered": mark_delivered,
+            "delivered": False,
             "created_at": now,
             **book,
         }
@@ -743,9 +768,9 @@ def _generate_recommendations(user_id: str, domain: str, mark_delivered: bool = 
     firestore_batch.commit()
 
     # Pre-structure overviews for cron-generated batches so their PDPs open with no
-    # structuring latency. Cron-only (mark_delivered=False) — the inline path is
-    # already slow and would risk the client timeout. Best-effort.
-    if not mark_delivered:
+    # structuring latency. Cron-only — the inline path is already slow and would
+    # risk the client timeout. Best-effort.
+    if is_cron:
         try:
             _prewarm_overviews(books)
         except Exception as exc:
@@ -1044,7 +1069,7 @@ def cron_generate_all(
             if unseen_count >= 60:
                 skipped += 1
                 continue
-            _generate_recommendations(user_id, "books", mark_delivered=False)
+            _generate_recommendations(user_id, "books", is_cron=True)
             processed += 1
         except Exception as exc:
             log.exception("cron generation failed for user %s: %s", user_id, exc)
