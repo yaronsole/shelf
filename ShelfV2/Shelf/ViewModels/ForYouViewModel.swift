@@ -208,6 +208,67 @@ final class ForYouViewModel {
         }
     }
 
+    // MARK: - Card credentials
+
+    private var isHydratingCredentials = false
+
+    /// Gives feed cards the same review quote and accolades the detail page shows,
+    /// for books that arrived without them (delivered before the server sent the
+    /// fields, or with none in their publisher text). It reads the same structured
+    /// overview the detail page fetches on open, which the server caches per book,
+    /// so most lookups make no model call. Each book is looked up once
+    /// (credentialsChecked); a failed request is retried on a later pass.
+    @MainActor
+    func hydrateCredentials(_ recs: [CachedRecommendation]) {
+        guard !isHydratingCredentials else { return }
+        let todo = Array(recs.filter { !$0.credentialsChecked && $0.reviewQuote.isEmpty && $0.accolades.isEmpty }
+            .prefix(30))
+        guard !todo.isEmpty else { return }
+        isHydratingCredentials = true
+        let inputs = todo.map { (title: $0.title, author: $0.author, description: $0.bookDescription) }
+
+        Task { @MainActor in
+            defer { self.isHydratingCredentials = false }
+            var results: [Int: BookOverviewDTO] = [:]
+            await withTaskGroup(of: (Int, BookOverviewDTO?).self) { group in
+                var next = 0
+                func enqueue() {
+                    guard next < inputs.count else { return }
+                    let i = next
+                    next += 1
+                    let item = inputs[i]
+                    group.addTask {
+                        (i, try? await APIClient.shared.fetchBookOverview(
+                            title: item.title, author: item.author, description: item.description))
+                    }
+                }
+                for _ in 0..<min(3, inputs.count) { enqueue() }
+                while let (i, overview) = await group.next() {
+                    if let overview { results[i] = overview }
+                    enqueue()
+                }
+            }
+            for (i, rec) in todo.enumerated() {
+                guard let overview = results[i] else { continue }
+                // Pin the description and any quote/accolades already carried in a
+                // joined blurb, then fill what is still missing from the overview.
+                let parts = BookDisplay.cardParts(blurb: rec.blurb, blurbText: rec.blurbText,
+                                                  quote: rec.reviewQuote, quoteSource: rec.reviewQuoteSource,
+                                                  accolades: rec.accolades)
+                rec.blurbText = parts.text
+                if !parts.quote.isEmpty {
+                    rec.reviewQuote = parts.quote
+                    rec.reviewQuoteSource = parts.source
+                } else if let q = overview.pullQuotes.first(where: { !$0.text.isEmpty }) {
+                    rec.reviewQuote = q.text
+                    rec.reviewQuoteSource = q.source
+                }
+                rec.accolades = parts.accolades.isEmpty ? overview.accolades : parts.accolades
+                rec.credentialsChecked = true
+            }
+        }
+    }
+
     // MARK: - Seen Tracking (REC-07)
 
     func markSeen(_ id: String, modelContext: ModelContext) {

@@ -41,6 +41,9 @@ final class CachedRecommendation {
     var reviewQuote: String = ""
     var reviewQuoteSource: String = ""
     var accolades: [String] = []
+    // Set once the feed has looked up this book's structured overview for a quote
+    // and accolades it arrived without (ForYouViewModel.hydrateCredentials).
+    var credentialsChecked: Bool = false
     // Frequency cap: incremented at launch when isSeen flips from true.
     // Eliminated (marked reacted) once viewCount >= 2.
     var viewCount: Int = 0

@@ -147,6 +147,8 @@ struct ForYouView: View {
                     .padding(.bottom, 32)
                 }
                 .refreshable { await refreshAsync() }
+                // Same quote and badges as the detail page, before it's opened.
+                .task(id: feed.count) { vm.hydrateCredentials(Array(feed)) }
                 .onChange(of: vm.scrollToTopTick) { _, _ in
                     withAnimation(.easeOut(duration: 0.5)) {
                         scrollProxy.scrollTo("__top", anchor: .top)
