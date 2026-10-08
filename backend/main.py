@@ -80,9 +80,6 @@ COMMUNITY_LIST_SIZE = int(os.environ.get("COMMUNITY_LIST_SIZE", "30"))
 # Stored with headroom: each viewer's own read books are hidden at serve time
 # (the heaviest reader had read 67 of the top 120).
 COMMUNITY_STORED_SIZE = COMMUNITY_LIST_SIZE * 3
-# Device token whose "Read & loved" picks rank first among books with the same
-# number of readers. (Its Taste seeds no longer count as loves.) Unset → no preference.
-COMMUNITY_SEED_TOKEN = os.environ.get("COMMUNITY_SEED_TOKEN", "")
 
 # ---------------------------------------------------------------------------
 # App
@@ -1601,9 +1598,9 @@ def unreact_to_list_book(slug: str, book_id: str, user_id: UserID, domain: str =
 
 
 # ---------------------------------------------------------------------------
-# Community list — "loved by readers" (aggregated from reactions, seeded with
-# the configured seed user's taste). Computed on a schedule, persisted to
-# Firestore, served cheaply through the /v1/lists endpoints above.
+# Community list — "loved by readers" (aggregated from "Read & loved"
+# reactions). Computed on a schedule, persisted to Firestore, served cheaply
+# through the /v1/lists endpoints above.
 # ---------------------------------------------------------------------------
 def _clean_blurb(text: str, limit: int = 480) -> str:
     """Strip HTML / collapse whitespace from a Google Books description and
@@ -1637,15 +1634,17 @@ def _compute_loved_by_readers(dry_run: bool = False) -> dict:
     hides each viewer's own read books there are still COMMUNITY_LIST_SIZE to
     show. No LLM calls.
 
-    The seed user's Taste books no longer count as loves: that day-one bootstrap
-    (85 seeds) outranked every book a single other reader loved, so the list was
-    mostly the seed user's own shelf.
+    Books with the same number of readers are ordered by their most recent love,
+    so the list moves as readers react. (It used to count one seed user's Taste
+    books as loves and rank that user's picks first, then sort the rest
+    alphabetically. The list was mostly that user's own shelf and barely changed.)
 
     dry_run=True computes and returns the result WITHOUT persisting."""
     loved_users: dict[tuple[str, str], set[str]] = defaultdict(set)
+    latest_love: dict[tuple[str, str], datetime] = {}
     titles: dict[tuple[str, str], dict] = {}
 
-    def _register(title: str, author: str, uid: str) -> None:
+    def _register(title: str, author: str, uid: str, loved_at) -> None:
         t = (title or "").strip()
         a = (author or "").strip()
         if not t:
@@ -1653,6 +1652,8 @@ def _compute_loved_by_readers(dry_run: bool = False) -> dict:
         key = (t.lower(), a.lower())
         loved_users[key].add(uid)
         titles.setdefault(key, {"title": t, "author": a})
+        if isinstance(loved_at, datetime) and loved_at > latest_love.get(key, _EPOCH):
+            latest_love[key] = loved_at
 
     # 1) "Read & loved" reactions across contributing users
     for user in db.collection("users").stream():
@@ -1663,14 +1664,12 @@ def _compute_loved_by_readers(dry_run: bool = False) -> dict:
                     .where("kind", "==", ReactionKind.already_read_liked.value)
                     .stream()):
             d = doc.to_dict()
-            _register(d.get("title", ""), d.get("author", ""), uid)
+            _register(d.get("title", ""), d.get("author", ""), uid, d.get("created_at"))
 
-    # Rank by distinct readers desc; within a tier the seed user's loves come
-    # first (the founder's picks surface ahead of other single-reader books),
-    # then title for stable ordering.
+    # Rank by distinct readers desc; within a tier the most recently loved first,
+    # then title for a stable order.
     def _rank(k: tuple[str, str]):
-        users = loved_users[k]
-        return (-len(users), 0 if COMMUNITY_SEED_TOKEN in users else 1, k[0])
+        return (-len(loved_users[k]), -latest_love.get(k, _EPOCH).timestamp(), k[0])
     ranked = sorted(titles.keys(), key=_rank)
 
     # Resolve covers for a candidate pool (headroom for the cover guard), drop
@@ -1720,7 +1719,6 @@ def _compute_loved_by_readers(dry_run: bool = False) -> dict:
     return {
         "count": len(books),
         "distinct_books_considered": len(titles),
-        "seeded": bool(COMMUNITY_SEED_TOKEN),
         "books": [
             {"title": b["title"], "author": b["author"], "loved_count": b["loved_count"],
              "year": b.get("year"), "description": b.get("description", "")}
