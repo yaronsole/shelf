@@ -47,13 +47,35 @@ enum SimilarBooksCacheService {
     static let displayCount = 5
     static let maxParallel = 2
     static let staggerSeconds: UInt64 = 500_000_000 // 0.5s in nanoseconds
+    /// A seed whose refresh failed is retried at most this often (per app session).
+    static let retryInterval: TimeInterval = 30 * 60
+
+    // One refresh run at a time, and no immediate retry of a seed that just
+    // failed. The app becomes active often (app switcher, Control Center,
+    // notifications, Face ID), and each activation used to start another loop
+    // over every stale seed while the previous loop's requests were still in
+    // flight (up to ~40s each on a server cache miss), so the same seeds were
+    // requested many times over: one device sent 220 requests in 10 minutes on
+    // 09-24. A failed seed stayed stale and was re-requested on every activation.
+    @MainActor private static var isRefreshing = false
+    @MainActor private static var lastAttempt: [String: Date] = [:]
 
     // MARK: - Foreground refresh trigger
 
+    @MainActor
     static func refreshAllIfNeeded(seeds: [LocalSeedBook], modelContext: ModelContext) {
-        let stale = seeds.filter { isStale($0) }
+        guard !isRefreshing else { return }
+        let now = Date()
+        let stale = seeds.filter { seed in
+            guard isStale(seed) else { return false }
+            guard let attempted = lastAttempt[seed.id] else { return true }
+            return now.timeIntervalSince(attempted) >= retryInterval
+        }
         guard !stale.isEmpty else { return }
-        Task {
+        isRefreshing = true
+        for seed in stale { lastAttempt[seed.id] = now }
+        Task { @MainActor in
+            defer { isRefreshing = false }
             var batches: [[LocalSeedBook]] = []
             var i = 0
             while i < stale.count {
