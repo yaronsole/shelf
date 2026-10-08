@@ -43,7 +43,7 @@ from models import (
     UserSettingsResponse,
 )
 from prompts import build_recommendations_prompt, build_suggestions_prompt, build_overview_structure_prompt
-from book_match import is_derivative_description, norm
+from book_match import is_derivative_description
 from credentials import credentials, strip_unverified_quotes
 from google_books import lookup_cover, lookup_metadata
 from open_library import lookup_cover as open_library_lookup_cover
@@ -422,17 +422,17 @@ def _attach_credentials(b: dict, overview: dict | None = None) -> None:
     unverified praise-quote removed), review_quote + source and accolades (verbatim
     from the publisher description, credentials.py), and blurb, the three joined
     for app builds that predate the separate fields. When the regex finds nothing,
-    a structured overview of the same publisher text (cron prewarm) can supply
-    them: its quote is used only if it appears verbatim in that text."""
+    a structured overview of the same publisher text (cron prewarm) supplies them
+    exactly as the PDP shows them: its first pull quote, extracted from the
+    publisher text by the relevance-guarded structuring call."""
     source = b.get("description") or ""
     text = strip_unverified_quotes(b.get("blurb_text") or b.get("blurb") or "", source)
     quote, accs = credentials(source, b.get("title") or "", b.get("author") or "")
     if overview:
         if not quote:
-            plain = norm(re.sub(r"<[^>]+>", " ", source))
             for q in overview.get("pull_quotes") or []:
                 qt, qs = (q.get("text") or "").strip(), (q.get("source") or "").strip()
-                if qt and qs and len(qt) <= 240 and norm(qt) in plain:
+                if qt and qs:
                     quote = (qt, qs)
                     break
         if not accs:
