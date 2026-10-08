@@ -10,6 +10,24 @@ import re
 # taste profile stays bounded (SEED_CONTEXT_MAX seeds x this).
 SEED_DESCRIPTION_CHARS = 240
 
+# How blurbs should read, shared by the For You and similar-books prompts. The
+# voice follows the approved friend-voice list descriptions (986717a); the
+# avoid-list names the habits measured in Opus 5 blurbs on 10-07: 96% were a
+# two-sentence premise + verdict, 18% ended on a run of adjectives, 14% leaned on
+# "genuinely/actually/exactly/honestly". The examples are trimmed approved list
+# descriptions in three different shapes.
+BLURB_VOICE = """BLURBS: write each blurb the way a well-read friend recommends a book in a text: honest, specific, a little opinionated, never press-release copy.
+- Start from something concrete only this book has (its situation, a scene, its structure, how it was made), then say what it does well or why it's worth the time, in plain words.
+- Mix lengths: make about a third of the blurbs a single sentence and the rest two, never more. Vary the shape too: some are all situation, some lead with what the author does, some land on a plain verdict. Don't end most of them on a verdict, and don't open two blurbs the same way.
+- Leave out the habits that make recommendations read as machine-written: a closing run of adjectives ("Short, quiet, and devastating."), "genuinely", "actually", "exactly", "honestly", "reads like", "feels like", "in the best way", "impossible to put down", "better than almost anyone", calling a book another book's "cousin" or "sibling", colon lead-ins, first person, and review clichés like "sweeping", "breathtaking", "powerful", "compelling", "propulsive", "unflinching", "a tale of", "a story about".
+- Write only the finished blurb: no second thoughts, swaps, or notes about other picks.
+
+The voice, for tone only (don't reuse their structure):
+- "Two game designers meet as kids, drift apart, and spend decades building games together in a partnership too tangled to be friendship. Zevin gets how making something with another person can be more intimate than dating them."
+- "Hardin was a suburban mom stealing identities to fund an opiate habit until prison made her everyone's letter writer, and she's funny about addiction without skipping the ugly parts."
+- "A former Iranian colonel buys a foreclosed house at auction; the woman who lost it to a clerical error wants it back."
+"""
+
 
 def _seed_line(seed: dict) -> str:
     """Render a seed as '- Title by Author (year) — description…', including only
@@ -84,7 +102,7 @@ CRITICAL: Do NOT recommend any of the following books — they have already been
 
 Generate exactly {count} book recommendations for domain "{domain}". If a loved author's backlist is exhausted or excluded, widen to close-in-voice authors and adjacent picks rather than returning fewer; a shorter list is acceptable only if you genuinely cannot find {count} books that fit this reader.
 For each book include roughly 80% books that clearly match their taste, and 20% that are a gentle stretch outside their comfort zone (set is_comfort_zone_push true for those).
-Settle each pick before you write it. The title and author fields must contain only the exact published title and author — never alternatives, corrections, or commentary.
+Settle each pick before you write it. The title and author fields must contain only the exact published title and author — never alternatives, corrections, or commentary — and every other field must be finished text too.
 
 AUTHOR AFFINITY (a top-priority signal): First identify the authors this reader clearly loves — those recurring across their taste profile and positive signals above. Treat (a) OTHER books by those authors that they haven't already read, and (b) authors very close in voice and style, as among your STRONGEST candidates — ahead of generic genre matching. This is priority-weighted, NOT a quota: if a loved author has more eligible work, lead with it; if their backlist is thin or already shown, let the slot fall through to close-in-voice authors and other taste matches. Never invent books an author didn't write, and never use an excluded title.
 
@@ -95,6 +113,9 @@ Two things should shape the batch:
   2. Build the list seed-first: for each pick, start from a SPECIFIC seed book in their taste profile and choose a genuinely new book that follows from it — the seed should DRIVE the selection, not be attached as a label afterward. Set because_of to that exact seed title, and set because_of_reason to the specific thing this pick shares with that seed. For an occasional stretch pick that isn't anchored to any single seed, use because_of "" and because_of_reason "".
 
 because_of MUST be one of these exact strings, copied verbatim: {because_of_options}. Use the empty string "" only if no seed title genuinely drove this recommendation. Do NOT invent a title that isn't in that list.
+
+{BLURB_VOICE}
+The card already shows "Because you loved <seed> — <because_of_reason>" under each blurb, so don't spend the blurb repeating that link; spend it on the book.
 """
 
 
@@ -162,4 +183,5 @@ Seed book: "{seed_title}" by {seed_author} (domain: {domain})
 Suggest exactly {count} books that readers of this book often enjoy next.
 Choose books that are closely related in theme, style, or readership — not just the same genre.
 Prioritize by author first: if {seed_author} has OTHER notable books the reader likely hasn't read (and that aren't excluded above), lead with 1–2 of them, then branch out to closely related authors and books. If {seed_author} has no suitable other work, skip straight to adjacent authors — do NOT pad with weak filler, and never invent titles the author didn't write.
-"""
+
+{BLURB_VOICE}"""

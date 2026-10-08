@@ -109,17 +109,18 @@ FEED_DELIVERY_LIMIT = 50  # Phase 4: deliver up to this many undelivered recs pe
                           # /v1/recommendations call, so a queue accumulated while
                           # the user was away drains in one open (was 10).
 
-# Claude model + per-site effort. Opus 5 rejects sampling parameters, so effort is
-# the quality/latency lever; low and medium are unusually strong on it. Inline recs
-# (a phone is waiting, 60s client timeout) run medium with the shorter exclusion
-# list — measured 31s for 10 fresh books. Cron recs run high with the long list:
-# no one is waiting, and medium against a 650-line list was a coin flip between a
-# 64s thinking run and a 10s four-book dud. Similar-books ("closely related to this
-# one book") and the mechanical overview split run low (the 18-book pool measured
-# 39s at medium vs 34s at low, right under the client timeout).
-CLAUDE_MODEL = "claude-opus-5"
+# Claude model + per-site effort. Opus 5.5 rejects sampling parameters and can't run
+# without thinking, so effort is the quality/latency lever, and its levels sit higher
+# than Opus 5's (its medium beats Opus 5's high in Anthropic's testing). Measured on
+# 10-08 with the current prompt: inline recs (a phone is waiting, 60s client timeout)
+# at medium took 43s for the heaviest reader (18.7k-token prompt, 10/10 kept) and
+# less for everyone else; low returned a 4-book dud for that reader. Cron recs run
+# medium against the long exclusion list. Similar-books ("closely related to this one
+# book") and the mechanical overview split run low: the 18-book pool took 27s, the
+# overview 3s. Opus 5 at the same settings cost 25% more per token.
+CLAUDE_MODEL = "claude-opus-5-5"
 REC_EFFORT_INLINE = "medium"
-REC_EFFORT_CRON = "high"
+REC_EFFORT_CRON = "medium"
 SIMILAR_EFFORT = "low"
 OVERVIEW_EFFORT = "low"
 # Cron: a batch thinner than this after filtering gets one refill draw.
@@ -223,14 +224,15 @@ def _exc_key(title, author) -> tuple[str, str] | None:
     return (t.lower(), a.lower()) if t else None
 
 
-# Per-MTok (input, output) USD prices for the cost estimate in the usage log line.
-# Models a server-side fallback can answer with are included; an unlisted model
-# logs tokens without an estimate. Cache reads bill at 0.1x and 5-minute cache
-# writes at 1.25x of the input price on these models.
+# Per-MTok (input, output) USD prices and the cache-read multiplier, for the cost
+# estimate in the usage log line. Models a server-side fallback can answer with
+# are included; an unlisted model logs tokens without an estimate. 5-minute cache
+# writes bill at 1.25x of the input price on all of these.
 _PRICES_PER_MTOK = {
-    "claude-opus-5": (5.0, 25.0),
-    "claude-opus-4-8": (5.0, 25.0),
-    "claude-opus-4-7": (5.0, 25.0),
+    "claude-opus-5-5": (4.0, 20.0, 0.05),
+    "claude-opus-5": (5.0, 25.0, 0.1),
+    "claude-opus-4-8": (5.0, 25.0, 0.1),
+    "claude-opus-4-7": (5.0, 25.0, 0.1),
 }
 
 
@@ -246,7 +248,7 @@ def _log_claude_usage(kind: str, effort: str, body: dict) -> None:
         cread = int(u.get("cache_read_input_tokens") or 0)
         cwrite = int(u.get("cache_creation_input_tokens") or 0)
         price = _PRICES_PER_MTOK.get(model)
-        est = (f"{(inp * price[0] + cread * price[0] * 0.1 + cwrite * price[0] * 1.25 + out * price[1]) / 1e6:.4f}"
+        est = (f"{(inp * price[0] + cread * price[0] * price[2] + cwrite * price[0] * 1.25 + out * price[1]) / 1e6:.4f}"
                if price else "n/a")
         log.info("claude usage kind=%s model=%s effort=%s input=%d output=%d cache_read=%d cache_write=%d "
                  "stop=%s est_usd=%s", kind, model, effort, inp, out, cread, cwrite, body.get("stop_reason"), est)
@@ -262,7 +264,7 @@ def _claude_parse(prompt: str, output_format, effort: str, max_tokens: int, kind
     inside parse(), so a max_tokens truncation or a mid-output refusal surfaces
     as ValidationError rather than through stop_reason. API errors propagate to
     the caller exactly as before. max_tokens caps thinking plus text together on
-    Opus 5, so callers size it well above the JSON.
+    Opus 5.x, so callers size it well above the JSON.
 
     The raw response is read before validation so the usage line is logged even
     when the output then fails to validate. `kind` labels the call site."""

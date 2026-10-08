@@ -206,7 +206,8 @@ class RecommendedBookOut(BaseModel):
     title: str = Field(description="The exact published title only — no alternatives, corrections, or commentary.")
     author: str = Field(description="The exact published author name only.")
     blurb: str = Field(description=(
-        "1-2 sentences, personal and specific, like a well-read friend recommending it."))
+        "One or two sentences in the voice described under BLURBS: something concrete about this "
+        "book and why it is worth this reader's time."))
     genre: str
     era: str = Field(description='e.g. "1990s", "Contemporary", "Classic".')
     is_comfort_zone_push: bool = Field(description=(
@@ -231,10 +232,11 @@ class RecommendedBookOut(BaseModel):
     because_of_reason: str = Field(description=(
         "A SHORT, SPECIFIC phrase, MAX 12 words, naming what THIS book shares with the "
         "because_of seed: the concrete appeal/voice/theme/structure that makes it a natural "
-        'next read (e.g. "the same spare, dread-soaked prose and father-son core", '
-        '"another slow-unraveling unreliable narrator"). Do NOT restate the plot, repeat the '
-        'blurb, or be generic ("a great read"). Empty string if because_of is empty or you '
-        "cannot name a specific, honest connection."))
+        'next read (e.g. "dread built out of small domestic details", "a con man narrating '
+        'his own slow unraveling", "Gilded Age ambition seen from the servants\' floor"). '
+        'Vary how these phrases start across the batch; don\'t open with "the same" or '
+        '"another". Do NOT restate the plot, repeat the blurb, or be generic ("a great read"). '
+        "Empty string if because_of is empty or you cannot name a specific, honest connection."))
 
 
 class RecommendationBatchOut(BaseModel):
@@ -244,7 +246,9 @@ class RecommendationBatchOut(BaseModel):
 class SuggestedBookOut(BaseModel):
     title: str = Field(description="The exact published title only — no alternatives, corrections, or commentary.")
     author: str = Field(description="The exact published author name only.")
-    blurb: str = Field(description="1-2 sentences, specific to this book's appeal vs the seed book.")
+    blurb: str = Field(description=(
+        "One or two sentences in the voice described under BLURBS: something concrete about this "
+        "book and what a reader of the seed book would get from it."))
     genre: str
     era: str = Field(description='e.g. "1990s", "Contemporary", "Classic".')
     awards: list[str] = Field(description=(
