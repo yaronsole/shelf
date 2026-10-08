@@ -4,26 +4,43 @@ struct BookCardView: View {
     let display: BookDisplay
     var onTap: () -> Void    // open detail sheet
     var onSave: () -> Void   // long press — save directly
+    /// With both set, the card shows the detail page's pass / save / read it row.
+    var onPass: (() -> Void)? = nil
+    var onSentiment: ((Bool) -> Void)? = nil
 
     @State private var isRemoving = false
+    @State private var askingSentiment = false
 
     // Back-compat: accept a CachedRecommendation directly.
-    init(rec: CachedRecommendation, onTap: @escaping () -> Void, onSave: @escaping () -> Void) {
+    init(rec: CachedRecommendation, onTap: @escaping () -> Void, onSave: @escaping () -> Void,
+         onPass: (() -> Void)? = nil, onSentiment: ((Bool) -> Void)? = nil) {
         self.display = BookDisplay(from: rec)
         self.onTap = onTap
         self.onSave = onSave
+        self.onPass = onPass
+        self.onSentiment = onSentiment
     }
 
-    init(display: BookDisplay, onTap: @escaping () -> Void, onSave: @escaping () -> Void) {
+    init(display: BookDisplay, onTap: @escaping () -> Void, onSave: @escaping () -> Void,
+         onPass: (() -> Void)? = nil, onSentiment: ((Bool) -> Void)? = nil) {
         self.display = display
         self.onTap = onTap
         self.onSave = onSave
+        self.onPass = onPass
+        self.onSentiment = onSentiment
     }
 
     var body: some View {
-        // The same header the detail page shows above its Overview.
-        BookHeaderSection(display: display)
-            .padding(.bottom, 20)
+        // The same header the detail page shows above its Overview, then (in the
+        // feed) the same three actions as the detail page's bottom bar.
+        VStack(spacing: 14) {
+            BookHeaderSection(display: display, showSeeMore: true)
+            if let onPass, let onSentiment {
+                actionRow(onPass: onPass, onSentiment: onSentiment)
+                    .padding(.horizontal, 16)
+            }
+        }
+            .padding(.bottom, onPass == nil ? 20 : 16)
             .background(Color(.systemBackground))
             .clipShape(RoundedRectangle(cornerRadius: 16))
             .shadow(color: .black.opacity(0.07), radius: 12, x: 0, y: 4)
@@ -37,6 +54,46 @@ struct BookCardView: View {
                 Haptics.medium()
                 animateRemoval { onSave() }
             }
+    }
+
+    private func actionRow(onPass: @escaping () -> Void, onSentiment: @escaping (Bool) -> Void) -> some View {
+        HStack(spacing: 6) {
+            Button {
+                Haptics.light()
+                animateRemoval { onPass() }
+            } label: {
+                ActionPillLabel(iconName: "xmark", iconColor: Color(hexString: "A32D2D"),
+                          label: "pass", labelColor: Color(hexString: "444444"),
+                          background: .white, hasBorder: true)
+            }
+            .buttonStyle(.plain)
+
+            Button {
+                Haptics.medium()
+                animateRemoval { onSave() }
+            } label: {
+                ActionPillLabel(iconName: "bookmark.fill", iconColor: .white,
+                          label: "save", labelColor: .white,
+                          background: Color(hex: 0x1A1A1A), hasBorder: false)
+            }
+            .buttonStyle(.plain)
+
+            Button {
+                Haptics.light()
+                askingSentiment = true
+            } label: {
+                ActionPillLabel(iconName: "checkmark", iconColor: Color(hexString: "3B6D11"),
+                          label: "read it", labelColor: Color(hexString: "444444"),
+                          background: .white, hasBorder: true)
+            }
+            .buttonStyle(.plain)
+        }
+        .confirmationDialog("did you like it?", isPresented: $askingSentiment, titleVisibility: .visible) {
+            Button("loved it") { animateRemoval { onSentiment(true) } }
+            Button("not for me") { animateRemoval { onSentiment(false) } }
+        } message: {
+            Text(display.title)
+        }
     }
 
     private func animateRemoval(then action: @escaping () -> Void) {
@@ -126,6 +183,9 @@ struct BookHeaderSection: View {
     let display: BookDisplay
     var fillQuote: (text: String, source: String)? = nil
     var fillAccolades: [String] = []
+    /// The feed card ends the description with an inline "See more" (the whole
+    /// card opens the detail page), so the cue costs no extra line.
+    var showSeeMore: Bool = false
 
     private var quoteText: String { display.quote.isEmpty ? (fillQuote?.text ?? "") : display.quote }
     private var quoteSource: String { display.quote.isEmpty ? (fillQuote?.source ?? "") : display.quoteSource }
@@ -142,6 +202,14 @@ struct BookHeaderSection: View {
             if display.nytBestseller && (l == "new york times bestseller" || l == "nyt bestseller") { return false }
             return !awardKeys.contains { !$0.isEmpty && l.contains($0) }
         }
+    }
+
+    private var descriptionLine: Text {
+        let text = Text(display.descriptionText)
+        guard showSeeMore else { return text }
+        return text + Text("  See more")
+            .font(.subheadline.weight(.semibold))
+            .foregroundColor(Color(hexString: "4D3388"))
     }
 
     private var becauseLine: String {
@@ -203,7 +271,7 @@ struct BookHeaderSection: View {
             }
 
             if !display.descriptionText.isEmpty {
-                Text(display.descriptionText)
+                descriptionLine
                     .font(.subheadline)
                     .foregroundStyle(Color(.label))
                     .multilineTextAlignment(.leading)

@@ -253,7 +253,7 @@ struct BookDetailView: View {
                 onPass()
                 dismiss()
             } label: {
-                PillLabel(iconName: "xmark", iconColor: Color(hexString: "A32D2D"),
+                ActionPillLabel(iconName: "xmark", iconColor: Color(hexString: "A32D2D"),
                           label: "pass", labelColor: Color(hexString: "444444"),
                           background: .white, hasBorder: true)
             }
@@ -264,7 +264,7 @@ struct BookDetailView: View {
                 onSave()
                 dismiss()
             } label: {
-                PillLabel(iconName: "bookmark.fill", iconColor: .white,
+                ActionPillLabel(iconName: "bookmark.fill", iconColor: .white,
                           label: "save", labelColor: .white,
                           background: Color(hex: 0x1A1A1A), hasBorder: false)
             }
@@ -274,7 +274,7 @@ struct BookDetailView: View {
                 Haptics.light()
                 withAnimation { inSentimentMode = true }
             } label: {
-                PillLabel(iconName: "checkmark", iconColor: Color(hexString: "3B6D11"),
+                ActionPillLabel(iconName: "checkmark", iconColor: Color(hexString: "3B6D11"),
                           label: "read it", labelColor: Color(hexString: "444444"),
                           background: .white, hasBorder: true)
             }
@@ -364,9 +364,9 @@ struct BookDetailView: View {
     }
 }
 
-// MARK: - Pill button label
+// MARK: - Pill button label (also used by the For You card's action row)
 
-private struct PillLabel: View {
+struct ActionPillLabel: View {
     let iconName: String
     let iconColor: Color
     let label: String

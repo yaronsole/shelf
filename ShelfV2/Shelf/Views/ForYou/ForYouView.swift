@@ -118,6 +118,14 @@ struct ForYouView: View {
                                     onSave: {
                                         vm.save(rec, modelContext: modelContext)
                                         ToastManager.shared.show(.savedToShelf)
+                                    },
+                                    onPass: {
+                                        vm.dismiss(rec, modelContext: modelContext)
+                                        ToastManager.shared.show(.reactedPass)
+                                    },
+                                    onSentiment: { liked in
+                                        vm.markAlreadyRead(rec, liked: liked, modelContext: modelContext)
+                                        ToastManager.shared.show(liked ? .reactedRead : .reactedPass)
                                     }
                                 )
                                 .padding(.horizontal, 16)
