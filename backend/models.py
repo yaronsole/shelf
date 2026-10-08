@@ -206,8 +206,8 @@ class RecommendedBookOut(BaseModel):
     title: str = Field(description="The exact published title only — no alternatives, corrections, or commentary.")
     author: str = Field(description="The exact published author name only.")
     blurb: str = Field(description=(
-        "One or two sentences in the voice described under BLURBS: something concrete about this "
-        "book and why it is worth this reader's time."))
+        "The card description, three or four sentences as described under DESCRIPTIONS: what the "
+        "book is, what makes it stand out, and why it suits this reader. No review quotes."))
     genre: str
     era: str = Field(description='e.g. "1990s", "Contemporary", "Classic".')
     is_comfort_zone_push: bool = Field(description=(
@@ -247,8 +247,9 @@ class SuggestedBookOut(BaseModel):
     title: str = Field(description="The exact published title only — no alternatives, corrections, or commentary.")
     author: str = Field(description="The exact published author name only.")
     blurb: str = Field(description=(
-        "One or two sentences in the voice described under BLURBS: something concrete about this "
-        "book and what a reader of the seed book would get from it."))
+        "The card description, three or four sentences as described under DESCRIPTIONS: what the "
+        "book is, what makes it stand out, and what a reader of the seed book would get from it. "
+        "No review quotes."))
     genre: str
     era: str = Field(description='e.g. "1990s", "Contemporary", "Classic".')
     awards: list[str] = Field(description=(

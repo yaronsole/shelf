@@ -14,6 +14,7 @@ import urllib.parse
 import httpx
 
 from book_match import edition_matches
+from credentials import credentials
 
 log = logging.getLogger(__name__)
 
@@ -45,6 +46,11 @@ def _score_volume(item: dict, expected_title: str) -> int:
         score += 20
     if len(info.get("description", "") or "") > 100:
         score += 15
+    # Editions whose copy carries attributed review quotes or accolades give the
+    # card description verified praise to show (credentials.py).
+    quote, accs = credentials(info.get("description", "") or "", expected_title, "")
+    if quote or accs:
+        score += 12
     if isinstance(info.get("pageCount"), int) and info["pageCount"] >= 100:
         score += 10
 

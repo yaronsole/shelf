@@ -67,7 +67,13 @@ def title_matches(requested: str, candidate: str) -> bool:
     # Near-identical wording ("Sorcerer's" vs "Philosopher's" Stone): most of the
     # title's words shared. Unrelated books share almost none.
     a, b = _tokens(req_main), _tokens(cand_main)
-    return bool(a and b) and len(a & b) / len(a | b) >= 0.6
+    if a and b and len(a & b) / len(a | b) >= 0.6:
+        return True
+    # Series name and book title in a different order: "Allie Finkle's Rules for
+    # Girls: Moving Day" vs "Moving Day (Allie Finkle's Rules for Girls #1)".
+    fa = {t for t in _tokens(requested) if not t.isdigit()}
+    fb = {t for t in _tokens(candidate) if not t.isdigit()}
+    return len(fa) >= 3 and bool(fb) and len(fa & fb) / len(fa | fb) >= 0.75
 
 
 def author_matches(requested: str, candidates: list[str] | None) -> bool:

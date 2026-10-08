@@ -10,22 +10,21 @@ import re
 # taste profile stays bounded (SEED_CONTEXT_MAX seeds x this).
 SEED_DESCRIPTION_CHARS = 240
 
-# How blurbs should read, shared by the For You and similar-books prompts. The
-# voice follows the approved friend-voice list descriptions (986717a); the
-# avoid-list names the habits measured in Opus 5 blurbs on 10-07: 96% were a
-# two-sentence premise + verdict, 18% ended on a run of adjectives, 14% leaned on
-# "genuinely/actually/exactly/honestly". The examples are trimmed approved list
-# descriptions in three different shapes.
-BLURB_VOICE = """BLURBS: write each blurb the way a well-read friend recommends a book in a text: honest, specific, a little opinionated, never press-release copy.
-- Start from something concrete only this book has (its situation, a scene, its structure, how it was made), then say what it does well or why it's worth the time, in plain words.
-- Mix lengths: make about a third of the blurbs a single sentence and the rest two, never more. Vary the shape too: some are all situation, some lead with what the author does, some land on a plain verdict. Don't end most of them on a verdict, and don't open two blurbs the same way.
-- Leave out the habits that make recommendations read as machine-written: a closing run of adjectives ("Short, quiet, and devastating."), "genuinely", "actually", "exactly", "honestly", "reads like", "feels like", "in the best way", "impossible to put down", "better than almost anyone", calling a book another book's "cousin" or "sibling", colon lead-ins, first person, and review clichés like "sweeping", "breathtaking", "powerful", "compelling", "propulsive", "unflinching", "a tale of", "a story about".
-- Write only the finished blurb: no second thoughts, swaps, or notes about other picks.
-
-The voice, for tone only (don't reuse their structure):
-- "Two game designers meet as kids, drift apart, and spend decades building games together in a partnership too tangled to be friendship. Zevin gets how making something with another person can be more intimate than dating them."
-- "Hardin was a suburban mom stealing identities to fund an opiate habit until prison made her everyone's letter writer, and she's funny about addiction without skipping the ugly parts."
-- "A former Iranian colonel buys a foreclosed house at auction; the woman who lost it to a clerical error wants it back."
+# How card descriptions ("blurb") should read, shared by the For You and
+# similar-books prompts. Yaron's feedback on 10-08: the short, tic-free version lost
+# to the older blurbs in a blind test (warm verdicts, links to the reader's own
+# books), and he wants them longer and more informative, with reviews, awards and
+# bestseller status. Review quotes are NOT written by the model: verified quotes and
+# accolades from the publisher description are appended in code (credentials.py),
+# so the model is told never to quote.
+BLURB_VOICE = """DESCRIPTIONS: the "blurb" is the book's description on its card. Write it the way a well-read friend who knows this reader describes a book they're handing over: informative first, then honest about why it's worth their time.
+- Three or four sentences, about 60 to 90 words.
+- Say concretely what the book is: the situation or subject, the setting and period, and the shape of the story or argument.
+- Say what makes it stand out: what the author does unusually well, how it was made, or how it was received (major prizes, a long bestseller run, a film or series adaptation) when you're certain of it.
+- Connect it to this reader when there's a real link to books they love, and give an honest verdict.
+- Never quote a review or put words in a critic's mouth; verified review quotes are added separately.
+- Vary how descriptions open and end across the batch. Skip stock phrases like "in the best way", "impossible to put down", "genuinely", "reads like", and don't call a book another book's "cousin".
+- Write only the finished description: no second thoughts, swaps, or notes about other picks.
 """
 
 
@@ -114,9 +113,7 @@ Two things should shape the batch:
 
 because_of MUST be one of these exact strings, copied verbatim: {because_of_options}. Use the empty string "" only if no seed title genuinely drove this recommendation. Do NOT invent a title that isn't in that list.
 
-{BLURB_VOICE}
-The card already shows "Because you loved <seed> — <because_of_reason>" under each blurb, so don't spend the blurb repeating that link; spend it on the book.
-"""
+{BLURB_VOICE}"""
 
 
 def build_overview_structure_prompt(raw: str, title: str = "", author: str = "") -> str:

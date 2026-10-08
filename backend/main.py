@@ -44,6 +44,7 @@ from models import (
 )
 from prompts import build_recommendations_prompt, build_suggestions_prompt, build_overview_structure_prompt
 from book_match import is_derivative_description
+from credentials import credentials, strip_unverified_quotes
 from google_books import lookup_cover, lookup_metadata
 from open_library import lookup_cover as open_library_lookup_cover
 from nyt_bestsellers import lookup_bestseller
@@ -125,6 +126,11 @@ SIMILAR_EFFORT = "low"
 OVERVIEW_EFFORT = "low"
 # Cron: a batch thinner than this after filtering gets one refill draw.
 CRON_MIN_BATCH = 8
+# Books per generation. Inline is smaller because a phone is waiting: with the long
+# card descriptions, 10 books at medium took up to 59s of model time on 10-08
+# (client timeout 60s), 6 books 32-34s. The nightly queue fills the rest.
+CRON_BATCH_SIZE = 10
+INLINE_BATCH_SIZE = 6
 
 # Seed context for the recs prompt: how many of the user's newest seeds get a
 # description/year attached, and how many Google Books lookups a single
@@ -402,6 +408,31 @@ def _cached_lookup_metadata(title: str, author: str, client: httpx.Client,
         except Exception as exc:
             log.warning("book_meta_cache write failed for %r: %s", title, exc)
     return {**meta, "validated": True}
+
+
+# Key terms of an accolade; one that shares a term with the model's description
+# ("...won the Pulitzer") is not repeated under it.
+_ACCOLADE_TERMS = ("pulitzer", "booker", "national book award", "national book critics", "nobel", "hugo",
+                   "nebula", "newbery", "caldecott", "printz", "costa", "women's prize", "oprah", "reese",
+                   "bestseller", "motion picture", "film", "series", "netflix", "hbo", "notable", "best book")
+
+
+def _compose_description(b: dict) -> str:
+    """The card description: the model's text, then a verified review quote and up
+    to two accolades taken verbatim from the book's publisher description
+    (credentials.py). Any quote the model wrote itself that isn't in the publisher
+    text is removed. Paragraphs are separated by a blank line."""
+    source = b.get("description") or ""
+    text = strip_unverified_quotes(b.get("blurb") or "", source)
+    quote, accs = credentials(source, b.get("title") or "", b.get("author") or "")
+    parts = [text]
+    if quote:
+        parts.append(f"“{quote[0]}” — {quote[1]}")
+    said = text.lower()
+    fresh = [a for a in accs if not any(t in a.lower() and t in said for t in _ACCOLADE_TERMS)]
+    if fresh:
+        parts.append(" · ".join(fresh[:2]))
+    return "\n\n".join(p for p in parts if p)
 
 
 def _enrich_books(books: list[dict], client: httpx.Client) -> None:
@@ -795,6 +826,7 @@ def _generate_recommendations(user_id: str, domain: str, is_cron: bool = False) 
 
     seed_title_lookup = {s["title"].strip().lower(): s["title"] for s in seeds if s.get("title")}
     effort = REC_EFFORT_CRON if is_cron else REC_EFFORT_INLINE
+    batch_size = CRON_BATCH_SIZE if is_cron else INLINE_BATCH_SIZE
 
     def _draw() -> list[dict] | None:
         """One Claude draw: prompt -> parse -> validate -> filter. None if declined.
@@ -805,7 +837,7 @@ def _generate_recommendations(user_id: str, domain: str, is_cron: bool = False) 
             disliked=disliked,
             exclude_ids=exclude_list,
             domain=domain,
-            count=10,
+            count=batch_size,
             recent_mix=recent_mix,
         )
         parsed = _claude_parse(prompt, RecommendationBatchOut, effort, max_tokens=16000,
@@ -859,7 +891,7 @@ def _generate_recommendations(user_id: str, domain: str, is_cron: bool = False) 
     # exclusion list. Inline can't afford the second call.
     if is_cron and len(books) < CRON_MIN_BATCH:
         more = _draw() or []
-        books.extend(more[:10 - len(books)])
+        books.extend(more[:batch_size - len(books)])
         log.info("cron refill for user %s: +%d -> %d books", user_id, len(more), len(books))
 
     # Enrich with Google Books cover + NYT bestseller + reading time
@@ -870,6 +902,9 @@ def _generate_recommendations(user_id: str, domain: str, is_cron: bool = False) 
     # placeholder never reaches the feed. Earliest line of defense — these are
     # never persisted or served. (iOS guards again on insert as a backstop.)
     books = [b for b in books if _has_valid_cover(b.get("cover_url"))]
+    # Card descriptions: model text + verified review quote and accolades.
+    for b in books:
+        b["blurb"] = _compose_description(b)
 
     batch_id = str(uuid.uuid4())
     now = datetime.now(timezone.utc)
@@ -985,6 +1020,8 @@ def _compute_similar_pool(body: SuggestionsRequest, cache_ref) -> list[dict]:
     with httpx.Client(timeout=5.0) as client:
         _enrich_books(pool, client)
     pool = [b for b in pool if _has_valid_cover(b.get("cover_url"))]
+    for b in pool:
+        b["blurb"] = _compose_description(b)
     cache_ref.set({
         "books": pool,
         "seed_title": body.seed_book_title,
