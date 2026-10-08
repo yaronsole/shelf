@@ -21,6 +21,38 @@ struct BookDisplay {
     // Phase 3 PDP enrichment
     let becauseOfReason: String
     let bookDescription: String
+    // Card credentials (2.2): the description alone, and a review quote and
+    // accolades from the publisher description, rendered by BookHeaderSection.
+    let descriptionText: String
+    let quote: String
+    let quoteSource: String
+    let accolades: [String]
+
+    /// The card parts from the structured fields, or, for books saved before those
+    /// existed, split out of the server's joined `blurb`
+    /// ("description\n\n“quote” — Source\n\nAccolade · Accolade").
+    static func cardParts(blurb: String, blurbText: String, quote: String, quoteSource: String,
+                          accolades: [String]) -> (text: String, quote: String, source: String, accolades: [String]) {
+        if !blurbText.isEmpty { return (blurbText, quote, quoteSource, accolades) }
+        var paragraphs = blurb.components(separatedBy: "\n\n")
+        guard paragraphs.count > 1 else { return (blurb, "", "", []) }
+        var accs: [String] = []
+        var q = "", src = ""
+        if let last = paragraphs.last, last.count <= 160,
+           !["." , "!", "?", "”", "\""].contains(where: { last.hasSuffix($0) }) {
+            accs = last.components(separatedBy: " · ")
+                .map { $0.trimmingCharacters(in: .whitespaces) }
+                .filter { !$0.isEmpty }
+            paragraphs.removeLast()
+        }
+        if paragraphs.count > 1, let last = paragraphs.last, last.hasPrefix("“"),
+           let r = last.range(of: "” — ") {
+            q = String(last[last.index(after: last.startIndex)..<r.lowerBound])
+            src = String(last[r.upperBound...])
+            paragraphs.removeLast()
+        }
+        return (paragraphs.joined(separator: "\n\n"), q, src, accs)
+    }
 }
 
 extension BookDisplay {
@@ -32,7 +64,9 @@ extension BookDisplay {
             contextTag: rec.contextTag, becauseOf: rec.becauseOf,
             nytBestseller: rec.nytBestseller, nytWeeksOnList: rec.nytWeeksOnList,
             readingTimeMinutes: rec.readingTimeMinutes,
-            becauseOfReason: rec.becauseOfReason, bookDescription: rec.bookDescription
+            becauseOfReason: rec.becauseOfReason, bookDescription: rec.bookDescription,
+            parts: BookDisplay.cardParts(blurb: rec.blurb, blurbText: rec.blurbText, quote: rec.reviewQuote,
+                                         quoteSource: rec.reviewQuoteSource, accolades: rec.accolades)
         )
     }
 
@@ -44,7 +78,9 @@ extension BookDisplay {
             contextTag: s.contextTag, becauseOf: becauseOf,
             nytBestseller: s.nytBestseller, nytWeeksOnList: s.nytWeeksOnList,
             readingTimeMinutes: s.readingTimeMinutes,
-            becauseOfReason: "", bookDescription: s.bookDescription ?? ""
+            becauseOfReason: "", bookDescription: s.bookDescription ?? "",
+            parts: BookDisplay.cardParts(blurb: s.blurb, blurbText: s.blurbText ?? "", quote: s.reviewQuote ?? "",
+                                         quoteSource: s.reviewQuoteSource ?? "", accolades: s.accolades ?? [])
         )
     }
 
@@ -56,8 +92,23 @@ extension BookDisplay {
             contextTag: s.contextTag, becauseOf: becauseOf,
             nytBestseller: s.nytBestseller, nytWeeksOnList: s.nytWeeksOnList,
             readingTimeMinutes: s.readingTimeMinutes,
-            becauseOfReason: "", bookDescription: s.bookDescription
+            becauseOfReason: "", bookDescription: s.bookDescription,
+            parts: BookDisplay.cardParts(blurb: s.blurb, blurbText: s.blurbText, quote: s.reviewQuote,
+                                         quoteSource: s.reviewQuoteSource, accolades: s.accolades)
         )
+    }
+
+    private init(title: String, author: String, coverURL: String, blurb: String, era: String, genre: String,
+                 isComfortZonePush: Bool, awards: [String], contextTag: String, becauseOf: String,
+                 nytBestseller: Bool, nytWeeksOnList: Int?, readingTimeMinutes: Int?,
+                 becauseOfReason: String, bookDescription: String,
+                 parts: (text: String, quote: String, source: String, accolades: [String])) {
+        self.init(title: title, author: author, coverURL: coverURL, blurb: blurb, era: era, genre: genre,
+                  isComfortZonePush: isComfortZonePush, awards: awards, contextTag: contextTag,
+                  becauseOf: becauseOf, nytBestseller: nytBestseller, nytWeeksOnList: nytWeeksOnList,
+                  readingTimeMinutes: readingTimeMinutes, becauseOfReason: becauseOfReason,
+                  bookDescription: bookDescription, descriptionText: parts.text, quote: parts.quote,
+                  quoteSource: parts.source, accolades: parts.accolades)
     }
 }
 
@@ -109,60 +160,13 @@ struct BookDetailView: View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: 16) {
-                    BookCoverView(url: display.coverURL, width: min(UIScreen.main.bounds.width * 0.45, 180))
-                        .padding(.top, 24)
-
-                    VStack(spacing: 4) {
-                        Text(display.title)
-                            .font(.title3.bold())
-                            .multilineTextAlignment(.center)
-                        Text(display.author)
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
-                        if !display.era.isEmpty {
-                            Text(display.era)
-                                .font(.caption)
-                                .foregroundStyle(.tertiary)
-                        }
-                    }
-                    .padding(.horizontal, 16)
-
-                    ContextRow(
-                        nytBestseller: display.nytBestseller,
-                        nytWeeks: display.nytWeeksOnList,
-                        readingTimeMinutes: display.readingTimeMinutes
+                    // Same header as the For You card. A quote/accolades from the
+                    // structured overview fill in only when the book carries none.
+                    BookHeaderSection(
+                        display: display,
+                        fillQuote: overview?.pullQuotes.first.map { (text: $0.text, source: $0.source) },
+                        fillAccolades: overview?.accolades ?? []
                     )
-                    .padding(.horizontal, 16)
-
-                    FlowingTagsDetail(
-                        genre: display.genre,
-                        isComfortZonePush: display.isComfortZonePush,
-                        awards: display.awards
-                    )
-                    .padding(.horizontal, 16)
-
-                    if !display.becauseOf.isEmpty {
-                        Label(becauseLine, systemImage: "sparkle")
-                            .font(.subheadline.weight(.medium))
-                            .foregroundStyle(Color(hexString: "4D3388"))
-                            .multilineTextAlignment(.leading)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .padding(.horizontal, 16)
-                    } else if !display.contextTag.isEmpty {
-                        Label(display.contextTag, systemImage: "sparkle")
-                            .font(.caption.weight(.medium))
-                            .foregroundStyle(Color(hexString: "4D3388"))
-                            .padding(.horizontal, 16)
-                    }
-
-                    Text(display.blurb)
-                        .font(.subheadline)
-                        .foregroundStyle(Color(.label))
-                        .multilineTextAlignment(.leading)
-                        .fixedSize(horizontal: false, vertical: true)
-                        .lineSpacing(3)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .padding(.horizontal, 16)
 
                     overviewSection
                         .padding(.horizontal, 16)
@@ -206,17 +210,11 @@ struct BookDetailView: View {
 
     // MARK: - Phase 3 helpers
 
-    private var becauseLine: String {
-        display.becauseOfReason.isEmpty
-            ? "Because you loved \(display.becauseOf)"
-            : "Because you loved \(display.becauseOf) — \(display.becauseOfReason)"
-    }
-
+    // The overview's quote and accolades render in the header (above); only the
+    // synopsis belongs here.
     @ViewBuilder private var overviewSection: some View {
-        if let overview, !overview.isEmpty {
-            StructuredOverview(synopsis: overview.synopsis,
-                               pullQuotes: overview.pullQuotes,
-                               accolades: overview.accolades)
+        if let overview, !overview.synopsis.isEmpty {
+            ExpandableOverview(text: overview.synopsis)
         } else if !overviewLoaded {
             overviewLoadingRow
         }
@@ -397,40 +395,6 @@ private struct PillLabel: View {
                     : nil
                 )
         )
-    }
-}
-
-// MARK: - Flowing tags (local copy for detail view)
-
-private struct FlowingTagsDetail: View {
-    let genre: String
-    let isComfortZonePush: Bool
-    let awards: [String]
-
-    var body: some View {
-        HStack(spacing: 6) {
-            if !genre.isEmpty { DetailTag(text: genre) }
-            if isComfortZonePush { DetailTag(text: Strings.ForYou.comfortZoneLabel, highlighted: true) }
-            ForEach(awards, id: \.self) { AwardBadge(text: $0) }
-            Spacer(minLength: 0)
-        }
-    }
-}
-
-private struct DetailTag: View {
-    let text: String
-    var highlighted: Bool = false
-    var body: some View {
-        Text(text)
-            .font(.caption.weight(.medium))
-            .foregroundStyle(highlighted ? Color(.systemOrange) : Color(.secondaryLabel))
-            .padding(.horizontal, 8)
-            .padding(.vertical, 4)
-            .background(
-                Capsule().fill(highlighted
-                               ? Color(.systemOrange).opacity(0.12)
-                               : Color(.secondarySystemFill))
-            )
     }
 }
 

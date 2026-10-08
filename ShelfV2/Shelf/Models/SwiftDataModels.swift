@@ -35,6 +35,12 @@ final class CachedRecommendation {
     // Phase 3 PDP enrichment (all defaulted → no SwiftData migration needed).
     var becauseOfReason: String = ""   // short, specific clause: why this follows from the seed
     var bookDescription: String = ""   // full Google Books description (expandable in the PDP)
+    // Card credentials (2.2, defaulted → no migration): the model-written description
+    // alone, and a review quote + accolades verbatim from the publisher description.
+    var blurbText: String = ""
+    var reviewQuote: String = ""
+    var reviewQuoteSource: String = ""
+    var accolades: [String] = []
     // Frequency cap: incremented at launch when isSeen flips from true.
     // Eliminated (marked reacted) once viewCount >= 2.
     var viewCount: Int = 0
@@ -59,6 +65,10 @@ final class CachedRecommendation {
         becauseOf: String = "",
         becauseOfReason: String = "",
         bookDescription: String = "",
+        blurbText: String = "",
+        reviewQuote: String = "",
+        reviewQuoteSource: String = "",
+        accolades: [String] = [],
         isSurfaced: Bool = true
     ) {
         self.id = id
@@ -84,6 +94,10 @@ final class CachedRecommendation {
         self.becauseOf = becauseOf
         self.becauseOfReason = becauseOfReason
         self.bookDescription = bookDescription
+        self.blurbText = blurbText
+        self.reviewQuote = reviewQuote
+        self.reviewQuoteSource = reviewQuoteSource
+        self.accolades = accolades
     }
 }
 

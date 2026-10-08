@@ -18,6 +18,11 @@ struct CachedSuggestion: Codable, Identifiable {
     let readingTimeMinutes: Int?
     // Phase 3 PDP enrichment (optional → older cached blobs decode fine as nil)
     let bookDescription: String?
+    // Card credentials (2.2; optional for the same reason)
+    let blurbText: String?
+    let reviewQuote: String?
+    let reviewQuoteSource: String?
+    let accolades: [String]?
 }
 
 extension CachedSuggestion {
@@ -35,6 +40,10 @@ extension CachedSuggestion {
         nytWeeksOnList = dto.nytWeeksOnList
         readingTimeMinutes = dto.readingTimeMinutes
         bookDescription = dto.bookDescription
+        blurbText = dto.blurbText
+        reviewQuote = dto.reviewQuote
+        reviewQuoteSource = dto.reviewQuoteSource
+        accolades = dto.accolades
     }
 }
 

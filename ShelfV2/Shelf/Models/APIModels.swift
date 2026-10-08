@@ -26,9 +26,16 @@ struct RecommendationDTO: Decodable, Identifiable {
     // Phase 3 PDP enrichment
     let becauseOfReason: String
     let bookDescription: String
+    // Card credentials as separate fields (2.2): the model-written description
+    // alone, plus a review quote and accolades taken verbatim from the publisher
+    // description. `blurb` still carries all three joined for older builds.
+    let blurbText: String
+    let reviewQuote: String
+    let reviewQuoteSource: String
+    let accolades: [String]
 
     enum CodingKeys: String, CodingKey {
-        case id, title, author, blurb, genre, era, domain, awards, acclaim
+        case id, title, author, blurb, genre, era, domain, awards, acclaim, accolades
         case coverURL = "cover_url"
         case isComfortZonePush = "is_comfort_zone_push"
         case batchId = "batch_id"
@@ -39,6 +46,9 @@ struct RecommendationDTO: Decodable, Identifiable {
         case becauseOf = "because_of"
         case becauseOfReason = "because_of_reason"
         case bookDescription = "description"
+        case blurbText = "blurb_text"
+        case reviewQuote = "review_quote"
+        case reviewQuoteSource = "review_quote_source"
     }
 
     init(from decoder: Decoder) throws {
@@ -63,6 +73,10 @@ struct RecommendationDTO: Decodable, Identifiable {
         becauseOf = (try? c.decodeIfPresent(String.self, forKey: .becauseOf)) ?? ""
         becauseOfReason = (try? c.decodeIfPresent(String.self, forKey: .becauseOfReason)) ?? ""
         bookDescription = (try? c.decode(String.self, forKey: .bookDescription)) ?? ""
+        blurbText = (try? c.decodeIfPresent(String.self, forKey: .blurbText)) ?? ""
+        reviewQuote = (try? c.decodeIfPresent(String.self, forKey: .reviewQuote)) ?? ""
+        reviewQuoteSource = (try? c.decodeIfPresent(String.self, forKey: .reviewQuoteSource)) ?? ""
+        accolades = (try? c.decodeIfPresent([String].self, forKey: .accolades)) ?? []
     }
 }
 
@@ -175,15 +189,23 @@ struct SuggestionDTO: Decodable, Identifiable {
     let readingTimeMinutes: Int?
     // Phase 3 PDP enrichment
     let bookDescription: String
+    // Card credentials as separate fields (see RecommendationDTO).
+    let blurbText: String
+    let reviewQuote: String
+    let reviewQuoteSource: String
+    let accolades: [String]
 
     enum CodingKeys: String, CodingKey {
-        case id, title, author, blurb, genre, era, awards, acclaim
+        case id, title, author, blurb, genre, era, awards, acclaim, accolades
         case coverURL = "cover_url"
         case contextTag = "context_tag"
         case nytBestseller = "nyt_bestseller"
         case nytWeeksOnList = "nyt_weeks_on_list"
         case readingTimeMinutes = "reading_time_minutes"
         case bookDescription = "description"
+        case blurbText = "blurb_text"
+        case reviewQuote = "review_quote"
+        case reviewQuoteSource = "review_quote_source"
     }
 
     init(from decoder: Decoder) throws {
@@ -202,6 +224,10 @@ struct SuggestionDTO: Decodable, Identifiable {
         nytWeeksOnList = try? c.decodeIfPresent(Int.self, forKey: .nytWeeksOnList)
         readingTimeMinutes = try? c.decodeIfPresent(Int.self, forKey: .readingTimeMinutes)
         bookDescription = (try? c.decode(String.self, forKey: .bookDescription)) ?? ""
+        blurbText = (try? c.decodeIfPresent(String.self, forKey: .blurbText)) ?? ""
+        reviewQuote = (try? c.decodeIfPresent(String.self, forKey: .reviewQuote)) ?? ""
+        reviewQuoteSource = (try? c.decodeIfPresent(String.self, forKey: .reviewQuoteSource)) ?? ""
+        accolades = (try? c.decodeIfPresent([String].self, forKey: .accolades)) ?? []
     }
 }
 

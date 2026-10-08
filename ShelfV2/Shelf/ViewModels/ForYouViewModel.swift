@@ -142,6 +142,12 @@ final class ForYouViewModel {
                         if rec.bookDescription.isEmpty && !dto.bookDescription.isEmpty {
                             rec.bookDescription = dto.bookDescription
                         }
+                        if rec.blurbText.isEmpty && !dto.blurbText.isEmpty {
+                            rec.blurbText = dto.blurbText
+                            rec.reviewQuote = dto.reviewQuote
+                            rec.reviewQuoteSource = dto.reviewQuoteSource
+                            rec.accolades = dto.accolades
+                        }
                         continue
                     }
                     // Filter books without resolvable cover for *new* inserts (RG-04)
@@ -171,6 +177,10 @@ final class ForYouViewModel {
                         becauseOf: dto.becauseOf,
                         becauseOfReason: dto.becauseOfReason,
                         bookDescription: dto.bookDescription,
+                        blurbText: dto.blurbText,
+                        reviewQuote: dto.reviewQuote,
+                        reviewQuoteSource: dto.reviewQuoteSource,
+                        accolades: dto.accolades,
                         isSurfaced: surfaceNew
                     )
                     modelContext.insert(rec)

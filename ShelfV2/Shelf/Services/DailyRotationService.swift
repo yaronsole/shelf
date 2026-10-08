@@ -91,6 +91,10 @@ final class DailyRotationService {
                     becauseOf: dto.becauseOf,
                     becauseOfReason: dto.becauseOfReason,
                     bookDescription: dto.bookDescription,
+                    blurbText: dto.blurbText,
+                    reviewQuote: dto.reviewQuote,
+                    reviewQuoteSource: dto.reviewQuoteSource,
+                    accolades: dto.accolades,
                     isSurfaced: false
                 )
                 modelContext.insert(rec)
