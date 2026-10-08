@@ -43,6 +43,7 @@ from models import (
     UserSettingsResponse,
 )
 from prompts import build_recommendations_prompt, build_suggestions_prompt, build_overview_structure_prompt
+from book_match import is_derivative_description
 from google_books import lookup_cover, lookup_metadata
 from open_library import lookup_cover as open_library_lookup_cover
 from nyt_bestsellers import lookup_bestseller
@@ -76,8 +77,11 @@ claude = anthropic.Anthropic(api_key=os.environ["ANTHROPIC_API_KEY"], timeout=12
 # Cloud Run's filesystem is ephemeral so we can't write a JSON file there.
 COMMUNITY_LIST_SLUG = "loved_by_readers"
 COMMUNITY_LIST_SIZE = int(os.environ.get("COMMUNITY_LIST_SIZE", "30"))
-# Device token whose taste (seed_books) bootstraps the list on day one. Counts
-# as that one reader's love; real reactions augment it over time. Unset → no seed.
+# Stored with headroom: each viewer's own read books are hidden at serve time
+# (the heaviest reader had read 67 of the top 120).
+COMMUNITY_STORED_SIZE = COMMUNITY_LIST_SIZE * 3
+# Device token whose "Read & loved" picks rank first among books with the same
+# number of readers. (Its Taste seeds no longer count as loves.) Unset → no preference.
 COMMUNITY_SEED_TOKEN = os.environ.get("COMMUNITY_SEED_TOKEN", "")
 
 # ---------------------------------------------------------------------------
@@ -153,6 +157,68 @@ _EPOCH = datetime(1970, 1, 1, tzinfo=timezone.utc)
 # Deliberation leaking into a structured field, e.g. "The Tin Drum? no — The Late Show".
 _LEAK_RE = re.compile(r"(?:\?|\.\.\.|…)\s*no\s*[—-]|\breplaced:", re.I)
 
+# The same deliberation leaking into a blurb (39 stored recs, 9 of them among
+# Opus 5's first 855): "Wait—better entry point: ...", "No—too thin for you. Instead, ...",
+# "Too obvious—instead, ...", "Already shown—so instead, ...". Anchored on a
+# marker word followed by punctuation, so "No one ..." and "no-nonsense" pass.
+_BLURB_LEAK_RE = re.compile(
+    r"^\W*(?:wait|no|actually|hmm+|scratch that|too obvious|already shown|correction"
+    r"|on second thought|never mind)\s*[—–\-,.:;!]"
+    r"|\b(?:wait|actually)\s*[—–-]\s*no\b|\bthe pick you want is\b",
+    re.I)
+
+# Stand-in values the model sometimes emits instead of real text. Seen on Opus 5:
+# blurb "placeholder", author "placeholder" / "x", genre and era "placeholder".
+_PLACEHOLDER_RE = re.compile(
+    r"\bplace[- ]?holder\b|lorem ipsum|\{\{|\}\}"
+    r"|^\s*(?:tbd|todo|n/?a|none|null|undefined|x+|\.{2,}|…|-+|\?+)\s*\.?\s*$",
+    re.I)
+_MIN_BLURB_CHARS = 20
+# Core fields: a book whose core field is a stand-in is dropped. Optional fields
+# (the reason clause and editorial hooks) are blanked instead, keeping the book.
+_CORE_TEXT_FIELDS = ("title", "author", "blurb", "genre", "era")
+_OPTIONAL_TEXT_FIELDS = ("because_of_reason", "context_tag", "acclaim")
+
+
+def _is_placeholder(value) -> bool:
+    return isinstance(value, str) and bool(value.strip()) and bool(_PLACEHOLDER_RE.search(value))
+
+
+def _blank_placeholder_fields(b: dict) -> None:
+    """Blank optional fields (and award entries) holding a stand-in value or leaked
+    deliberation."""
+    for f in _OPTIONAL_TEXT_FIELDS:
+        if _is_placeholder(b.get(f)) or _BLURB_LEAK_RE.search(b.get(f) or ""):
+            b[f] = ""
+    if isinstance(b.get("awards"), list):
+        b["awards"] = [a for a in b["awards"] if not _is_placeholder(a)]
+
+
+def _junk_reason(b: dict, seed_titles=()) -> str | None:
+    """Why a generated book must be dropped, or None if it is usable: leaked
+    deliberation, missing title/author, the author's name as the title, a seed
+    title in possessive form ("The Poet X's"), a stand-in core field, or no real
+    blurb. `seed_titles` are lowercased seed titles for the possessive check."""
+    title, author = (b.get("title") or "").strip(), (b.get("author") or "").strip()
+    if _LEAK_RE.search(title) or _LEAK_RE.search(author):
+        return "leaked deliberation"
+    if len(title) < 2 or len(author) < 2:
+        return "missing title/author"
+    if title.lower() == author.lower():
+        return "title is the author"
+    possessive = re.match(r"^(.*?)['’]s$", title)
+    if possessive and possessive.group(1).strip().lower() in seed_titles:
+        return "possessive seed title"
+    for f in _CORE_TEXT_FIELDS:
+        if _is_placeholder(b.get(f)):
+            return f"placeholder {f}"
+    blurb = (b.get("blurb") or "").strip()
+    if len(blurb) < _MIN_BLURB_CHARS:
+        return "missing blurb"
+    if _BLURB_LEAK_RE.search(blurb):
+        return "leaked deliberation in blurb"
+    return None
+
 
 def _exc_key(title, author) -> tuple[str, str] | None:
     """Normalized title|author identity used for exclusion and repeat filtering."""
@@ -160,7 +226,38 @@ def _exc_key(title, author) -> tuple[str, str] | None:
     return (t.lower(), a.lower()) if t else None
 
 
-def _claude_parse(prompt: str, output_format, effort: str, max_tokens: int):
+# Per-MTok (input, output) USD prices for the cost estimate in the usage log line.
+# Models a server-side fallback can answer with are included; an unlisted model
+# logs tokens without an estimate. Cache reads bill at 0.1x and 5-minute cache
+# writes at 1.25x of the input price on these models.
+_PRICES_PER_MTOK = {
+    "claude-opus-5": (5.0, 25.0),
+    "claude-opus-4-8": (5.0, 25.0),
+    "claude-opus-4-7": (5.0, 25.0),
+}
+
+
+def _log_claude_usage(kind: str, effort: str, body: dict) -> None:
+    """One greppable line per Claude call ('claude usage kind=...'), so the daily
+    token and dollar spend can be rolled up from Cloud Run logs by call site.
+    output_tokens includes thinking. Never raises."""
+    try:
+        u = body.get("usage") or {}
+        model = body.get("model") or CLAUDE_MODEL
+        inp = int(u.get("input_tokens") or 0)
+        out = int(u.get("output_tokens") or 0)
+        cread = int(u.get("cache_read_input_tokens") or 0)
+        cwrite = int(u.get("cache_creation_input_tokens") or 0)
+        price = _PRICES_PER_MTOK.get(model)
+        est = (f"{(inp * price[0] + cread * price[0] * 0.1 + cwrite * price[0] * 1.25 + out * price[1]) / 1e6:.4f}"
+               if price else "n/a")
+        log.info("claude usage kind=%s model=%s effort=%s input=%d output=%d cache_read=%d cache_write=%d "
+                 "stop=%s est_usd=%s", kind, model, effort, inp, out, cread, cwrite, body.get("stop_reason"), est)
+    except Exception as exc:
+        log.warning("claude usage logging failed for kind=%s: %s", kind, exc)
+
+
+def _claude_parse(prompt: str, output_format, effort: str, max_tokens: int, kind: str):
     """One structured-output Claude call. Returns the validated `output_format`
     instance, or None when there is nothing usable: the safety classifiers
     declined (an HTTP 200 with stop_reason "refusal" — even after the server-side
@@ -168,17 +265,26 @@ def _claude_parse(prompt: str, output_format, effort: str, max_tokens: int):
     inside parse(), so a max_tokens truncation or a mid-output refusal surfaces
     as ValidationError rather than through stop_reason. API errors propagate to
     the caller exactly as before. max_tokens caps thinking plus text together on
-    Opus 5, so callers size it well above the JSON."""
+    Opus 5, so callers size it well above the JSON.
+
+    The raw response is read before validation so the usage line is logged even
+    when the output then fails to validate. `kind` labels the call site."""
+    raw = claude.beta.messages.with_raw_response.parse(
+        model=CLAUDE_MODEL,
+        max_tokens=max_tokens,
+        messages=[{"role": "user", "content": prompt}],
+        output_format=output_format,
+        output_config={"effort": effort},
+        betas=["server-side-fallback-2026-07-01"],
+        fallbacks="default",
+    )
     try:
-        response = claude.beta.messages.parse(
-            model=CLAUDE_MODEL,
-            max_tokens=max_tokens,
-            messages=[{"role": "user", "content": prompt}],
-            output_format=output_format,
-            output_config={"effort": effort},
-            betas=["server-side-fallback-2026-07-01"],
-            fallbacks="default",
-        )
+        body = raw.http_response.json()
+    except Exception:
+        body = {}
+    _log_claude_usage(kind, effort, body)
+    try:
+        response = raw.parse()
     except ValidationError as exc:
         log.warning("Claude %s output failed schema validation (truncated or mid-output refusal): %s",
                     output_format.__name__, exc)
@@ -255,29 +361,48 @@ def _meta_is_stale_partial(d: dict, now: datetime) -> bool:
     return not isinstance(ts, datetime) or (now - ts) > _META_RECHECK
 
 
-def _cached_lookup_metadata(title: str, author: str, client: httpx.Client) -> dict:
+# book_meta_cache entries written since edition matching (book_match) carry this
+# version. Older entries may hold a wrong edition's cover and description: about a
+# quarter of a live sample matched a summary edition or an unrelated book.
+META_CACHE_VERSION = 2
+
+
+def _cached_lookup_metadata(title: str, author: str, client: httpx.Client,
+                            require_validated: bool = False) -> dict:
     """google_books.lookup_metadata behind the shared book_meta_cache/{book_id}
     collection, so a popular title costs one Google Books query across all users
     (GB quota is 1000/day). Empty results are never cached, so a title self-heals
-    once quota returns. Best-effort: a cache failure degrades to the direct lookup."""
+    once quota returns. Best-effort: a cache failure degrades to the direct lookup.
+
+    Pre-validation entries are still served, since re-fetching them all would
+    exhaust the GB quota, except when require_validated (the caller is about to
+    show the entry's cover) or when the description is from a summary edition.
+    Re-fetched entries are overwritten, even with an empty result, so a bad entry
+    is replaced once instead of being re-fetched on every read. The returned
+    dict's "validated" says whether the entry passed edition matching."""
     ref = db.collection("book_meta_cache").document(book_id_hash(title, author))
+    replacing_bad = False
     try:
         snap = ref.get()
         if snap.exists:
             d = snap.to_dict() or {}
-            if not _meta_is_stale_partial(d, datetime.now(timezone.utc)):
+            validated = d.get("v") == META_CACHE_VERSION
+            if is_derivative_description(d.get("description")) or (require_validated and not validated):
+                replacing_bad = True
+            elif not _meta_is_stale_partial(d, datetime.now(timezone.utc)):
                 return {"cover_url": d.get("cover_url") or "", "page_count": d.get("page_count"),
-                        "description": d.get("description") or "", "year": d.get("year")}
+                        "description": d.get("description") or "", "year": d.get("year"),
+                        "validated": validated}
     except Exception as exc:
         log.warning("book_meta_cache read failed for %r: %s", title, exc)
     meta = lookup_metadata(title, author, client=client)
-    if meta.get("description") or meta.get("page_count") or meta.get("cover_url"):
+    if meta.get("description") or meta.get("page_count") or meta.get("cover_url") or replacing_bad:
         try:
             ref.set({**{k: meta.get(k) for k in _META_KEYS}, "title": title, "author": author,
-                     "cached_at": datetime.now(timezone.utc)})
+                     "v": META_CACHE_VERSION, "cached_at": datetime.now(timezone.utc)})
         except Exception as exc:
             log.warning("book_meta_cache write failed for %r: %s", title, exc)
-    return meta
+    return {**meta, "validated": True}
 
 
 def _enrich_books(books: list[dict], client: httpx.Client) -> None:
@@ -307,10 +432,13 @@ def _enrich_book(b: dict, client: httpx.Client) -> None:
     author = b.get("author", "")
 
     # Prefer Open Library for covers — far better data quality than Google Books.
-    # Fall back to Google Books if Open Library has nothing.
+    # Fall back to Google Books if Open Library has nothing. Both only accept an
+    # edition that matches this title/author and isn't a summary edition.
     meta = _cached_lookup_metadata(title, author, client)   # still need for pageCount
     if not b.get("cover_url"):
         ol_cover = open_library_lookup_cover(title, author, client=client)
+        if not ol_cover and not meta.get("validated"):
+            meta = _cached_lookup_metadata(title, author, client, require_validated=True)
         b["cover_url"] = ol_cover or meta.get("cover_url", "")
 
     # Reading time: ~1.7 min per page on average (200wpm, ~340 words/page)
@@ -681,7 +809,8 @@ def _generate_recommendations(user_id: str, domain: str, is_cron: bool = False) 
             count=10,
             recent_mix=recent_mix,
         )
-        parsed = _claude_parse(prompt, RecommendationBatchOut, effort, max_tokens=16000)
+        parsed = _claude_parse(prompt, RecommendationBatchOut, effort, max_tokens=16000,
+                               kind="recs_cron" if is_cron else "recs_inline")
         if parsed is None:
             return None
         drawn: list[dict] = [b.model_dump() for b in parsed.books]
@@ -689,6 +818,7 @@ def _generate_recommendations(user_id: str, domain: str, is_cron: bool = False) 
         dropped_junk = dropped_repeat = 0
         for b in drawn:
             b["cover_url"] = ""   # resolved by enrichment below
+            _blank_placeholder_fields(b)
             # Validate `because_of` against the user's actual seed titles. If Claude
             # invents or distorts a title, drop the field rather than show a confusing
             # "Because you loved <book you don't own>" line in the UI.
@@ -704,12 +834,13 @@ def _generate_recommendations(user_id: str, domain: str, is_cron: bool = False) 
             else:
                 b["because_of_reason"] = ""
             # Drop picks the model should not have produced: leaked deliberation in
-            # a title ("The Tin Drum? no — The Late Show"), placeholder fields, and
-            # repeats of anything excluded (the client discards those anyway, so
-            # they were dead weight in every batch).
+            # a title ("The Tin Drum? no — The Late Show"), stand-in text in a core
+            # field (a "placeholder" blurb), and repeats of anything excluded (the
+            # client discards those anyway, so they were dead weight in every batch).
             title, author = b.get("title") or "", b.get("author") or ""
-            if (_LEAK_RE.search(title) or _LEAK_RE.search(author)
-                    or "placeholder" in (title + author).lower() or len(title.strip()) < 2):
+            junk = _junk_reason(b, seed_title_lookup)
+            if junk:
+                log.warning("recs for user %s: dropped %r by %r (%s)", user_id, title, author, junk)
                 dropped_junk += 1
                 continue
             if _exc_key(title, author) in exclude_keys:
@@ -782,6 +913,88 @@ def _generate_recommendations(user_id: str, domain: str, is_cron: bool = False) 
 # ---------------------------------------------------------------------------
 # POST /v1/onboarding/suggestions
 # ---------------------------------------------------------------------------
+_SIMILAR_INFLIGHT: dict[str, Future] = {}
+_SIMILAR_INFLIGHT_GUARD = threading.Lock()
+
+
+def _similar_pool(body: SuggestionsRequest) -> list[dict]:
+    """The shared similar-books pool for one seed book: from the cache, or computed
+    once. Concurrent misses for the same book wait for the one in-flight
+    computation instead of each paying for a Claude call. The iOS foreground
+    refresh fans out over every Taste book and re-requests seeds whose first call
+    is still running: on 09-24 one device sent 220 requests in 10 minutes, ~194
+    Claude calls for only 26 distinct books, all on one instance. Per-process
+    only, like _generate_inline."""
+    book_id = book_id_hash(body.seed_book_title, body.seed_book_author)
+    cache_ref = db.collection("similar_books_cache").document(book_id)
+    snap = cache_ref.get()
+    if snap.exists:
+        return (snap.to_dict() or {}).get("books", [])
+    with _SIMILAR_INFLIGHT_GUARD:
+        fut = _SIMILAR_INFLIGHT.get(book_id)
+        owner = fut is None
+        if owner:
+            fut = Future()
+            _SIMILAR_INFLIGHT[book_id] = fut
+    if not owner:
+        return fut.result()
+    try:
+        # Re-check: a computation that finished between the read above and taking
+        # ownership has already cached the pool.
+        snap = cache_ref.get()
+        pool = ((snap.to_dict() or {}).get("books", []) if snap.exists
+                else _compute_similar_pool(body, cache_ref))
+    except BaseException as exc:
+        fut.set_exception(exc)
+        raise
+    else:
+        fut.set_result(pool)
+        return pool
+    finally:
+        with _SIMILAR_INFLIGHT_GUARD:
+            _SIMILAR_INFLIGHT.pop(book_id, None)
+
+
+def _compute_similar_pool(body: SuggestionsRequest, cache_ref) -> list[dict]:
+    """One Claude call for the taste-blind pool, then filter, enrich, and cache."""
+    prompt = build_suggestions_prompt(
+        seed_title=body.seed_book_title,
+        seed_author=body.seed_book_author,
+        domain=body.domain,
+        count=SIMILAR_CACHE_POOL_SIZE,
+        exclude=None,   # user-agnostic pool — no per-user exclude baked in
+        liked=None,
+        disliked=None,
+    )
+    parsed = _claude_parse(prompt, SuggestionBatchOut, SIMILAR_EFFORT, max_tokens=16000, kind="similar")
+    if parsed is None:
+        raise RuntimeError(f"similar-books generation declined by Claude for {body.seed_book_title!r}")
+    pool = [b.model_dump() for b in parsed.books]
+    kept = []
+    for b in pool:
+        b["cover_url"] = ""   # resolved by enrichment below
+        _blank_placeholder_fields(b)
+        junk = _junk_reason(b, {body.seed_book_title.strip().lower()})
+        if junk:
+            log.warning("similar-books for %r: dropped %r by %r (%s)",
+                        body.seed_book_title, b.get("title"), b.get("author"), junk)
+            continue
+        kept.append(b)
+    pool = kept
+    # Enrich (cover + NYT + reading time + description) then drop cover-less so a
+    # cover-less book is never cached or served (Phase 2 parity).
+    with httpx.Client(timeout=5.0) as client:
+        _enrich_books(pool, client)
+    pool = [b for b in pool if _has_valid_cover(b.get("cover_url"))]
+    cache_ref.set({
+        "books": pool,
+        "seed_title": body.seed_book_title,
+        "seed_author": body.seed_book_author,
+        "cached_at": datetime.now(timezone.utc),
+    })
+    return pool
+
+
 @app.post("/v1/onboarding/suggestions", response_model=list[SuggestionResponse])
 def get_suggestions(body: SuggestionsRequest, user_id: UserID):
     # Phase 6: shared, taste-blind, per-book cache. Similar-books are computed once
@@ -789,39 +1002,7 @@ def get_suggestions(body: SuggestionsRequest, user_id: UserID):
     # seed book is the anchor and per-user taste is intentionally not applied. The
     # per-user `exclude` list is applied AFTER the cache so each reader still avoids
     # books they've already been shown. No LLM call on a cache hit.
-    book_id = book_id_hash(body.seed_book_title, body.seed_book_author)
-    cache_ref = db.collection("similar_books_cache").document(book_id)
-    snap = cache_ref.get()
-
-    if snap.exists:
-        pool = (snap.to_dict() or {}).get("books", [])
-    else:
-        prompt = build_suggestions_prompt(
-            seed_title=body.seed_book_title,
-            seed_author=body.seed_book_author,
-            domain=body.domain,
-            count=SIMILAR_CACHE_POOL_SIZE,
-            exclude=None,   # user-agnostic pool — no per-user exclude baked in
-            liked=None,
-            disliked=None,
-        )
-        parsed = _claude_parse(prompt, SuggestionBatchOut, SIMILAR_EFFORT, max_tokens=16000)
-        if parsed is None:
-            raise RuntimeError(f"similar-books generation declined by Claude for {body.seed_book_title!r}")
-        pool = [b.model_dump() for b in parsed.books]
-        for b in pool:
-            b["cover_url"] = ""   # resolved by enrichment below
-        # Enrich (cover + NYT + reading time + description) then drop cover-less so a
-        # cover-less book is never cached or served (Phase 2 parity).
-        with httpx.Client(timeout=5.0) as client:
-            _enrich_books(pool, client)
-        pool = [b for b in pool if _has_valid_cover(b.get("cover_url"))]
-        cache_ref.set({
-            "books": pool,
-            "seed_title": body.seed_book_title,
-            "seed_author": body.seed_book_author,
-            "cached_at": datetime.now(timezone.utc),
-        })
+    pool = _similar_pool(body)
 
     # Per-user dedup against the supplied exclude list (lowercased title|author).
     exclude_keys = {item.lower().strip() for item in (body.exclude or [])}
@@ -848,7 +1029,7 @@ def _structure_overview(raw: str, title: str = "", author: str = "") -> dict:
         return {"synopsis": "", "pull_quotes": [], "accolades": []}
     try:
         parsed = _claude_parse(build_overview_structure_prompt(raw, title, author),
-                               StructuredOverviewOut, OVERVIEW_EFFORT, max_tokens=8000)
+                               StructuredOverviewOut, OVERVIEW_EFFORT, max_tokens=8000, kind="overview")
         if parsed is None:
             raise RuntimeError("overview structuring declined by Claude")
         data = parsed.model_dump()
@@ -857,13 +1038,18 @@ def _structure_overview(raw: str, title: str = "", author: str = "") -> dict:
         # book — so never substitute the raw (wrong) text back in. Only a genuine
         # API failure (the except: below) falls back to raw.
         synopsis = (data.get("synopsis") or "").strip()
+        # A stand-in synopsis is a failed call, not an intentional empty: the
+        # except: below marks it _failed, so it is never cached and retries later.
+        if _is_placeholder(synopsis):
+            raise RuntimeError("overview synopsis is a placeholder")
         quotes = []
         for q in (data.get("pull_quotes") or [])[:3]:
             t = (q.get("text") or "").strip().strip('"').strip("“”").strip()
             s = (q.get("source") or "").strip()
-            if t:
+            if t and not _is_placeholder(t) and not _is_placeholder(s):
                 quotes.append({"text": t[:400], "source": s[:80]})
-        accolades = [str(a).strip()[:60] for a in (data.get("accolades") or [])[:4] if str(a).strip()]
+        accolades = [str(a).strip()[:60] for a in (data.get("accolades") or [])[:4]
+                     if str(a).strip() and not _is_placeholder(str(a))]
         return {"synopsis": synopsis, "pull_quotes": quotes, "accolades": accolades}
     except Exception as exc:
         log.warning("overview structuring failed: %s", exc)
@@ -1016,6 +1202,59 @@ def cron_generate_all(
     if not expected or x_cloud_scheduler_auth != expected:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="invalid cron secret")
 
+    lock = _acquire_cron_lock("generate_all")
+    if lock is None:
+        log.warning("cron generate-all: another run holds the lock; skipping this delivery")
+        return {"processed": 0, "skipped": 0, "failed": 0, "remaining": 0,
+                "elapsed_seconds": 0.0, "skipped_reason": "already running"}
+    try:
+        return _generate_all_users()
+    finally:
+        _release_cron_lock("generate_all", lock)
+
+
+# A lease outlives the longest possible run (the 1800s Cloud Run request timeout),
+# so a run that dies without releasing it never blocks the next night.
+CRON_LOCK_TTL_SECONDS = 1800
+
+
+def _acquire_cron_lock(name: str) -> str | None:
+    """Take a Firestore lease so overlapping deliveries of one Cloud Scheduler job
+    don't both run. Returns the lease token, or None while a live lease is held.
+    Scheduler delivery is at-least-once: on 09-22 it fired shelf-nightly-gen at
+    10:00:30 and again at 10:02:10, and both full runs went ahead."""
+    ref = db.collection("cron_locks").document(name)
+    token = str(uuid.uuid4())
+    now = datetime.now(timezone.utc)
+
+    @firestore.transactional
+    def _take(transaction) -> bool:
+        snap = ref.get(transaction=transaction)
+        if snap.exists:
+            expires_at = (snap.to_dict() or {}).get("expires_at")
+            if isinstance(expires_at, datetime) and expires_at > now:
+                return False
+        transaction.set(ref, {"token": token, "acquired_at": now,
+                              "expires_at": now + timedelta(seconds=CRON_LOCK_TTL_SECONDS)})
+        return True
+
+    return token if _take(db.transaction()) else None
+
+
+def _release_cron_lock(name: str, token: str) -> None:
+    """Drop the lease if this run still holds it. Best-effort: a lease left behind
+    expires on its own."""
+    ref = db.collection("cron_locks").document(name)
+    try:
+        snap = ref.get()
+        if snap.exists and (snap.to_dict() or {}).get("token") == token:
+            ref.delete()
+    except Exception as exc:
+        log.warning("cron lock release failed for %s: %s", name, exc)
+
+
+def _generate_all_users() -> dict:
+    """The nightly run proper; cron_generate_all holds the lock around it."""
     started = time.monotonic()
     processed = 0
     skipped = 0
@@ -1202,8 +1441,9 @@ def get_lists():
     for entry in load_catalog():
         m = ListMetadata(**entry)
         if entry["slug"] == COMMUNITY_LIST_SLUG:
-            # book_count for the computed list comes from Firestore, not a file
-            m.book_count = len(_community_list_books())
+            # book_count for the computed list comes from Firestore, not a file.
+            # The stored list has headroom; a viewer is shown at most COMMUNITY_LIST_SIZE.
+            m.book_count = min(len(_community_list_books()), COMMUNITY_LIST_SIZE)
         out.append(m)
     return ListCatalogResponse(lists=out)
 
@@ -1229,9 +1469,12 @@ def get_list_detail(slug: str, user_id: UserID, domain: str = "books"):
         covers = _resolve_list_covers(books)
 
     user_status = _user_list_status_map(user_id, domain)
+    is_community = slug == COMMUNITY_LIST_SLUG
 
     decorated = []
     for b in books:
+        if is_community and len(decorated) >= COMMUNITY_LIST_SIZE:
+            break
         cover_url = covers.get(b["book_id"], "")
         # Phase 2: omit books whose cover didn't resolve so a list never shows a
         # blank placeholder tile. (Community-list books are already cover-filtered
@@ -1239,6 +1482,10 @@ def get_list_detail(slug: str, user_id: UserID, domain: str = "books"):
         if not _has_valid_cover(cover_url):
             continue
         key = (b["title"].lower().strip(), b["author"].lower().strip())
+        # "Loved by readers" is for discovering other readers' books: hide the
+        # viewer's own read books (Taste seeds and read reactions).
+        if is_community and user_status.get(key) == "read":
+            continue
         decorated.append(ListBookResponse(
             book_id=b["book_id"],
             title=b["title"],
@@ -1385,10 +1632,14 @@ def _community_list_books() -> list[dict]:
 
 def _compute_loved_by_readers(dry_run: bool = False) -> dict:
     """Rank books by the count of DISTINCT users who marked them
-    'alreadyReadLiked', seeded with the configured seed user's taste so the
-    list is populated from day one. Sentiment comes from reactions only (the
-    seed is a deliberate bootstrap). Honors the per-user `contribute` flag,
-    drops cover-less books, caps at COMMUNITY_LIST_SIZE. No LLM calls.
+    'alreadyReadLiked'. Honors the per-user `contribute` flag, drops cover-less
+    books, and stores up to COMMUNITY_STORED_SIZE so that after get_list_detail
+    hides each viewer's own read books there are still COMMUNITY_LIST_SIZE to
+    show. No LLM calls.
+
+    The seed user's Taste books no longer count as loves: that day-one bootstrap
+    (85 seeds) outranked every book a single other reader loved, so the list was
+    mostly the seed user's own shelf.
 
     dry_run=True computes and returns the result WITHOUT persisting."""
     loved_users: dict[tuple[str, str], set[str]] = defaultdict(set)
@@ -1414,13 +1665,7 @@ def _compute_loved_by_readers(dry_run: bool = False) -> dict:
             d = doc.to_dict()
             _register(d.get("title", ""), d.get("author", ""), uid)
 
-    # 2) Day-one bootstrap: the seed user's taste counts as their love
-    if COMMUNITY_SEED_TOKEN:
-        for doc in seed_col(COMMUNITY_SEED_TOKEN).where("domain", "==", "books").stream():
-            d = doc.to_dict()
-            _register(d.get("title", ""), d.get("author", ""), COMMUNITY_SEED_TOKEN)
-
-    # Rank by distinct readers desc; within a tier the seed user's taste comes
+    # Rank by distinct readers desc; within a tier the seed user's loves come
     # first (the founder's picks surface ahead of other single-reader books),
     # then title for stable ordering.
     def _rank(k: tuple[str, str]):
@@ -1437,14 +1682,14 @@ def _compute_loved_by_readers(dry_run: bool = False) -> dict:
             "author": titles[k]["author"],
             "loved_count": len(loved_users[k]),
         }
-        for k in ranked[: COMMUNITY_LIST_SIZE * 2]
+        for k in ranked[: COMMUNITY_STORED_SIZE * 2]
     ]
     covers = _resolve_list_covers(candidates) if candidates else {}
 
     books: list[dict] = []
     seen: set[str] = set()
     for c in candidates:
-        if len(books) >= COMMUNITY_LIST_SIZE:
+        if len(books) >= COMMUNITY_STORED_SIZE:
             break
         cover = covers.get(c["book_id"], "")
         if not _has_valid_cover(cover) or c["book_id"] in seen:

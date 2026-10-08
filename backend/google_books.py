@@ -13,6 +13,8 @@ import urllib.parse
 
 import httpx
 
+from book_match import edition_matches
+
 log = logging.getLogger(__name__)
 
 _BASE_URL = "https://www.googleapis.com/books/v1/volumes"
@@ -61,9 +63,12 @@ def _score_volume(item: dict, expected_title: str) -> int:
     return score
 
 
-def _query_books(query: str, client: httpx.Client, expected_title: str = "") -> dict:
+def _query_books(query: str, client: httpx.Client, expected_title: str = "",
+                 expected_author: str = "") -> dict:
     """Run a Google Books query and pick the highest-scoring volume.
 
+    Only volumes that match the requested title and author and are not a
+    summary/study-guide edition are considered (book_match.edition_matches).
     Returns {cover_url, page_count} or {} if nothing matched.
     """
     params = {
@@ -84,6 +89,13 @@ def _query_books(query: str, client: httpx.Client, expected_title: str = "") -> 
     # empty description. Prefer real (preview/ebook) editions; if only catalog
     # editions exist, treat as no result (cover falls back / book is filtered).
     items = [it for it in items if not (it.get("id") or "").endswith("AAJ")]
+    if expected_title:
+        def _matches(it: dict) -> bool:
+            info = it.get("volumeInfo", {}) or {}
+            return edition_matches(expected_title, expected_author, info.get("title", "") or "",
+                                   info.get("subtitle", "") or "", info.get("authors") or [],
+                                   info.get("description", "") or "")
+        items = [it for it in items if _matches(it)]
     if not items:
         return {}
 
@@ -117,9 +129,11 @@ def lookup_metadata(title: str, author: str, client: httpx.Client | None = None)
     if owns_client:
         client = httpx.Client(timeout=5.0)
     try:
-        result = _query_books(f'intitle:"{title}" inauthor:{author}', client, expected_title=title)
+        result = _query_books(f'intitle:"{title}" inauthor:{author}', client,
+                              expected_title=title, expected_author=author)
         if not result.get("cover_url"):
-            result = _query_books(f"{title} {author}", client, expected_title=title)
+            result = _query_books(f"{title} {author}", client,
+                                  expected_title=title, expected_author=author)
         return result or empty
     except Exception as exc:
         log.warning("google_books lookup failed for %r / %r: %s", title, author, exc)

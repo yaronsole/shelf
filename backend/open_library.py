@@ -6,7 +6,8 @@ images). No API key required.
 
 Lookup flow:
   1. GET https://openlibrary.org/search.json?title=X&author=Y&limit=5
-  2. Pick the first result that has a `cover_i` field
+  2. Pick the first result that has a `cover_i` field and matches the requested
+     title/author without being a summary edition (book_match.edition_matches)
   3. Cover URL: https://covers.openlibrary.org/b/id/{cover_i}-L.jpg
 """
 
@@ -17,6 +18,8 @@ import urllib.parse
 from typing import Optional
 
 import httpx
+
+from book_match import edition_matches
 
 log = logging.getLogger(__name__)
 
@@ -32,7 +35,7 @@ def lookup_cover(title: str, author: str, client: httpx.Client | None = None) ->
     if owns_client:
         client = httpx.Client(timeout=5.0)
     try:
-        params = {"title": title, "author": author, "limit": "5", "sort": "editions", "fields": "title,author_name,cover_i,first_publish_year,edition_count"}
+        params = {"title": title, "author": author, "limit": "5", "sort": "editions", "fields": "title,subtitle,author_name,cover_i,first_publish_year,edition_count"}
         url = f"{_SEARCH_URL}?{urllib.parse.urlencode(params)}"
         resp = client.get(url, headers={"User-Agent": "ShelfApp/2.0 (yaronsole@github)"})
         if resp.status_code != 200:
@@ -41,7 +44,8 @@ def lookup_cover(title: str, author: str, client: httpx.Client | None = None) ->
         docs = resp.json().get("docs") or []
         for d in docs:
             cid = d.get("cover_i")
-            if cid:
+            if cid and edition_matches(title, author, d.get("title", "") or "",
+                                       d.get("subtitle", "") or "", d.get("author_name") or []):
                 return _COVER_URL_FMT.format(cid=cid)
         return None
     except Exception as exc:
