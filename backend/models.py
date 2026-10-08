@@ -109,6 +109,13 @@ class RecommendationResponse(BaseModel):
     because_of: Optional[str] = None  # exact title of the seed book driving this pick, validated against seeds
     because_of_reason: str = ""       # Phase 3: short, specific clause on why this pick follows from the seed
     description: str = ""             # Phase 3: full Google Books description (expandable in the PDP)
+    # Card credentials as separate fields (10-08), so the app renders them styled
+    # instead of reading them out of `blurb`. `blurb` keeps all three joined for
+    # app builds that predate these fields.
+    blurb_text: str = ""              # the model-written description alone
+    review_quote: str = ""            # verbatim from the publisher description
+    review_quote_source: str = ""
+    accolades: list[str] = []         # verbatim from the publisher description
 
 
 class SuggestionResponse(BaseModel):
@@ -126,6 +133,10 @@ class SuggestionResponse(BaseModel):
     nyt_weeks_on_list: int | None = None
     reading_time_minutes: int | None = None
     description: str = ""             # Phase 3: full Google Books description (expandable in the PDP)
+    blurb_text: str = ""              # see RecommendationResponse
+    review_quote: str = ""
+    review_quote_source: str = ""
+    accolades: list[str] = []
 
 
 class DebugInfoResponse(BaseModel):

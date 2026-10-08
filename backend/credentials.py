@@ -146,7 +146,7 @@ def accolades(description: str) -> list[str]:
         phrase = m.group(1).strip(" •.,:-")
         if (phrase.upper() == phrase and len(phrase.split()) >= 2 and _ACCOLADE_WORDS.search(phrase)
                 and not phrase.endswith((" A", " AN", " THE", " OF", " AND"))):
-            nice = _titlecase(phrase)
+            nice = re.sub(r"^(?:A|An)\s+", "", _titlecase(phrase))
             if nice.lower() not in seen:
                 seen.add(nice.lower()); out.append(nice)
     return out

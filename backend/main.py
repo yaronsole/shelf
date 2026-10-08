@@ -43,7 +43,7 @@ from models import (
     UserSettingsResponse,
 )
 from prompts import build_recommendations_prompt, build_suggestions_prompt, build_overview_structure_prompt
-from book_match import is_derivative_description
+from book_match import is_derivative_description, norm
 from credentials import credentials, strip_unverified_quotes
 from google_books import lookup_cover, lookup_metadata
 from open_library import lookup_cover as open_library_lookup_cover
@@ -417,22 +417,37 @@ _ACCOLADE_TERMS = ("pulitzer", "booker", "national book award", "national book c
                    "bestseller", "motion picture", "film", "series", "netflix", "hbo", "notable", "best book")
 
 
-def _compose_description(b: dict) -> str:
-    """The card description: the model's text, then a verified review quote and up
-    to two accolades taken verbatim from the book's publisher description
-    (credentials.py). Any quote the model wrote itself that isn't in the publisher
-    text is removed. Paragraphs are separated by a blank line."""
+def _attach_credentials(b: dict, overview: dict | None = None) -> None:
+    """Set the card fields in place: blurb_text (the model's description with any
+    unverified praise-quote removed), review_quote + source and accolades (verbatim
+    from the publisher description, credentials.py), and blurb, the three joined
+    for app builds that predate the separate fields. When the regex finds nothing,
+    a structured overview of the same publisher text (cron prewarm) can supply
+    them: its quote is used only if it appears verbatim in that text."""
     source = b.get("description") or ""
-    text = strip_unverified_quotes(b.get("blurb") or "", source)
+    text = strip_unverified_quotes(b.get("blurb_text") or b.get("blurb") or "", source)
     quote, accs = credentials(source, b.get("title") or "", b.get("author") or "")
+    if overview:
+        if not quote:
+            plain = norm(re.sub(r"<[^>]+>", " ", source))
+            for q in overview.get("pull_quotes") or []:
+                qt, qs = (q.get("text") or "").strip(), (q.get("source") or "").strip()
+                if qt and qs and len(qt) <= 240 and norm(qt) in plain:
+                    quote = (qt, qs)
+                    break
+        if not accs:
+            accs = [a for a in (overview.get("accolades") or []) if isinstance(a, str) and a.strip()]
+    said = text.lower()
+    fresh = [a for a in accs if not any(t in a.lower() and t in said for t in _ACCOLADE_TERMS)][:3]
+    b["blurb_text"] = text
+    b["review_quote"], b["review_quote_source"] = (quote if quote else ("", ""))
+    b["accolades"] = fresh
     parts = [text]
     if quote:
         parts.append(f"“{quote[0]}” — {quote[1]}")
-    said = text.lower()
-    fresh = [a for a in accs if not any(t in a.lower() and t in said for t in _ACCOLADE_TERMS)]
     if fresh:
         parts.append(" · ".join(fresh[:2]))
-    return "\n\n".join(p for p in parts if p)
+    b["blurb"] = "\n\n".join(p for p in parts if p)
 
 
 def _enrich_books(books: list[dict], client: httpx.Client) -> None:
@@ -902,9 +917,20 @@ def _generate_recommendations(user_id: str, domain: str, is_cron: bool = False) 
     # placeholder never reaches the feed. Earliest line of defense — these are
     # never persisted or served. (iOS guards again on insert as a backstop.)
     books = [b for b in books if _has_valid_cover(b.get("cover_url"))]
-    # Card descriptions: model text + verified review quote and accolades.
+
+    # Card fields: the model's description plus a verified review quote and
+    # accolades. The nightly path structures each book's overview first (so its
+    # PDP opens instantly) and lets that fill in what the regex finds nothing
+    # for; the inline path can't afford the extra calls.
+    overviews: dict[str, dict] = {}
+    if is_cron:
+        try:
+            _prewarm_overviews(books)
+            overviews = _cached_overviews(books)
+        except Exception as exc:
+            log.warning("overview prewarm failed: %s", exc)
     for b in books:
-        b["blurb"] = _compose_description(b)
+        _attach_credentials(b, overviews.get(book_id_hash(b.get("title", ""), b.get("author", ""))))
 
     batch_id = str(uuid.uuid4())
     now = datetime.now(timezone.utc)
@@ -931,16 +957,6 @@ def _generate_recommendations(user_id: str, domain: str, is_cron: bool = False) 
         merge=True,
     )
     firestore_batch.commit()
-
-    # Pre-structure overviews for cron-generated batches so their PDPs open with no
-    # structuring latency. Cron-only — the inline path is already slow and would
-    # risk the client timeout. Best-effort.
-    if is_cron:
-        try:
-            _prewarm_overviews(books)
-        except Exception as exc:
-            log.warning("overview prewarm failed: %s", exc)
-
     return results
 
 
@@ -1021,7 +1037,7 @@ def _compute_similar_pool(body: SuggestionsRequest, cache_ref) -> list[dict]:
         _enrich_books(pool, client)
     pool = [b for b in pool if _has_valid_cover(b.get("cover_url"))]
     for b in pool:
-        b["blurb"] = _compose_description(b)
+        _attach_credentials(b)
     cache_ref.set({
         "books": pool,
         "seed_title": body.seed_book_title,
@@ -1113,7 +1129,7 @@ def get_book_overview(body: BookOverviewRequest, user_id: UserID):
         d = snap.to_dict() or {}
         # Only a current-version, non-empty structured cache counts; older/empty
         # entries fall through and re-structure (so stale-wrong overviews heal).
-        if d.get("v") == OVERVIEW_CACHE_VERSION and _has_overview_content(d):
+        if d.get("v") == OVERVIEW_CACHE_VERSION and _has_overview_content(d) and not d.get("_failed"):
             return {"synopsis": d.get("synopsis", ""),
                     "pull_quotes": d.get("pull_quotes", []),
                     "accolades": d.get("accolades", [])}
@@ -1167,12 +1183,26 @@ def _prewarm_overviews(books: list[dict]) -> None:
         if d.get("v") == OVERVIEW_CACHE_VERSION and _has_overview_content(d):
             return
         structured = _structure_overview(b["description"], b["title"], b["author"])
-        if _has_overview_content(structured):
+        # A failed call returns the raw, unverified text marked _failed: never cache
+        # it (get_book_overview would serve it as if the relevance guard had run).
+        if not structured.get("_failed") and _has_overview_content(structured):
             ref.set({**structured, "v": OVERVIEW_CACHE_VERSION, "title": b["title"],
                      "author": b["author"], "cached_at": datetime.now(timezone.utc)})
 
     with ThreadPoolExecutor(max_workers=4) as pool:
         list(pool.map(_one, targets))
+
+
+def _cached_overviews(books: list[dict]) -> dict[str, dict]:
+    """Current-version structured overviews for these books, keyed by book_id."""
+    refs = [db.collection("book_overview_cache").document(book_id_hash(b.get("title", ""), b.get("author", "")))
+            for b in books]
+    out = {}
+    for snap in (db.get_all(refs) if refs else []):
+        d = (snap.to_dict() or {}) if snap.exists else {}
+        if d.get("v") == OVERVIEW_CACHE_VERSION and _has_overview_content(d) and not d.get("_failed"):
+            out[snap.id] = d
+    return out
 
 
 # ---------------------------------------------------------------------------
