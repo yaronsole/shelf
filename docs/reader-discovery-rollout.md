@@ -1,6 +1,10 @@
 # Reader discovery: feedback, saved books and community rankings
 
-Base: `feed-pdp-polish` at `46e56af` (2.2/build 123). This change does not bump the release version or deploy anything.
+Base: `feed-pdp-polish` at `46e56af` (2.2/build 123).
+
+Deployment update, October 12, 2026: reader counts are hidden on both the leaderboard and book details at the owner's request. The backend was built as digest `sha256:32b16bb3c5e38834457933820154000e35c357757cb108c9b6ffff942c85855e` and deployed to Cloud Run revision `shelf-api-00055-xiz`, with 100% production traffic after candidate checks. The community aggregate was refreshed and both production leaderboard modes verified. Existing service configuration was preserved. Previous serving revision for rollback: `shelf-api-00051-5qc`.
+
+The iOS archive is version 2.3/build 128. Version 2.2/build 127 was rejected by Apple because the approved 2.2 train was closed. The replacement archive built successfully with the existing release configuration and is being uploaded through Xcode.
 
 ## Product behavior
 
