@@ -251,12 +251,6 @@ struct BookDetailSheet: View {
                     }
                     .padding(.horizontal, 16)
 
-                    if let count = book.lovedCount, count > 0 {
-                        Label("Loved by \(count) \(count == 1 ? "reader" : "readers") on Shelf", systemImage: "heart.fill")
-                            .font(.subheadline)
-                            .foregroundStyle(Color(hexString: "4D3388"))
-                            .padding(.horizontal, 16)
-                    }
                     if !recommendationContext.isEmpty {
                         Text(recommendationContext)
                             .font(.body)

@@ -5,7 +5,7 @@ Base: `feed-pdp-polish` at `46e56af` (2.2/build 123). This change does not bump 
 ## Product behavior
 
 - Discover links to a global **Most loved on Shelf** book leaderboard. Most loved is all-time explicit loves from contributing anonymous device identities, one vote per book per identity. Later dislikes retract a vote; passes and saves do not. Equal counts share a competition rank (1, 1, 3).
-- **Recently loved** uses a separate candidate pool, so recent books do not need to enter the popular list first. It is an ordering of recent love events, not a weekly trend or velocity score. Both views show all-time counts and the aggregate update time. Already-read books remain in the global ranking with a read marker.
+- **Recently loved** uses a separate candidate pool, so recent books do not need to enter the popular list first. It is an ordering of recent love events, not a weekly trend or velocity score. Both views show the aggregate update time. Reader counts are deliberately hidden throughout the UI while the community is small; internal counts still determine ranking. Already-read books remain in the global ranking with a read marker.
 - The original personalized community discovery endpoint remains compatible. The iOS Discover screen falls back to its existing catalog card if the leaderboard endpoint is unavailable. Before the first new-format recomputation, the recent pool is empty, not fabricated from an all-time list.
 - Shelf rows open book details, retain the saved recommendation context, offer an explicit Amazon action, and support one **Up next** pin. Removing a saved book offers Undo.
 - For You pass offers Undo and no longer supplies a generalized negative taste signal. Explicit, latest read sentiment drives that signal. The existing exclusion and feed-frequency rules remain.
@@ -42,7 +42,7 @@ xcodebuild -project ShelfV2/Shelf.xcodeproj -scheme Shelf -configuration Debug -
 
 Interactive Simulator access was unavailable in the connected UI tool. Compilation and data tests do not verify touch targets, layout, voiceover or installed phone behavior.
 
-- New and existing install: open Discover, both leaderboard segments, a book detail, back and retry. Check empty, old aggregate, error, long titles, equal votes and read/saved state. Counts must match the snapshot; recent must never imply a weekly window.
+- New and existing install: open Discover, both leaderboard segments, a book detail, back and retry. Check empty, old aggregate, error, long titles, equal votes and read/saved state. Reader counts must remain hidden in rows and book details; ranks must match the snapshot, and recent must never imply a weekly window.
 - From search, Similar Books, a curated list, the leaderboard and For You: save and mark loved/disliked. Check Shelf, Taste, server context and the next aggregate. Repeated loves must not inflate counts. New user contribution false must remain excluded.
 - Open an existing saved item; verify original context and explicit Amazon search. Pin/unpin, relaunch, pin a different book, remove and Undo. Existing coverless owned books must remain accessible.
 - Pass and Undo with the API delayed; verify the card returns and that reaction is deleted only after the write finishes. Simulate a write failure and verify the restored card is visible and usable.

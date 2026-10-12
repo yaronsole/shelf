@@ -159,8 +159,8 @@ private struct CommunityLeaderboardView: View {
                 }
                 .pickerStyle(.segmented)
                 Text(order == "popular"
-                     ? "Ranked by readers who marked each book as loved. All time; equal counts share a rank."
-                     : "Books most recently marked as loved. Counts show all-time loves.")
+                     ? "All-time favorites from the Shelf community. Equally loved books share a rank."
+                     : "The latest books readers have marked as loved.")
                     .font(.subheadline).foregroundStyle(.secondary)
                 if let label = result?.updateLabel {
                     Text(label).font(.caption).foregroundStyle(.secondary)
@@ -184,11 +184,7 @@ private struct CommunityLeaderboardView: View {
                                     VStack(alignment: .leading, spacing: 5) {
                                         Text(book.title).font(.headline).multilineTextAlignment(.leading)
                                         Text(book.author).font(.subheadline).foregroundStyle(.secondary)
-                                        if let count = book.lovedCount {
-                                            Text("\(count) \(count == 1 ? "reader" : "readers") loved it")
-                                                .font(.caption.weight(.medium))
-                                                .foregroundStyle(Color(hexString: "4D3388"))
-                                        }
+
                                     }.frame(maxWidth: .infinity, alignment: .leading)
                                     if actions.status(for: book.bookId) == .read {
                                         Image(systemName: "checkmark.circle").accessibilityLabel("Read")
