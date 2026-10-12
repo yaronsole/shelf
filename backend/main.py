@@ -4,6 +4,8 @@ Python 3.12 / FastAPI / Firestore / Claude API
 """
 from __future__ import annotations
 
+from community import rank_loves, recently_loved, with_ranks, taste_signals
+
 import logging
 import os
 import re
@@ -616,7 +618,18 @@ def list_seed_books(user_id: UserID, domain: str = "books"):
 # ---------------------------------------------------------------------------
 @app.delete("/v1/seed-books/{book_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_seed_book(book_id: str, user_id: UserID):
-    seed_col(user_id).document(book_id).delete()
+    ref = seed_col(user_id).document(book_id)
+    snap = ref.get()
+    seed = snap.to_dict() if snap.exists else None
+    if seed:
+        key = book_id_hash(seed.get("title", ""), seed.get("author", ""))
+        # Removing influence is not a retraction of the reader's community love.
+        # Exclude old reactions from taste while preserving them for discovery.
+        for doc in reaction_col(user_id).where("domain", "==", seed.get("domain", "books")).stream():
+            r = doc.to_dict()
+            if book_id_hash(r.get("title", ""), r.get("author", "")) == key:
+                doc.reference.update({"taste_excluded": True})
+    ref.delete()
 
 
 # ---------------------------------------------------------------------------
@@ -645,6 +658,12 @@ def add_reaction(body: ReactionRequest, user_id: UserID):
         "author": book.get("author") or body.author or "",
     })
     return {"id": doc_id}
+
+
+@app.delete("/v1/reactions/{reaction_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_reaction(reaction_id: str, user_id: UserID):
+    """Undo only the authenticated reader's specific reaction."""
+    reaction_col(user_id).document(reaction_id).delete()
 
 
 # ---------------------------------------------------------------------------
@@ -790,20 +809,9 @@ def _generate_recommendations(user_id: str, domain: str, is_cron: bool = False) 
         d = rxn.to_dict()
         _exclude(d.get("title"), d.get("author"))
 
-    # Positive / negative taste signals
-    liked = [
-        d.to_dict()
-        for d in reaction_col(user_id)
-        .where("kind", "in", [ReactionKind.save, ReactionKind.already_read_liked])
-        .stream()
-    ]
-    disliked = [
-        d.to_dict()
-        for d in reaction_col(user_id)
-        .where("kind", "in", [ReactionKind.already_read_disliked, ReactionKind.dismiss])
-        .limit(50)
-        .stream()
-    ]
+    # Only explicit, current reading sentiment changes taste. A pass still
+    # participates in exclusions above, but never generalizes into a dislike.
+    liked, disliked = taste_signals([d.to_dict() for d in reaction_col(user_id).stream()], domain)
 
     # Phase B: compact genre/era histogram over the last few DELIVERED batches
     # (bounded by RECENT_BATCH_LOOKBACK). Lets the prompt apply a LIGHT bias
@@ -1472,8 +1480,8 @@ def _user_list_status_map(user_id: str, domain: str) -> dict[tuple[str, str], st
     explicitly marked the book as read)."""
     status: dict[tuple[str, str], str] = {}
 
-    for doc in reaction_col(user_id).where("domain", "==", domain).stream():
-        d = doc.to_dict()
+    reactions = [doc.to_dict() for doc in reaction_col(user_id).where("domain", "==", domain).stream()]
+    for d in sorted(reactions, key=lambda r: r.get("created_at") or _EPOCH):
         title = (d.get("title") or "").lower().strip()
         author = (d.get("author") or "").lower().strip()
         if not title:
@@ -1709,61 +1717,34 @@ def _compute_loved_by_readers(dry_run: bool = False) -> dict:
     alphabetically. The list was mostly that user's own shelf and barely changed.)
 
     dry_run=True computes and returns the result WITHOUT persisting."""
-    loved_users: dict[tuple[str, str], set[str]] = defaultdict(set)
-    latest_love: dict[tuple[str, str], datetime] = {}
-    titles: dict[tuple[str, str], dict] = {}
-
-    def _register(title: str, author: str, uid: str, loved_at) -> None:
-        t = (title or "").strip()
-        a = (author or "").strip()
-        if not t:
-            return
-        key = (t.lower(), a.lower())
-        loved_users[key].add(uid)
-        titles.setdefault(key, {"title": t, "author": a})
-        if isinstance(loved_at, datetime) and loved_at > latest_love.get(key, _EPOCH):
-            latest_love[key] = loved_at
-
-    # 1) "Read & loved" reactions across contributing users
+    readers = []
     for user in db.collection("users").stream():
-        if (user.to_dict() or {}).get("contribute", True) is False:
-            continue
-        uid = user.id
-        for doc in (reaction_col(uid)
-                    .where("kind", "==", ReactionKind.already_read_liked.value)
-                    .stream()):
-            d = doc.to_dict()
-            _register(d.get("title", ""), d.get("author", ""), uid, d.get("created_at"))
-
-    # Rank by distinct readers desc; within a tier the most recently loved first,
-    # then title for a stable order.
-    def _rank(k: tuple[str, str]):
-        return (-len(loved_users[k]), -latest_love.get(k, _EPOCH).timestamp(), k[0])
-    ranked = sorted(titles.keys(), key=_rank)
-
-    # Resolve covers for a candidate pool (headroom for the cover guard), drop
-    # cover-less, then cap.
-    candidates = [
-        {
-            "book_id": book_id_hash(titles[k]["title"], titles[k]["author"]),
-            "title": titles[k]["title"],
-            "author": titles[k]["author"],
-            "loved_count": len(loved_users[k]),
-        }
-        for k in ranked[: COMMUNITY_STORED_SIZE * 2]
-    ]
+        contributes = (user.to_dict() or {}).get("contribute", True) is not False
+        if contributes:
+            reactions = [d.to_dict() for d in reaction_col(user.id)
+                         .where("kind", "in", [ReactionKind.already_read_liked.value,
+                                               ReactionKind.already_read_disliked.value]).stream()]
+            readers.append((user.id, True, reactions))
+    ranked = rank_loves(readers)
+    recent = recently_loved(ranked)
+    # Separate candidate pools: recent discoveries need not already be popular.
+    candidates = list({b["book_id"]: b for b in
+                       ranked[:COMMUNITY_STORED_SIZE * 2] + recent[:COMMUNITY_STORED_SIZE * 2]}.values())
     covers = _resolve_list_covers(candidates) if candidates else {}
 
     books: list[dict] = []
     seen: set[str] = set()
     for c in candidates:
-        if len(books) >= COMMUNITY_STORED_SIZE:
-            break
         cover = covers.get(c["book_id"], "")
         if not _has_valid_cover(cover) or c["book_id"] in seen:
             continue
         seen.add(c["book_id"])
         books.append({**c, "cover_url": cover})
+
+    eligible = {b["book_id"]: b for b in books}
+    popular_books = [eligible[b["book_id"]] for b in ranked if b["book_id"] in eligible][:COMMUNITY_STORED_SIZE]
+    recent_books = [eligible[b["book_id"]] for b in recent if b["book_id"] in eligible][:COMMUNITY_STORED_SIZE]
+    books = list({b["book_id"]: b for b in popular_books + recent_books}.values())
 
     # Enrich the final list with a year + short description from Google Books
     # (no LLM) so the detail sheet matches the curated lists instead of being bare.
@@ -1778,22 +1759,47 @@ def _compute_loved_by_readers(dry_run: bool = False) -> dict:
             b["year"] = m.get("year")
             b["description"] = _clean_blurb(m.get("description", ""))
 
+    eligible = {b["book_id"]: b for b in books}
+    popular_books = [eligible[b["book_id"]] for b in ranked if b["book_id"] in eligible][:COMMUNITY_STORED_SIZE]
+    recent_books = [eligible[b["book_id"]] for b in recent if b["book_id"] in eligible][:COMMUNITY_STORED_SIZE]
     if not dry_run:
         _community_doc_ref().set({
-            "books": books,
-            "count": len(books),
+            "books": popular_books,
+            "recent_books": recent_books,
+            "count": len(popular_books),
             "updated_at": datetime.now(timezone.utc),
         })
 
     return {
-        "count": len(books),
-        "distinct_books_considered": len(titles),
+        "count": len(popular_books),
+        "recent_count": len(recent_books),
+        "distinct_books_considered": len(ranked),
         "books": [
             {"title": b["title"], "author": b["author"], "loved_count": b["loved_count"],
              "year": b.get("year"), "description": b.get("description", "")}
-            for b in books
+            for b in popular_books
         ],
     }
+
+
+@app.get("/v1/community/leaderboard")
+def community_leaderboard(user_id: UserID, order: str = "popular"):
+    if order not in ("popular", "recent"):
+        raise HTTPException(status_code=400, detail="order must be popular or recent")
+    snap = _community_doc_ref().get()
+    data = snap.to_dict() if snap.exists else {}
+    data = data or {}
+    books = [b for b in data.get("books" if order == "popular" else "recent_books", [])
+             if _has_valid_cover(b.get("cover_url")) and b.get("loved_count", 0) > 0]
+    if order == "popular":
+        books = with_ranks(sorted(books, key=lambda b: -b["loved_count"]))
+    else:
+        books = recently_loved(books)
+    statuses = _user_list_status_map(user_id, "books")
+    out = []
+    for b in books[:COMMUNITY_LIST_SIZE]:
+        out.append({**b, "user_status": statuses.get((b["title"].lower().strip(), b["author"].lower().strip()))})
+    return {"books": out, "updated_at": data.get("updated_at"), "order": order}
 
 
 @app.post("/v1/cron/recompute-community")
