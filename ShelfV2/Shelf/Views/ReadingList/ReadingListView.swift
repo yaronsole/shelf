@@ -2,11 +2,13 @@ import SwiftUI
 import SwiftData
 
 struct ReadingListView: View {
+    @Environment(\.openURL) private var openURL
     @Environment(\.modelContext) private var modelContext
 
     @Query(sort: \ReadingListItem.savedAt, order: .reverse)
     private var items: [ReadingListItem]
 
+    @State private var selectedItem: ReadingListItem?
     @State private var vm = ReadingListViewModel()
     @State private var itemForSentiment: ReadingListItem? = nil
 
@@ -21,8 +23,8 @@ struct ReadingListView: View {
                     )
                 } else {
                     List {
-                        ForEach(items) { item in
-                            ReadingListCardView(item: item)
+                        ForEach(items.sorted { $0.isUpNext != $1.isUpNext ? $0.isUpNext : $0.savedAt > $1.savedAt }) { item in
+                            ReadingListCardView(item: item, onOpen: { selectedItem = item })
                                 .listRowInsets(EdgeInsets(top: 10, leading: 16, bottom: 10, trailing: 16))
                                 .swipeActions(edge: .leading, allowsFullSwipe: false) {
                                     Button {
@@ -46,6 +48,22 @@ struct ReadingListView: View {
                 }
             }
         }
+        .sheet(item: $selectedItem) { item in
+            BookDetailSheet(
+                book: ListBookDTO(bookId: item.id, title: item.title, author: item.author,
+                    year: nil, coverURL: item.coverURL, userStatus: .saved, description: ""),
+                listTitle: "Your shelf",
+                onReadLoved: { vm.markAsRead(item, liked: true, modelContext: modelContext) },
+                onReadDisliked: { vm.markAsRead(item, liked: false, modelContext: modelContext) },
+                onSave: { vm.toggleUpNext(item, modelContext: modelContext) },
+                onBuy: {
+                    if let url = AmazonLinkService.searchURL(title: item.title, author: item.author) { openURL(url) }
+                },
+                recommendationContext: item.blurb,
+                saveLabel: item.isUpNext ? "unpin" : "up next",
+                saveIcon: item.isUpNext ? "pin.slash" : "pin.fill"
+            )
+        }
         // Action-sheet style prompt — much more reliable than a chained sheet
         // and renders instantly (no white-screen race).
         .confirmationDialog(
@@ -59,11 +77,9 @@ struct ReadingListView: View {
         ) { item in
             Button("Loved it") {
                 vm.markAsRead(item, liked: true, modelContext: modelContext)
-                ToastManager.shared.show(.reactedRead)
             }
             Button("Didn't like it") {
                 vm.markAsRead(item, liked: false, modelContext: modelContext)
-                ToastManager.shared.show(.reactedPass)
             }
             Button("Cancel", role: .cancel) { }
         } message: { item in

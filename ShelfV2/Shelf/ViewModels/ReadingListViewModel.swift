@@ -2,45 +2,43 @@ import Foundation
 import SwiftData
 
 @Observable
+@MainActor
 final class ReadingListViewModel {
-    var expandedItemId: String? = nil
-
-    func toggleExpand(_ id: String) {
-        expandedItemId = expandedItemId == id ? nil : id
+    func toggleUpNext(_ item: ReadingListItem, modelContext: ModelContext) {
+        let wasUpNext = item.isUpNext
+        let items = (try? modelContext.fetch(FetchDescriptor<ReadingListItem>())) ?? []
+        for saved in items { saved.isUpNext = false }
+        item.isUpNext = !wasUpNext
     }
 
     func remove(_ item: ReadingListItem, modelContext: ModelContext) {
+        // Capture values before deletion; a deleted SwiftData object cannot be
+        // safely reinserted after an autosave.
+        let restored = ReadingListItem(id: item.id, title: item.title, author: item.author,
+            coverURL: item.coverURL, blurb: item.blurb, domain: item.domain,
+            genre: item.genre, era: item.era, becauseOf: item.becauseOf,
+            readingTimeMinutes: item.readingTimeMinutes, nytBestseller: item.nytBestseller,
+            nytWeeksOnList: item.nytWeeksOnList)
+        restored.savedAt = item.savedAt
+        restored.isUpNext = item.isUpNext
         modelContext.delete(item)
+        ToastManager.shared.show(.removedFromShelf, undo: {
+            if restored.isUpNext {
+                let items = (try? modelContext.fetch(FetchDescriptor<ReadingListItem>())) ?? []
+                restored.isUpNext = !items.contains { $0.isUpNext }
+            }
+            modelContext.insert(restored)
+        })
     }
 
     func markAsRead(_ item: ReadingListItem, liked: Bool, modelContext: ModelContext) {
-        // Record the reaction on the backend (no-op for Discover-saved items whose
-        // id isn't in recommendation_col, but harmless).
-        Task { try? await APIClient.shared.submitReaction(bookId: item.id, kind: liked ? .alreadyReadLiked : .alreadyReadDisliked) }
-
-        // Loved it → also seed the book so it informs future recs and shows up in Taste.
-        // Mirrors the ForYouViewModel.markAlreadyRead seeding behavior so both
-        // "I loved this" surfaces feed back into the user's taste consistently.
-        if liked {
-            let title = item.title
-            let author = item.author
-            let coverURL = item.coverURL
-            let titleKey = title.lowercased()
-            let authorKey = author.lowercased()
-            let descriptor = FetchDescriptor<LocalSeedBook>()
-            let alreadySeeded = ((try? modelContext.fetch(descriptor)) ?? []).contains {
-                $0.title.lowercased() == titleKey && $0.author.lowercased() == authorKey
-            }
-            if !alreadySeeded {
-                let local = LocalSeedBook(id: UUID().uuidString, title: title, author: author, coverURL: coverURL)
-                modelContext.insert(local)
-                Task {
-                    try? await APIClient.shared.submitSeedBook(title: title, author: author, coverURL: coverURL)
-                }
+        Task {
+            let ok = await SeedWriter.recordAlreadyRead(title: item.title, author: item.author,
+                coverURL: item.coverURL, liked: liked, modelContext: modelContext)
+            if ok {
+                modelContext.delete(item)
+                ToastManager.shared.show(liked ? .reactedRead : .reactedPass)
             }
         }
-
-        // Remove from local reading list
-        modelContext.delete(item)
     }
 }

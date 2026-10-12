@@ -342,11 +342,16 @@ struct ListBookDTO: Decodable, Identifiable {
     let coverURL: String
     let userStatus: ListUserStatus?
     let description: String
+    var lovedCount: Int? = nil
+    var rank: Int? = nil
+    var latestLovedAt: String? = nil
 
     var id: String { bookId }
 
     enum CodingKeys: String, CodingKey {
-        case title, author, year, description
+        case title, author, year, description, rank
+        case lovedCount = "loved_count"
+        case latestLovedAt = "latest_loved_at"
         case bookId = "book_id"
         case coverURL = "cover_url"
         case userStatus = "user_status"
@@ -361,6 +366,9 @@ struct ListBookDTO: Decodable, Identifiable {
         coverURL = (try? c.decode(String.self, forKey: .coverURL)) ?? ""
         userStatus = try? c.decodeIfPresent(ListUserStatus.self, forKey: .userStatus)
         description = (try? c.decode(String.self, forKey: .description)) ?? ""
+        lovedCount = try? c.decodeIfPresent(Int.self, forKey: .lovedCount)
+        rank = try? c.decodeIfPresent(Int.self, forKey: .rank)
+        latestLovedAt = try? c.decodeIfPresent(String.self, forKey: .latestLovedAt)
     }
 
     /// Memberwise init for building a DTO outside of decoding — lets `BookSearchView`
@@ -375,6 +383,28 @@ struct ListBookDTO: Decodable, Identifiable {
         self.coverURL = coverURL
         self.userStatus = userStatus
         self.description = description
+    }
+}
+
+struct CommunityLeaderboardDTO: Decodable {
+    let books: [ListBookDTO]
+    let updatedAt: String?
+    let order: String
+    enum CodingKeys: String, CodingKey {
+        case books, order
+        case updatedAt = "updated_at"
+    }
+
+    var updateLabel: String? {
+        guard let updatedAt else { return nil }
+        let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        var date = formatter.date(from: updatedAt)
+        if date == nil {
+            formatter.formatOptions = [.withInternetDateTime]
+            date = formatter.date(from: updatedAt)
+        }
+        return date.map { "Updated " + $0.formatted(date: .abbreviated, time: .shortened) }
     }
 }
 

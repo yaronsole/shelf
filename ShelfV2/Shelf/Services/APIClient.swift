@@ -46,10 +46,12 @@ final class APIClient {
 
     // MARK: - Seed Books
 
-    func submitSeedBook(title: String, author: String, coverURL: String, domain: Domain = .books) async throws {
+    @discardableResult
+    func submitSeedBook(title: String, author: String, coverURL: String, domain: Domain = .books) async throws -> String {
         let url = APIConfig.baseURL.appendingPathComponent(APIConfig.Endpoints.seedBooks)
         let body = SeedBookRequest(title: title, author: author, coverURL: coverURL, domain: domain.rawValue)
-        try await post(url: url, body: body)
+        let response: WriteResponse = try await postForResponse(url: url, body: body)
+        return response.id
     }
 
     func fetchSeedBooks(domain: Domain = .books) async throws -> [SeedBookDTO] {
@@ -58,15 +60,24 @@ final class APIClient {
         return try await get(url: components.url!)
     }
 
-    func deleteSeedBook(id: String, domain: Domain = .books) async throws {
-        let url = APIConfig.baseURL
-            .appendingPathComponent(APIConfig.Endpoints.seedBooks)
-            .appendingPathComponent(id)
-        try await delete(url: url)
+    func deleteSeedBook(id: String, title: String? = nil, author: String? = nil, domain: Domain = .books) async throws {
+        // Older installs generated unrelated local UUIDs. Resolve those mirrors
+        // by book identity before deleting; never claim success for a wrong ID.
+        var ids = [id]
+        if let title, let author {
+            let seeds = try await fetchSeedBooks(domain: domain)
+            let key = SeedWriter.stableBookId(title: title, author: author)
+            ids = seeds.filter { SeedWriter.stableBookId(title: $0.title, author: $0.author) == key }.map(\.id)
+        }
+        for serverID in ids {
+            let url = APIConfig.baseURL.appendingPathComponent(APIConfig.Endpoints.seedBooks).appendingPathComponent(serverID)
+            try await delete(url: url)
+        }
     }
 
     // MARK: - Reactions
 
+    @discardableResult
     func submitReaction(
         bookId: String,
         kind: ReactionKind,
@@ -74,14 +85,27 @@ final class APIClient {
         author: String? = nil,
         coverURL: String? = nil,
         domain: Domain = .books
-    ) async throws {
+    ) async throws -> String {
         let url = APIConfig.baseURL.appendingPathComponent(APIConfig.Endpoints.reactions)
         let body = ReactionRequest(
             bookId: bookId, kind: kind, domain: domain.rawValue,
             title: title, author: author, coverURL: coverURL
         )
-        try await post(url: url, body: body)
+        let response: WriteResponse = try await postForResponse(url: url, body: body)
+        return response.id
     }
+
+    func deleteReaction(id: String) async throws {
+        try await delete(url: APIConfig.baseURL.appendingPathComponent(APIConfig.Endpoints.reactions).appendingPathComponent(id))
+    }
+
+    func fetchLeaderboard(order: String) async throws -> CommunityLeaderboardDTO {
+        var components = URLComponents(url: APIConfig.baseURL.appendingPathComponent("/v1/community/leaderboard"), resolvingAgainstBaseURL: false)!
+        components.queryItems = [URLQueryItem(name: "order", value: order)]
+        return try await get(url: components.url!)
+    }
+
+    private struct WriteResponse: Decodable { let id: String }
 
     // MARK: - Seen Books
 

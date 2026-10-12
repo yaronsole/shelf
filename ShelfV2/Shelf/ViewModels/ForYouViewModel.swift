@@ -311,6 +311,7 @@ final class ForYouViewModel {
 
     // MARK: - Reactions (REC-08)
 
+    @MainActor
     func save(_ rec: CachedRecommendation, modelContext: ModelContext) {
         let item = ReadingListItem(
             id: rec.id,
@@ -326,40 +327,39 @@ final class ForYouViewModel {
             nytBestseller: rec.nytBestseller,
             nytWeeksOnList: rec.nytWeeksOnList
         )
-        modelContext.insert(item)
+        SeedWriter.recordSaved(item, modelContext: modelContext)
         removeFromFeed(rec, modelContext: modelContext)
-        Task { try? await APIClient.shared.submitReaction(bookId: rec.id, kind: .save) }
     }
 
     func dismiss(_ rec: CachedRecommendation, modelContext: ModelContext) {
         removeFromFeed(rec, modelContext: modelContext)
-        Task { try? await APIClient.shared.submitReaction(bookId: rec.id, kind: .dismiss) }
+        let write = Task { @MainActor () -> String? in
+            do {
+                return try await APIClient.shared.submitReaction(bookId: rec.id, kind: .dismiss,
+                    title: rec.title, author: rec.author)
+            } catch {
+                rec.isReacted = false
+                ToastManager.shared.show(.actionFailed)
+                return nil
+            }
+        }
+        ToastManager.shared.show(.passed, undo: {
+            rec.isReacted = false
+            Task { @MainActor in
+                do {
+                    if let id = await write.value { try await APIClient.shared.deleteReaction(id: id) }
+                } catch { ToastManager.shared.show(.actionFailed) }
+            }
+        })
     }
 
     func markAlreadyRead(_ rec: CachedRecommendation, liked: Bool, modelContext: ModelContext) {
         removeFromFeed(rec, modelContext: modelContext)
-        let kind: ReactionKind = liked ? .alreadyReadLiked : .alreadyReadDisliked
-        Task { try? await APIClient.shared.submitReaction(bookId: rec.id, kind: kind) }
-
-        // Loved it → also seed the book so it informs future recs and shows up in Taste
-        if liked {
-            let title = rec.title
-            let author = rec.author
-            let coverURL = rec.coverURL
-            // Skip if a local seed for this book already exists
-            let titleKey = title.lowercased()
-            let authorKey = author.lowercased()
-            let descriptor = FetchDescriptor<LocalSeedBook>()
-            let alreadySeeded = ((try? modelContext.fetch(descriptor)) ?? []).contains {
-                $0.title.lowercased() == titleKey && $0.author.lowercased() == authorKey
-            }
-            if !alreadySeeded {
-                let local = LocalSeedBook(id: UUID().uuidString, title: title, author: author, coverURL: coverURL)
-                modelContext.insert(local)
-                Task {
-                    try? await APIClient.shared.submitSeedBook(title: title, author: author, coverURL: coverURL)
-                }
-            }
+        Task { @MainActor in
+            let ok = await SeedWriter.recordAlreadyRead(title: rec.title, author: rec.author,
+                coverURL: rec.coverURL, liked: liked, modelContext: modelContext)
+            if !ok { rec.isReacted = false }
+            else { ToastManager.shared.show(liked ? .reactedRead : .reactedPass) }
         }
     }
 

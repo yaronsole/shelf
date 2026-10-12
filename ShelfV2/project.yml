@@ -18,8 +18,8 @@ targets:
         SWIFT_VERSION: 5.10
         PRODUCT_BUNDLE_IDENTIFIER: com.ysole.shelf
         TARGETED_DEVICE_FAMILY: "1"
-        MARKETING_VERSION: "2.0"
-        CURRENT_PROJECT_VERSION: "3"
+        MARKETING_VERSION: "2.3"
+        CURRENT_PROJECT_VERSION: "128"
         GENERATE_INFOPLIST_FILE: YES
         INFOPLIST_KEY_CFBundleDisplayName: Shelf
         INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents: YES

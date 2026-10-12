@@ -26,13 +26,19 @@ final class TasteProfileViewModel {
     func executeRemove(modelContext: ModelContext, seedCount: Int) {
         guard let book = bookToRemove else { return }
         guard seedCount > TasteProfileViewModel.minimumSeeds else { return }
-        Task {
-            try? await APIClient.shared.deleteSeedBook(id: book.id)
-        }
-        SimilarBooksCacheService.invalidate(seed: book)
-        modelContext.delete(book)
+        let title = book.title, author = book.author, id = book.id
         bookToRemove = nil
         isShowingRemoveConfirm = false
+        Task { @MainActor in
+            do {
+                try await APIClient.shared.deleteSeedBook(id: id, title: title, author: author)
+                SimilarBooksCacheService.invalidate(seed: book)
+                modelContext.delete(book)
+                ToastManager.shared.show(.removedFromTaste)
+            } catch {
+                ToastManager.shared.show(.actionFailed)
+            }
+        }
     }
 
     func cancelRemove() {

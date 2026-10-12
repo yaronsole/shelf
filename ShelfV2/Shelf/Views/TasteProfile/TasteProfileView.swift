@@ -91,7 +91,6 @@ struct TasteProfileView: View {
         .alert("remove from taste?", isPresented: $vm.isShowingRemoveConfirm) {
             Button("remove", role: .destructive) {
                 vm.executeRemove(modelContext: modelContext, seedCount: seedBooks.count)
-                ToastManager.shared.show(.removedFromTaste)
             }
             Button("cancel", role: .cancel) {
                 vm.cancelRemove()

@@ -211,6 +211,9 @@ struct BookDetailSheet: View {
     let onReadDisliked: () -> Void
     let onSave: () -> Void
     let onBuy: () -> Void
+    var recommendationContext: String = ""
+    var saveLabel: String = "save"
+    var saveIcon: String = "bookmark.fill"
 
     @Environment(\.dismiss) private var dismiss
     @State private var inSentimentMode = false
@@ -248,6 +251,12 @@ struct BookDetailSheet: View {
                     }
                     .padding(.horizontal, 16)
 
+                    if !recommendationContext.isEmpty {
+                        Text(recommendationContext)
+                            .font(.body)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(.horizontal, 16)
+                    }
                     overviewSection
                         .padding(.horizontal, 16)
                 }
@@ -339,8 +348,8 @@ struct BookDetailSheet: View {
                 onSave()
                 dismiss()
             } label: {
-                PillLabel(iconName: "bookmark.fill", iconColor: .white,
-                          label: "save", labelColor: .white,
+                PillLabel(iconName: saveIcon, iconColor: .white,
+                          label: saveLabel, labelColor: .white,
                           background: Color(hex: 0x1A1A1A), hasBorder: false)
             }
             .buttonStyle(.plain)

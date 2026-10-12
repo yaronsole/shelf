@@ -53,10 +53,14 @@ enum SeedWriter {
                 bookId: bookId, kind: kind,
                 title: title, author: author, coverURL: coverURL
             )
-            if insertedSeed != nil {
-                try await APIClient.shared.submitSeedBook(
+            if liked {
+                let serverID = try await APIClient.shared.submitSeedBook(
                     title: title, author: author, coverURL: coverURL
                 )
+                let seeds = (try? modelContext.fetch(FetchDescriptor<LocalSeedBook>())) ?? []
+                for seed in seeds where stableBookId(title: seed.title, author: seed.author) == bookId {
+                    seed.id = serverID
+                }
             }
             return true
         } catch {
@@ -65,7 +69,35 @@ enum SeedWriter {
             if let local = insertedSeed {
                 modelContext.delete(local)
             }
+            ToastManager.shared.show(.actionFailed)
             return false
+        }
+    }
+
+    /// Saves carry the same identity on search, popular picks, Similar Books and
+    /// For You. Keep the local choice usable offline; report failed taste sync.
+    @MainActor
+    static func recordSaved(_ item: ReadingListItem, modelContext: ModelContext) {
+        let key = stableBookId(title: item.title, author: item.author)
+        let existing = (try? modelContext.fetch(FetchDescriptor<ReadingListItem>())) ?? []
+        if !existing.contains(where: { $0.domain == item.domain && stableBookId(title: $0.title, author: $0.author) == key }) {
+            modelContext.insert(item)
+        }
+        syncSave(title: item.title, author: item.author, cover: item.coverURL)
+    }
+
+    @MainActor
+    private static func syncSave(title: String, author: String, cover: String) {
+        let key = stableBookId(title: title, author: author)
+        Task {
+            do {
+                try await APIClient.shared.submitReaction(bookId: key, kind: .save,
+                    title: title, author: author, coverURL: cover)
+            } catch {
+                ToastManager.shared.show(.actionFailed, retry: {
+                    syncSave(title: title, author: author, cover: cover)
+                })
+            }
         }
     }
 

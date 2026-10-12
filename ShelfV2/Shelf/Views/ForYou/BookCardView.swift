@@ -100,7 +100,12 @@ struct BookCardView: View {
         withAnimation(.spring(response: 0.35, dampingFraction: 0.75)) {
             isRemoving = true
         }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { action() }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+            action()
+            // A failed write or Undo can restore this card. Do not retain a
+            // permanently transparent state if SwiftUI reuses the view identity.
+            isRemoving = false
+        }
     }
 }
 

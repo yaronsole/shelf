@@ -91,7 +91,7 @@ The reader's taste profile (books they explicitly love). Where a line carries a 
 Books they saved or rated positively after we recommended them — these are STRONG positive signals:
 {liked_list}
 
-Books they dismissed or rated negatively — these are STRONG negative signals; avoid recommending books with similar appeal:
+Books they explicitly disliked after reading — these are negative taste signals; avoid recommending books with similar appeal:
 {disliked_list}
 
 Use both the seed list and the reaction history to refine your picks. The reactions are recent feedback and should weigh more heavily than the original seeds when they conflict.

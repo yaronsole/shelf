@@ -113,6 +113,7 @@ final class ReadingListItem {
     var author: String
     var coverURL: String
     var blurb: String
+    var isUpNext: Bool = false
     var savedAt: Date
     var domain: String
     // v2.1: rich card fields copied from CachedRecommendation at save time.

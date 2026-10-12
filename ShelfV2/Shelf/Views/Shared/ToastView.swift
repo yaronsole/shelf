@@ -3,6 +3,7 @@ import SwiftUI
 // MARK: - Toast kinds (TST-1 through TST-8)
 
 enum ToastKind {
+    case actionFailed
     case savedToShelf      // TST-1
     case passed            // TST-2
     case reactedRead       // TST-3
@@ -14,12 +15,13 @@ enum ToastKind {
 
     var message: String {
         switch self {
+        case .actionFailed:     return "Couldn’t sync that change. Please try again."
         case .savedToShelf:     return "added to your shelf"
         case .passed:           return "noted, moving on"
-        case .reactedRead:      return "noted — good taste"
+        case .reactedRead:      return "added to the books you love"
         case .reactedPass:      return "noted, not your thing"
         case .removedFromShelf: return "off the shelf"
-        case .removedFromTaste: return "we'll stop suggesting books like that"
+        case .removedFromTaste: return "removed from your taste"
         case .firstGeneration:  return "shaping your shelf — browse Discover while we cook"
         case .dailyRefresh:     return "fresh picks for today"
         }
@@ -27,6 +29,7 @@ enum ToastKind {
 
     var iconName: String {
         switch self {
+        case .actionFailed:     return "exclamationmark.icloud"
         case .savedToShelf:     return "bookmark.fill"
         case .passed:           return "arrow.right"
         case .reactedRead:      return "checkmark"
@@ -41,6 +44,7 @@ enum ToastKind {
     // Spec: colored circle icon matching action category
     var iconColor: Color {
         switch self {
+        case .actionFailed:     return Color.orange
         case .savedToShelf:     return Color(hexString: "FAC775") // gold
         case .passed:           return Color(hexString: "CECBF6") // lavender
         case .reactedRead:      return Color(hexString: "9FE1CB") // mint
@@ -72,16 +76,22 @@ final class ToastManager {
     private init() {}
 
     var current: ToastItem? = nil
+    var undoAction: (() -> Void)? = nil
+    var actionLabel = "Undo"
     private var dismissTask: Task<Void, Never>?
 
-    func show(_ kind: ToastKind) {
+    func show(_ kind: ToastKind, undo: (() -> Void)? = nil, retry: (() -> Void)? = nil) {
+        // Existing callers may repeat the same confirmation. Preserve its Undo.
+        if undo == nil, retry == nil, current?.kind == kind, undoAction != nil { return }
         dismissTask?.cancel()
+        undoAction = undo ?? retry
+        actionLabel = retry == nil ? "Undo" : "Retry"
         current = ToastItem(kind: kind)
         dismissTask = Task {
-            try? await Task.sleep(for: .seconds(2.0))
+            try? await Task.sleep(for: .seconds(undo == nil && retry == nil ? 2.0 : 6.0))
             guard !Task.isCancelled else { return }
             await MainActor.run {
-                withAnimation(.easeIn(duration: 0.2)) { self.current = nil }
+                withAnimation(.easeIn(duration: 0.2)) { self.current = nil; self.undoAction = nil }
             }
         }
     }
@@ -91,6 +101,8 @@ final class ToastManager {
 
 struct ToastView: View {
     let item: ToastItem
+    var onUndo: (() -> Void)? = nil
+    var actionLabel = "Undo"
 
     var body: some View {
         HStack(spacing: 10) {
@@ -109,6 +121,12 @@ struct ToastView: View {
                 .foregroundStyle(.white)
                 .lineLimit(2)
                 .fixedSize(horizontal: false, vertical: true)
+            if let onUndo {
+                Button(actionLabel, action: onUndo)
+                    .font(.subheadline.bold())
+                    .foregroundStyle(.white)
+                    .frame(minWidth: 44, minHeight: 44)
+            }
         }
         .padding(.vertical, 10)
         .padding(.horizontal, 16)
@@ -130,7 +148,12 @@ struct ToastOverlay: View {
         VStack {
             Spacer()
             if let item = manager.current {
-                ToastView(item: item)
+                ToastView(item: item, onUndo: manager.undoAction == nil ? nil : {
+                    let action = manager.undoAction
+                    manager.current = nil
+                    manager.undoAction = nil
+                    action?()
+                }, actionLabel: manager.actionLabel)
                     .transition(
                         .asymmetric(
                             insertion: .move(edge: .bottom).combined(with: .opacity),
@@ -143,6 +166,5 @@ struct ToastOverlay: View {
         }
         .frame(maxWidth: .infinity)
         .animation(.easeOut(duration: 0.25), value: manager.current)
-        .allowsHitTesting(false)
     }
 }
