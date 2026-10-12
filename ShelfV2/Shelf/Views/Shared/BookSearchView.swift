@@ -286,7 +286,7 @@ struct BookSearchView<Idle: View>: View {
             coverURL: coverURL,
             blurb: "Saved from search."
         )
-        modelContext.insert(item)
+        SeedWriter.recordSaved(item, modelContext: modelContext)
     }
 
     /// Build a detail DTO from a search result so a tap opens the shared PDP.

@@ -78,11 +78,14 @@ struct SimilarBooksSheet: View {
                 onSave: { saveContext(ctx) },
                 onPass: { hiddenIds.insert(ctx.id) },
                 onSentiment: { liked in
-                    if liked {
-                        seedFromContext(ctx)
-                    }
                     hiddenIds.insert(ctx.id)
-                    ToastManager.shared.show(liked ? .reactedRead : .reactedPass)
+                    Task { @MainActor in
+                        let ok = await SeedWriter.recordAlreadyRead(title: ctx.display.title,
+                            author: ctx.display.author, coverURL: ctx.display.coverURL,
+                            liked: liked, modelContext: modelContext)
+                        if !ok { hiddenIds.remove(ctx.id) }
+                        else { ToastManager.shared.show(liked ? .reactedRead : .reactedPass) }
+                    }
                 }
             )
         }
@@ -219,24 +222,8 @@ struct SimilarBooksSheet: View {
             nytBestseller: display.nytBestseller,
             nytWeeksOnList: display.nytWeeksOnList
         )
-        modelContext.insert(item)
+        SeedWriter.recordSaved(item, modelContext: modelContext)
         hiddenIds.insert(ctx.id)
-    }
-
-    /// "Loved it" → also add to seeds (same as before)
-    private func seedFromContext(_ ctx: SuggestionDetailContext) {
-        let title = ctx.display.title
-        let author = ctx.display.author
-        let coverURL = ctx.display.coverURL
-        Task { @MainActor in
-            do {
-                try await APIClient.shared.submitSeedBook(title: title, author: author, coverURL: coverURL)
-                let local = LocalSeedBook(id: UUID().uuidString, title: title, author: author, coverURL: coverURL)
-                modelContext.insert(local)
-            } catch {
-                print("[SimilarBooks] failed to seed liked book: \(error)")
-            }
-        }
     }
 
     // MARK: - Load logic

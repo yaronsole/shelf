@@ -89,7 +89,6 @@ struct ForYouView: View {
                 },
                 onPass: {
                     vm.dismiss(rec, modelContext: modelContext)
-                    ToastManager.shared.show(.reactedPass)
                 },
                 onSentiment: { liked in
                     vm.markAlreadyRead(rec, liked: liked, modelContext: modelContext)
@@ -121,7 +120,6 @@ struct ForYouView: View {
                                     },
                                     onPass: {
                                         vm.dismiss(rec, modelContext: modelContext)
-                                        ToastManager.shared.show(.reactedPass)
                                     },
                                     onSentiment: { liked in
                                         vm.markAlreadyRead(rec, liked: liked, modelContext: modelContext)

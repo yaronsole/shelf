@@ -1,34 +1,43 @@
 import SwiftUI
 
 /// Compact row for a saved book on the Shelf tab.
-/// Identical layout regardless of save source (For You vs Discover) — no blurb,
-/// just cover + title + author. Tap = open Amazon. Swipe-to-delete handled by parent List.
+/// Tap opens the book detail. Reading context is retained; actions live on the detail.
 struct ReadingListCardView: View {
     let item: ReadingListItem
-    @Environment(\.openURL) private var openURL
+    let onOpen: () -> Void
 
     var body: some View {
-        HStack(alignment: .center, spacing: 12) {
-            BookCoverView(url: item.coverURL, width: 56)
+        Button(action: onOpen) {
+            HStack(alignment: .center, spacing: 12) {
+                BookCoverView(url: item.coverURL, width: 56)
 
-            VStack(alignment: .leading, spacing: 4) {
-                Text(item.title)
-                    .font(.subheadline.bold())
-                    .foregroundStyle(Color(.label))
-                    .lineLimit(2)
-                Text(item.author)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .lineLimit(1)
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(item.title)
+                        .font(.subheadline.bold())
+                        .foregroundStyle(Color(.label))
+                        .lineLimit(2)
+                    if item.isUpNext {
+                        Label("Up next", systemImage: "pin.fill")
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(Color(hexString: "4D3388"))
+                    }
+                    Text(item.author)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                    if !item.becauseOf.isEmpty {
+                        Text("Because you loved \(item.becauseOf)")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .lineLimit(2)
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.vertical, 4)
+            .contentShape(Rectangle())
         }
-        .padding(.vertical, 4)
-        .contentShape(Rectangle())
-        .onTapGesture {
-            if let url = AmazonLinkService.searchURL(title: item.title, author: item.author) {
-                openURL(url)
-            }
-        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("View details for \(item.title)")
     }
 }

@@ -348,7 +348,7 @@ struct EmptyForYouView: View {
             coverURL: book.coverURL ?? "",
             blurb: "Saved from search."
         )
-        modelContext.insert(item)
+        SeedWriter.recordSaved(item, modelContext: modelContext)
     }
 
     // Popular-picks variants (same id space — "title|author" lowercased — so
@@ -392,7 +392,7 @@ struct EmptyForYouView: View {
             coverURL: pick.coverURL,
             blurb: "Saved from popular picks."
         )
-        modelContext.insert(item)
+        SeedWriter.recordSaved(item, modelContext: modelContext)
     }
 
 }
