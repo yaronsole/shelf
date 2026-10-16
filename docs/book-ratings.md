@@ -79,6 +79,8 @@ reset early by the provider, errors omit the control until the key is replaced.
   and candidate URLs; checks used the actual API routes and catalogue instead.
 - Xcode confirmed **Shelf 2.4 (132) uploaded** to App Store Connect. Upload success
   does not establish TestFlight processing completion or public App Store release.
+  The App Store Connect browser check requested sign-in, so TestFlight availability
+  remains unverified.
 - Existing Cloud Run settings were preserved. The key is server-only; no personal
   libraries, reviews or profile permissions were granted.
 - [Implementation PR](https://github.com/yaronsole/shelf/pull/4).
