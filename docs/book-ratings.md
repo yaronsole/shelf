@@ -34,7 +34,7 @@ reviews, user libraries and user profiles are not requested.
 
 The separate authenticated `POST /v1/book-rating` endpoint is optional. Existing
 clients and existing response schemas remain compatible. Firestore's shared
-`book_rating_cache` holds scores for at most seven days; absent, ambiguous and
+`book_rating_cache` serves cached scores for at most seven days; absent, ambiguous and
 below-threshold results retry after a day. Provider errors retry after five minutes.
 An expired positive cache is never served after a refresh failure. The app also
 rejects invalid, unknown-source or stale responses.
@@ -67,7 +67,21 @@ reset early by the provider, errors omit the control until the key is replaced.
   placement/dismissal, Dynamic Type, VoiceOver and touch behavior still need an
   on-device check. Compilation is not visual verification.
 
-Release/deployment evidence will be recorded below after validation.
+## Release evidence — October 16, 2026
+
+- Production: `shelf-api-00057-vob`, verified at 100% traffic after testing its
+  candidate URL. Image digest: `sha256:9945abb8fff77d046558fe7f1337a5d3c0e3a8f4a2baa1667164e228162a26c5`.
+- Previous serving revision: `shelf-api-00055-xiz` (retained for rollback).
+- Candidate and production checks confirmed qualifying and omitted ratings,
+  authentication, no returned counts, and the existing list catalogue. Cached
+  candidate repeat lookup took 0.11 seconds in this single smoke check, not a
+  latency benchmark. `/healthz` returned Google's 404 on both the old production
+  and candidate URLs; checks used the actual API routes and catalogue instead.
+- Xcode confirmed **Shelf 2.4 (132) uploaded** to App Store Connect. Upload success
+  does not establish TestFlight processing completion or public App Store release.
+- Existing Cloud Run settings were preserved. The key is server-only; no personal
+  libraries, reviews or profile permissions were granted.
+- [Implementation PR](https://github.com/yaronsole/shelf/pull/4).
 
 ## Rollback
 
