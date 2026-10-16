@@ -22,6 +22,7 @@ from google.cloud import firestore
 from pydantic import ValidationError
 
 from models import (
+    BookRatingRequest,
     BookOverviewRequest,
     DebugInfoResponse,
     ListBookResponse,
@@ -52,6 +53,7 @@ from open_library import lookup_cover as open_library_lookup_cover
 from nyt_bestsellers import lookup_bestseller
 from nyt_history import fetch_next_pages as nyt_history_fetch_next_pages, lookup_bestseller_history
 from lists import book_id_hash, get_list_metadata, load_catalog, load_list_books
+from hardcover import RatingService
 
 import threading
 from concurrent.futures import Future, ThreadPoolExecutor, as_completed
@@ -67,6 +69,7 @@ log = logging.getLogger(__name__)
 # Clients (module-level singletons, initialised once at cold start)
 # ---------------------------------------------------------------------------
 db = firestore.Client()
+book_ratings = RatingService(db, os.environ.get("HARDCOVER_API_KEY", ""))
 # Measured Claude calls run 15-40s. The SDK default (600s timeout, 2 retries) would
 # let one stalled call hold a request for ~30 min -- longer than the cron's whole
 # time budget -- so bound it tightly.
@@ -1121,6 +1124,11 @@ def _structure_overview(raw: str, title: str = "", author: str = "") -> dict:
 
 def _has_overview_content(d: dict) -> bool:
     return bool(d.get("synopsis") or d.get("pull_quotes") or d.get("accolades"))
+
+
+@app.post("/v1/book-rating")
+def get_book_rating(body: BookRatingRequest, user_id: UserID):
+    return {"rating": book_ratings.get(body.title, body.author)}
 
 
 @app.post("/v1/book-overview")

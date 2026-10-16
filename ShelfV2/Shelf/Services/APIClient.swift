@@ -137,6 +137,15 @@ final class APIClient {
 
     // MARK: - Book Overview (lazy full description for list / Discover PDPs)
 
+    func fetchBookRating(title: String, author: String) async throws -> BookRatingDTO? {
+        let url = APIConfig.baseURL.appendingPathComponent("/v1/book-rating")
+        var request = makeRequest(url: url, method: "POST")
+        request.timeoutInterval = 12
+        request.httpBody = try encoder.encode(BookRatingRequest(title: title, author: author))
+        let response: BookRatingResponse = try await perform(request)
+        return response.rating
+    }
+
     func fetchBookOverview(title: String, author: String, description: String = "",
                            descriptionIsFallback: Bool = false) async throws -> BookOverviewDTO {
         let url = APIConfig.baseURL.appendingPathComponent(APIConfig.Endpoints.bookOverview)

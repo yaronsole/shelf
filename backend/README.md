@@ -27,6 +27,22 @@ Python / FastAPI / Firestore / Claude API — deploys to Google Cloud Run.
 | POST | `/v1/onboarding/suggestions` | Chain discovery suggestions |
 | GET | `/v1/debug/generation-info` | Last generation metadata |
 | GET | `/healthz` | Health check |
+| POST | `/v1/book-rating` | Optional aggregate rating for a title and author |
+
+## Book ratings
+
+Set the server-only `HARDCOVER_API_KEY` with Hardcover's `read:catalog` scope.
+Without a key the endpoint returns `{"rating": null}`. The standard deploy script
+preserves an existing key when the local environment omits it. Never include this
+credential in the iOS app or Git.
+
+The authenticated endpoint accepts `{ "title": "…", "author": "…" }` and returns
+an optional `{ "score": 4.1, "source": "Hardcover", "fetched_at": "…" }` under
+`rating`. Only confidently matched works with at least 100 ratings qualify. Counts
+are kept in the server cache and are not returned to the app.
+
+See [book-ratings.md](../docs/book-ratings.md) for identity rules, cache behavior,
+release validation and key rotation.
 
 ## Auth
 
