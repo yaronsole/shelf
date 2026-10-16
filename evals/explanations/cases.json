@@ -1,0 +1,356 @@
+{
+  "schema_version": 1,
+  "dataset_id": "shelf-explanations-v1",
+  "created_at": "2026-10-16",
+  "source_revision": "212b9cd",
+  "case_count": 15,
+  "development_count": 10,
+  "holdout_count": 5,
+  "cases": [
+    {
+      "id": "d01",
+      "split": "development",
+      "seed": {
+        "title": "Project Hail Mary",
+        "author": "Andy Weir",
+        "notes": "Science fiction. Ryland Grace wakes alone on a spacecraft with missing memories. He must solve a scientific mystery to avert a threat to humanity. The publisher describes suspense, humor and science.",
+        "source_url": "https://www.penguinrandomhouse.com/books/828207/project-hail-mary-deluxe-edition-by-andy-weir/",
+        "source_checked": "2026-10-16",
+        "notes_kind": "Assistant paraphrase of publisher/author material; not a quotation or exhaustive synopsis."
+      },
+      "recommendation": {
+        "title": "The Martian",
+        "author": "Andy Weir",
+        "notes": "Science fiction about an astronaut stranded on Mars. Survival depends on technical ingenuity and solving practical problems; the story mixes danger with humor.",
+        "source_url": "https://www.penguinrandomhouse.com/books/234102/the-martian-by-andy-weir/",
+        "source_checked": "2026-10-16",
+        "notes_kind": "Assistant paraphrase of publisher/author material; not a quotation or exhaustive synopsis."
+      },
+      "reader": "Enjoyed the practical science and resourceful problem solving. Wants another adventurous story with a light touch.",
+      "scenario": "Fictional reader profile created for this experiment.",
+      "coverage_tag": "same_author"
+    },
+    {
+      "id": "d02",
+      "split": "development",
+      "seed": {
+        "title": "Normal People",
+        "author": "Sally Rooney",
+        "notes": "Literary fiction following Marianne and Connell from a small Irish town to university in Dublin. Their changing social positions, intimacy and difficulty communicating shape an on-and-off relationship.",
+        "source_url": "https://www.penguinrandomhouse.com/books/592625/normal-people-by-sally-rooney/9781984822185/",
+        "source_checked": "2026-10-16",
+        "notes_kind": "Assistant paraphrase of publisher/author material; not a quotation or exhaustive synopsis."
+      },
+      "recommendation": {
+        "title": "Conversations with Friends",
+        "author": "Sally Rooney",
+        "notes": "Literary fiction set around young Dubliners Frances and Bobbi and an older married couple. Friendship, desire and overlapping relationships are examined through Frances’s first-person perspective.",
+        "source_url": "https://www.penguinrandomhouse.com/books/550263/conversations-with-friends-by-sally-rooney/",
+        "source_checked": "2026-10-16",
+        "notes_kind": "Assistant paraphrase of publisher/author material; not a quotation or exhaustive synopsis."
+      },
+      "reader": "Enjoyed the awkward intimacy and shifting relationships. Wants psychologically observant fiction, rather than a tidy romance.",
+      "scenario": "Fictional reader profile created for this experiment.",
+      "coverage_tag": "voice"
+    },
+    {
+      "id": "d03",
+      "split": "development",
+      "seed": {
+        "title": "Pachinko",
+        "author": "Min Jin Lee",
+        "notes": "Historical fiction following four generations of a Korean family in twentieth-century Japan. Sunja’s move from Korea begins a family story shaped by migration, prejudice and the effort to survive.",
+        "source_url": "https://www.hachettebookgroup.com/titles/min-jin-lee/pachinko-national-book-award-finalist/9781538784037/",
+        "source_checked": "2026-10-16",
+        "notes_kind": "Assistant paraphrase of publisher/author material; not a quotation or exhaustive synopsis."
+      },
+      "recommendation": {
+        "title": "Homegoing",
+        "author": "Yaa Gyasi",
+        "notes": "Historical fiction tracing two half-sisters and their descendants from eighteenth-century Ghana through generations in Ghana and America. Slavery and its enduring consequences shape the family’s separate paths.",
+        "source_url": "https://www.penguinrandomhouse.com/books/533857/homegoing-by-yaa-gyasi/9781101947135/",
+        "source_checked": "2026-10-16",
+        "notes_kind": "Assistant paraphrase of publisher/author material; not a quotation or exhaustive synopsis."
+      },
+      "reader": "Enjoyed seeing history through several generations of one family. Open to a different place and period.",
+      "scenario": "Fictional reader profile created for this experiment.",
+      "coverage_tag": "structure"
+    },
+    {
+      "id": "d04",
+      "split": "development",
+      "seed": {
+        "title": "Gone Girl",
+        "author": "Gillian Flynn",
+        "notes": "Psychological thriller about a destructive marriage. Multiple unreliable narrators, shifting interpretations and social satire complicate the central mystery.",
+        "source_url": "https://www.penguinrandomhouse.com/books/196906/gone-girl-special-edition-by-gillian-flynn/",
+        "source_checked": "2026-10-16",
+        "notes_kind": "Assistant paraphrase of publisher/author material; not a quotation or exhaustive synopsis."
+      },
+      "recommendation": {
+        "title": "The Girl on the Train",
+        "author": "Paula Hawkins",
+        "notes": "Psychological thriller. Commuter Rachel imagines the lives of people she sees from a train, then witnesses something unsettling. Multiple unreliable perspectives and twists make the truth hard to establish.",
+        "source_url": "https://www.penguinrandomhouse.com/books/317557/the-girl-on-the-train-by-paula-hawkins/",
+        "source_checked": "2026-10-16",
+        "notes_kind": "Assistant paraphrase of publisher/author material; not a quotation or exhaustive synopsis."
+      },
+      "reader": "Enjoyed questioning whose account to trust. Wants a mystery driven by relationships and unreliable perspectives.",
+      "scenario": "Fictional reader profile created for this experiment.",
+      "coverage_tag": "narration"
+    },
+    {
+      "id": "d05",
+      "split": "development",
+      "seed": {
+        "title": "Educated",
+        "author": "Tara Westover",
+        "notes": "Memoir. Raised in an isolated survivalist family in Idaho and kept out of school, Westover pursues formal education and earns a Cambridge doctorate. Family loyalty, violence and self-reinvention complicate her departure.",
+        "source_url": "https://www.penguinrandomhouse.com/books/550168/educated-by-tara-westover/",
+        "source_checked": "2026-10-16",
+        "notes_kind": "Assistant paraphrase of publisher/author material; not a quotation or exhaustive synopsis."
+      },
+      "recommendation": {
+        "title": "The Glass Castle",
+        "author": "Jeannette Walls",
+        "notes": "Memoir about growing up in a chaotic, deeply dysfunctional family. Walls describes hardship, resilience and her parents with humor and compassion, including her charismatic father’s influence.",
+        "source_url": "https://www.simonandschuster.com/books/The-Glass-Castle/Jeannette-Walls/9781439156964",
+        "source_checked": "2026-10-16",
+        "notes_kind": "Assistant paraphrase of publisher/author material; not a quotation or exhaustive synopsis."
+      },
+      "reader": "Enjoyed a memoir that holds family affection and harm together. Wants emotional complexity rather than a simple success story.",
+      "scenario": "Fictional reader profile created for this experiment.",
+      "coverage_tag": "memoir"
+    },
+    {
+      "id": "d06",
+      "split": "development",
+      "seed": {
+        "title": "Piranesi",
+        "author": "Susanna Clarke",
+        "notes": "Fantasy and mystery set in a dreamlike alternative world: a vast labyrinth of halls, statues and tides. Immersion in the strange setting and questions of being lost and found are central to the publisher’s description and featured reviews.",
+        "source_url": "https://www.bloomsbury.com/us/piranesi-9781635577808/",
+        "source_checked": "2026-10-16",
+        "notes_kind": "Assistant paraphrase of publisher/author material; not a quotation or exhaustive synopsis."
+      },
+      "recommendation": {
+        "title": "The Ocean at the End of the Lane",
+        "author": "Neil Gaiman",
+        "notes": "An adult fairy tale combining wonder and terror. Its official description emphasizes mystery, survival, memory and magic, with impossible events made to feel real.",
+        "source_url": "https://neilgaiman.com/works/Books/The%2BOcean%2Bat%2Bthe%2BEnd%2Bof%2Bthe%2BLane/",
+        "source_checked": "2026-10-16",
+        "notes_kind": "Assistant paraphrase of publisher/author material; not a quotation or exhaustive synopsis."
+      },
+      "reader": "Enjoyed the feeling of wonder mixed with unease. Wants imaginative mystery rather than detailed magic-system rules.",
+      "scenario": "Fictional reader profile created for this experiment.",
+      "coverage_tag": "atmosphere"
+    },
+    {
+      "id": "d07",
+      "split": "development",
+      "seed": {
+        "title": "Atomic Habits",
+        "author": "James Clear",
+        "notes": "Practical nonfiction on building useful habits and breaking unwanted ones. Small repeated changes and systems for shaping everyday behavior are central to its approach.",
+        "source_url": "https://www.penguinrandomhouse.com/books/543993/atomic-habits-by-james-clear/",
+        "source_checked": "2026-10-16",
+        "notes_kind": "Assistant paraphrase of publisher/author material; not a quotation or exhaustive synopsis."
+      },
+      "recommendation": {
+        "title": "The Power of Habit",
+        "author": "Charles Duhigg",
+        "notes": "Reported nonfiction explaining how habits form and change. Stories range across individuals, businesses, sport and social movements to connect scientific research with behavior.",
+        "source_url": "https://www.penguinrandomhouse.com/books/202855/the-power-of-habit-by-charles-duhigg/9780679603856/",
+        "source_checked": "2026-10-16",
+        "notes_kind": "Assistant paraphrase of publisher/author material; not a quotation or exhaustive synopsis."
+      },
+      "reader": "Enjoyed understanding why everyday behavior repeats. Wants evidence and examples, not just motivational slogans.",
+      "scenario": "Fictional reader profile created for this experiment.",
+      "coverage_tag": "nonfiction"
+    },
+    {
+      "id": "d08",
+      "split": "development",
+      "seed": {
+        "title": "All the Light We Cannot See",
+        "author": "Anthony Doerr",
+        "notes": "Historical fiction about a blind French girl and a German boy during World War II. Their interwoven paths converge in occupied France, exploring survival and efforts to treat others with humanity.",
+        "source_url": "https://www.simonandschuster.com/books/All-the-Light-We-Cannot-See/Anthony-Doerr/9781476746586",
+        "source_checked": "2026-10-16",
+        "notes_kind": "Assistant paraphrase of publisher/author material; not a quotation or exhaustive synopsis."
+      },
+      "recommendation": {
+        "title": "The Book Thief",
+        "author": "Markus Zusak",
+        "notes": "Historical fiction narrated by Death, set in Nazi Germany. Foster child Liesel learns to read and shares stolen books during bombing raids and with a Jewish man hidden by her foster family.",
+        "source_url": "https://www.penguinrandomhouse.com/books/196153/the-book-thief-anniversary-edition-by-markus-zusak/9780375842207/",
+        "source_checked": "2026-10-16",
+        "notes_kind": "Assistant paraphrase of publisher/author material; not a quotation or exhaustive synopsis."
+      },
+      "reader": "Enjoyed ordinary people trying to remain humane during war. Wants emotional stakes rather than military strategy.",
+      "scenario": "Fictional reader profile created for this experiment.",
+      "coverage_tag": "theme"
+    },
+    {
+      "id": "d09",
+      "split": "development",
+      "seed": {
+        "title": "The Warmth of Other Suns",
+        "author": "Isabel Wilkerson",
+        "notes": "Narrative nonfiction about Black Americans’ migration from the Jim Crow South to northern and western cities. Individual lives give human scale to a broad history of race, movement and opportunity.",
+        "source_url": "https://www.penguinrandomhouse.com/books/190696/the-warmth-of-other-suns-by-isabel-wilkerson/",
+        "source_checked": "2026-10-16",
+        "notes_kind": "Assistant paraphrase of publisher/author material; not a quotation or exhaustive synopsis."
+      },
+      "recommendation": {
+        "title": "Evicted",
+        "author": "Matthew Desmond",
+        "notes": "Reported nonfiction following eight families struggling to retain housing in Milwaukee. Close observation of their lives connects housing insecurity with poverty and economic exploitation.",
+        "source_url": "https://www.penguinrandomhouse.com/books/247816/evicted-by-matthew-desmond/",
+        "source_checked": "2026-10-16",
+        "notes_kind": "Assistant paraphrase of publisher/author material; not a quotation or exhaustive synopsis."
+      },
+      "reader": "Enjoyed social history made concrete through individual lives. Open to contemporary reporting, but wants the difference made honest.",
+      "scenario": "Fictional reader profile created for this experiment.",
+      "coverage_tag": "adjacent"
+    },
+    {
+      "id": "d10",
+      "split": "development",
+      "seed": {
+        "title": "Quiet",
+        "author": "Susan Cain",
+        "notes": "Nonfiction about introversion and a culture that prizes extroversion. Research and profiles of real people examine how introverts think, work and contribute. It is not a crime story.",
+        "source_url": "https://www.penguinrandomhouse.com/books/22821/quiet-by-susan-cain/9780307352149/",
+        "source_checked": "2026-10-16",
+        "notes_kind": "Assistant paraphrase of publisher/author material; not a quotation or exhaustive synopsis."
+      },
+      "recommendation": {
+        "title": "The Silent Patient",
+        "author": "Alex Michaelides",
+        "notes": "Psychological thriller. Painter Alicia Berenson stops speaking after killing her husband. A psychotherapist becomes determined to uncover her motive. The central silence is part of a crime mystery.",
+        "source_url": "https://us.macmillan.com/books/9781250301697/thesilentpatient/",
+        "source_checked": "2026-10-16",
+        "notes_kind": "Assistant paraphrase of publisher/author material; not a quotation or exhaustive synopsis."
+      },
+      "reader": "Enjoyed research that made introversion feel understood. Wants reflective nonfiction and dislikes violent thrillers.",
+      "scenario": "Fictional reader profile created for this experiment.",
+      "coverage_tag": "weak_connection"
+    },
+    {
+      "id": "h01",
+      "split": "holdout",
+      "seed": {
+        "title": "Dune",
+        "author": "Frank Herbert",
+        "notes": "Science fiction set on the desert planet Arrakis. Paul Atreides and his family’s ambitions are central to a story of power and conflict in an imagined society.",
+        "source_url": "https://www.penguinrandomhouse.com/books/352036/dune-movie-tie-in-by-frank-herbert/",
+        "source_checked": "2026-10-16",
+        "notes_kind": "Assistant paraphrase of publisher/author material; not a quotation or exhaustive synopsis."
+      },
+      "recommendation": {
+        "title": "The Left Hand of Darkness",
+        "author": "Ursula K. Le Guin",
+        "notes": "Science fiction about a human emissary visiting the alien world Winter. Its inhabitants’ shifting sex challenges his assumptions about gender and society.",
+        "source_url": "https://www.penguinrandomhouse.com/books/538943/the-left-hand-of-darkness-by-ursula-k-le-guin/9780143111597/",
+        "source_checked": "2026-10-16",
+        "notes_kind": "Assistant paraphrase of publisher/author material; not a quotation or exhaustive synopsis."
+      },
+      "reader": "Enjoyed encountering an unfamiliar society and questioning how power works. Open to a less action-driven book.",
+      "scenario": "Fictional reader profile created for this experiment.",
+      "coverage_tag": "speculative_society"
+    },
+    {
+      "id": "h02",
+      "split": "holdout",
+      "seed": {
+        "title": "The Night Circus",
+        "author": "Erin Morgenstern",
+        "notes": "Fantasy about a mysterious circus that opens only at night. Two young magicians are trained for a dangerous competition, while a love story complicates their rivalry.",
+        "source_url": "https://www.penguinrandomhouse.com/books/211964/the-night-circus-by-erin-morgenstern/",
+        "source_checked": "2026-10-16",
+        "notes_kind": "Assistant paraphrase of publisher/author material; not a quotation or exhaustive synopsis."
+      },
+      "recommendation": {
+        "title": "The Starless Sea",
+        "author": "Erin Morgenstern",
+        "notes": "Fantasy and love story centered on a secret underground world. A graduate student finds his own childhood recorded in a mysterious book and follows clues into a realm of stories and magic.",
+        "source_url": "https://www.penguinrandomhouse.com/books/535366/the-starless-sea-by-erin-morgenstern/",
+        "source_checked": "2026-10-16",
+        "notes_kind": "Assistant paraphrase of publisher/author material; not a quotation or exhaustive synopsis."
+      },
+      "reader": "Enjoyed immersive magical places and romance. Wants atmosphere and discovery rather than a fast thriller.",
+      "scenario": "Fictional reader profile created for this experiment.",
+      "coverage_tag": "same_author"
+    },
+    {
+      "id": "h03",
+      "split": "holdout",
+      "seed": {
+        "title": "Sapiens",
+        "author": "Yuval Noah Harari",
+        "notes": "Broad nonfiction account of human history, from evolutionary origins through agriculture, money, religion and modern society. It connects history, biology, philosophy and economics through large explanatory arguments.",
+        "source_url": "https://www.ynharari.com/book/sapiens/",
+        "source_checked": "2026-10-16",
+        "notes_kind": "Assistant paraphrase of publisher/author material; not a quotation or exhaustive synopsis."
+      },
+      "recommendation": {
+        "title": "The Dawn of Everything",
+        "author": "David Graeber and David Wengrow",
+        "notes": "Nonfiction using archaeology and anthropology to reconsider human history. It challenges familiar linear stories linking agriculture and cities to inevitable inequality and state power.",
+        "source_url": "https://us.macmillan.com/books/9781250858801/thedawnofeverything/",
+        "source_checked": "2026-10-16",
+        "notes_kind": "Assistant paraphrase of publisher/author material; not a quotation or exhaustive synopsis."
+      },
+      "reader": "Enjoyed ambitious explanations of human history. Welcomes disagreement and wants assumptions challenged.",
+      "scenario": "Fictional reader profile created for this experiment.",
+      "coverage_tag": "contrasting_argument"
+    },
+    {
+      "id": "h04",
+      "split": "holdout",
+      "seed": {
+        "title": "Beach Read",
+        "author": "Emily Henry",
+        "notes": "Romance about neighboring writers with creative blocks. A romance novelist and a literary novelist challenge each other to write in the other’s genre, complicating their assumptions about love.",
+        "source_url": "https://www.penguinrandomhouse.com/books/608898/beach-read-by-emily-henry/",
+        "source_checked": "2026-10-16",
+        "notes_kind": "Assistant paraphrase of publisher/author material; not a quotation or exhaustive synopsis."
+      },
+      "recommendation": {
+        "title": "Book Lovers",
+        "author": "Emily Henry",
+        "notes": "Romantic comedy centered on ambitious literary agent Nora Stephens. It plays with conventional small-town romance expectations and examines love, family and choosing one’s own path.",
+        "source_url": "https://www.penguinrandomhouse.com/books/670293/book-lovers-by-emily-henry/9780593334843/",
+        "source_checked": "2026-10-16",
+        "notes_kind": "Assistant paraphrase of publisher/author material; not a quotation or exhaustive synopsis."
+      },
+      "reader": "Enjoyed witty romance involving people who work with books. Wants capable characters with ambitions beyond falling in love.",
+      "scenario": "Fictional reader profile created for this experiment.",
+      "coverage_tag": "romance"
+    },
+    {
+      "id": "h05",
+      "split": "holdout",
+      "seed": {
+        "title": "Killers of the Flower Moon",
+        "author": "David Grann",
+        "notes": "Investigative narrative nonfiction about murders of oil-wealthy members of the Osage Nation in 1920s Oklahoma. The criminal investigation exposes exploitation and a broader history of violence.",
+        "source_url": "https://penguinrandomhousehighereducation.com/book/?isbn=9780385534253",
+        "source_checked": "2026-10-16",
+        "notes_kind": "Assistant paraphrase of publisher/author material; not a quotation or exhaustive synopsis."
+      },
+      "recommendation": {
+        "title": "Say Nothing",
+        "author": "Patrick Radden Keefe",
+        "notes": "Investigative narrative nonfiction about a missing mother and the Troubles in Northern Ireland. Intersecting individual lives reveal political violence, secrecy and the lasting human cost of conflict.",
+        "source_url": "https://www.penguinrandomhouse.com/books/90837/say-nothing-by-patrick-radden-keefe/",
+        "source_checked": "2026-10-16",
+        "notes_kind": "Assistant paraphrase of publisher/author material; not a quotation or exhaustive synopsis."
+      },
+      "reader": "Enjoyed an investigation that revealed a wider historical injustice. Wants reporting focused on the people affected.",
+      "scenario": "Fictional reader profile created for this experiment.",
+      "coverage_tag": "narrative_nonfiction"
+    }
+  ]
+}

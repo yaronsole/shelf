@@ -1,0 +1,6 @@
+runs/*/judgments.json
+runs/*/judgments-history.jsonl
+runs/*/review-state.json
+runs/*/judgments.csv
+runs/*/qa-*
+qa-runs/

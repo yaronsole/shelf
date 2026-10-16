@@ -1,0 +1,936 @@
+{
+  "schema_version": 1,
+  "run_id": "round-01",
+  "dataset_id": "shelf-explanations-v1",
+  "dataset_sha256": "226bd6b10f524a8b310325b325ce5fb5791b3e1470a97416b2c0bcb16358efc7",
+  "source_revision": "212b9cd105be0600f18c59420973c71005f7260f",
+  "created_at": "2026-10-16T23:09:46.759391+00:00",
+  "split": "development",
+  "requested_model": "claude-opus-5-5",
+  "effort": "medium",
+  "max_output_tokens_per_call": 2048,
+  "max_calls": 20,
+  "random_seed": 2638280158934227411,
+  "assignments": {
+    "d01": {
+      "A": "baseline",
+      "B": "candidate"
+    },
+    "d02": {
+      "A": "candidate",
+      "B": "baseline"
+    },
+    "d03": {
+      "A": "candidate",
+      "B": "baseline"
+    },
+    "d04": {
+      "A": "baseline",
+      "B": "candidate"
+    },
+    "d05": {
+      "A": "candidate",
+      "B": "baseline"
+    },
+    "d06": {
+      "A": "baseline",
+      "B": "candidate"
+    },
+    "d07": {
+      "A": "candidate",
+      "B": "baseline"
+    },
+    "d08": {
+      "A": "candidate",
+      "B": "baseline"
+    },
+    "d09": {
+      "A": "baseline",
+      "B": "candidate"
+    },
+    "d10": {
+      "A": "baseline",
+      "B": "candidate"
+    }
+  },
+  "prompts": {
+    "baseline": "A SHORT, SPECIFIC phrase, MAX 12 words, naming what THIS book shares with the because_of seed: the concrete appeal/voice/theme/structure that makes it a natural next read (e.g. \"dread built out of small domestic details\", \"a con man narrating his own slow unraveling\", \"Gilded Age ambition seen from the servants' floor\"). Vary how these phrases start across the batch; don't open with \"the same\" or \"another\". Do NOT restate the plot, repeat the blurb, or be generic (\"a great read\"). Empty string if because_of is empty or you cannot name a specific, honest connection.\n",
+    "candidate": "A SHORT, SPECIFIC phrase, MAX 12 words, naming what THIS book shares with the because_of seed: the concrete appeal/voice/theme/structure that makes it a natural next read (e.g. \"dread built out of small domestic details\", \"a con man narrating his own slow unraveling\", \"Gilded Age ambition seen from the servants' floor\"). Vary how these phrases start across the batch; don't open with \"the same\" or \"another\". Do NOT restate the plot, repeat the blurb, or be generic (\"a great read\"). Empty string if because_of is empty or you cannot name a specific, honest connection.\n\nBefore writing, select the one overlap supported by BOTH book notes that best explains the stated reader's enjoyment. A shared genre, vaguely similar title, or the fact that both books involve people is not enough. If no supported connection fits this reader, return an empty reason instead of stretching the comparison.\n"
+  },
+  "common_prompt": "You write Shelf's short reason beneath \"Because you loved <seed title>\".\nThe reader profile and recommended book are FIXED for this experiment. Do not select\nanother book. Use only the supplied book notes for factual claims. These notes are\nlimited evidence, not complete books. Do not add quotations, awards, plot twists,\nor facts not supported by the notes. An empty reason is allowed when no honest\nconnection can be named. Return JSON with exactly one string field: reason.\nThe same 12-word and 120-character display limits apply to both prompt versions.\n",
+  "cases": [
+    {
+      "id": "d01",
+      "split": "development",
+      "seed": {
+        "title": "Project Hail Mary",
+        "author": "Andy Weir",
+        "notes": "Science fiction. Ryland Grace wakes alone on a spacecraft with missing memories. He must solve a scientific mystery to avert a threat to humanity. The publisher describes suspense, humor and science.",
+        "source_url": "https://www.penguinrandomhouse.com/books/828207/project-hail-mary-deluxe-edition-by-andy-weir/",
+        "source_checked": "2026-10-16",
+        "notes_kind": "Assistant paraphrase of publisher/author material; not a quotation or exhaustive synopsis."
+      },
+      "recommendation": {
+        "title": "The Martian",
+        "author": "Andy Weir",
+        "notes": "Science fiction about an astronaut stranded on Mars. Survival depends on technical ingenuity and solving practical problems; the story mixes danger with humor.",
+        "source_url": "https://www.penguinrandomhouse.com/books/234102/the-martian-by-andy-weir/",
+        "source_checked": "2026-10-16",
+        "notes_kind": "Assistant paraphrase of publisher/author material; not a quotation or exhaustive synopsis."
+      },
+      "reader": "Enjoyed the practical science and resourceful problem solving. Wants another adventurous story with a light touch.",
+      "scenario": "Fictional reader profile created for this experiment.",
+      "coverage_tag": "same_author"
+    },
+    {
+      "id": "d02",
+      "split": "development",
+      "seed": {
+        "title": "Normal People",
+        "author": "Sally Rooney",
+        "notes": "Literary fiction following Marianne and Connell from a small Irish town to university in Dublin. Their changing social positions, intimacy and difficulty communicating shape an on-and-off relationship.",
+        "source_url": "https://www.penguinrandomhouse.com/books/592625/normal-people-by-sally-rooney/9781984822185/",
+        "source_checked": "2026-10-16",
+        "notes_kind": "Assistant paraphrase of publisher/author material; not a quotation or exhaustive synopsis."
+      },
+      "recommendation": {
+        "title": "Conversations with Friends",
+        "author": "Sally Rooney",
+        "notes": "Literary fiction set around young Dubliners Frances and Bobbi and an older married couple. Friendship, desire and overlapping relationships are examined through Frances’s first-person perspective.",
+        "source_url": "https://www.penguinrandomhouse.com/books/550263/conversations-with-friends-by-sally-rooney/",
+        "source_checked": "2026-10-16",
+        "notes_kind": "Assistant paraphrase of publisher/author material; not a quotation or exhaustive synopsis."
+      },
+      "reader": "Enjoyed the awkward intimacy and shifting relationships. Wants psychologically observant fiction, rather than a tidy romance.",
+      "scenario": "Fictional reader profile created for this experiment.",
+      "coverage_tag": "voice"
+    },
+    {
+      "id": "d03",
+      "split": "development",
+      "seed": {
+        "title": "Pachinko",
+        "author": "Min Jin Lee",
+        "notes": "Historical fiction following four generations of a Korean family in twentieth-century Japan. Sunja’s move from Korea begins a family story shaped by migration, prejudice and the effort to survive.",
+        "source_url": "https://www.hachettebookgroup.com/titles/min-jin-lee/pachinko-national-book-award-finalist/9781538784037/",
+        "source_checked": "2026-10-16",
+        "notes_kind": "Assistant paraphrase of publisher/author material; not a quotation or exhaustive synopsis."
+      },
+      "recommendation": {
+        "title": "Homegoing",
+        "author": "Yaa Gyasi",
+        "notes": "Historical fiction tracing two half-sisters and their descendants from eighteenth-century Ghana through generations in Ghana and America. Slavery and its enduring consequences shape the family’s separate paths.",
+        "source_url": "https://www.penguinrandomhouse.com/books/533857/homegoing-by-yaa-gyasi/9781101947135/",
+        "source_checked": "2026-10-16",
+        "notes_kind": "Assistant paraphrase of publisher/author material; not a quotation or exhaustive synopsis."
+      },
+      "reader": "Enjoyed seeing history through several generations of one family. Open to a different place and period.",
+      "scenario": "Fictional reader profile created for this experiment.",
+      "coverage_tag": "structure"
+    },
+    {
+      "id": "d04",
+      "split": "development",
+      "seed": {
+        "title": "Gone Girl",
+        "author": "Gillian Flynn",
+        "notes": "Psychological thriller about a destructive marriage. Multiple unreliable narrators, shifting interpretations and social satire complicate the central mystery.",
+        "source_url": "https://www.penguinrandomhouse.com/books/196906/gone-girl-special-edition-by-gillian-flynn/",
+        "source_checked": "2026-10-16",
+        "notes_kind": "Assistant paraphrase of publisher/author material; not a quotation or exhaustive synopsis."
+      },
+      "recommendation": {
+        "title": "The Girl on the Train",
+        "author": "Paula Hawkins",
+        "notes": "Psychological thriller. Commuter Rachel imagines the lives of people she sees from a train, then witnesses something unsettling. Multiple unreliable perspectives and twists make the truth hard to establish.",
+        "source_url": "https://www.penguinrandomhouse.com/books/317557/the-girl-on-the-train-by-paula-hawkins/",
+        "source_checked": "2026-10-16",
+        "notes_kind": "Assistant paraphrase of publisher/author material; not a quotation or exhaustive synopsis."
+      },
+      "reader": "Enjoyed questioning whose account to trust. Wants a mystery driven by relationships and unreliable perspectives.",
+      "scenario": "Fictional reader profile created for this experiment.",
+      "coverage_tag": "narration"
+    },
+    {
+      "id": "d05",
+      "split": "development",
+      "seed": {
+        "title": "Educated",
+        "author": "Tara Westover",
+        "notes": "Memoir. Raised in an isolated survivalist family in Idaho and kept out of school, Westover pursues formal education and earns a Cambridge doctorate. Family loyalty, violence and self-reinvention complicate her departure.",
+        "source_url": "https://www.penguinrandomhouse.com/books/550168/educated-by-tara-westover/",
+        "source_checked": "2026-10-16",
+        "notes_kind": "Assistant paraphrase of publisher/author material; not a quotation or exhaustive synopsis."
+      },
+      "recommendation": {
+        "title": "The Glass Castle",
+        "author": "Jeannette Walls",
+        "notes": "Memoir about growing up in a chaotic, deeply dysfunctional family. Walls describes hardship, resilience and her parents with humor and compassion, including her charismatic father’s influence.",
+        "source_url": "https://www.simonandschuster.com/books/The-Glass-Castle/Jeannette-Walls/9781439156964",
+        "source_checked": "2026-10-16",
+        "notes_kind": "Assistant paraphrase of publisher/author material; not a quotation or exhaustive synopsis."
+      },
+      "reader": "Enjoyed a memoir that holds family affection and harm together. Wants emotional complexity rather than a simple success story.",
+      "scenario": "Fictional reader profile created for this experiment.",
+      "coverage_tag": "memoir"
+    },
+    {
+      "id": "d06",
+      "split": "development",
+      "seed": {
+        "title": "Piranesi",
+        "author": "Susanna Clarke",
+        "notes": "Fantasy and mystery set in a dreamlike alternative world: a vast labyrinth of halls, statues and tides. Immersion in the strange setting and questions of being lost and found are central to the publisher’s description and featured reviews.",
+        "source_url": "https://www.bloomsbury.com/us/piranesi-9781635577808/",
+        "source_checked": "2026-10-16",
+        "notes_kind": "Assistant paraphrase of publisher/author material; not a quotation or exhaustive synopsis."
+      },
+      "recommendation": {
+        "title": "The Ocean at the End of the Lane",
+        "author": "Neil Gaiman",
+        "notes": "An adult fairy tale combining wonder and terror. Its official description emphasizes mystery, survival, memory and magic, with impossible events made to feel real.",
+        "source_url": "https://neilgaiman.com/works/Books/The%2BOcean%2Bat%2Bthe%2BEnd%2Bof%2Bthe%2BLane/",
+        "source_checked": "2026-10-16",
+        "notes_kind": "Assistant paraphrase of publisher/author material; not a quotation or exhaustive synopsis."
+      },
+      "reader": "Enjoyed the feeling of wonder mixed with unease. Wants imaginative mystery rather than detailed magic-system rules.",
+      "scenario": "Fictional reader profile created for this experiment.",
+      "coverage_tag": "atmosphere"
+    },
+    {
+      "id": "d07",
+      "split": "development",
+      "seed": {
+        "title": "Atomic Habits",
+        "author": "James Clear",
+        "notes": "Practical nonfiction on building useful habits and breaking unwanted ones. Small repeated changes and systems for shaping everyday behavior are central to its approach.",
+        "source_url": "https://www.penguinrandomhouse.com/books/543993/atomic-habits-by-james-clear/",
+        "source_checked": "2026-10-16",
+        "notes_kind": "Assistant paraphrase of publisher/author material; not a quotation or exhaustive synopsis."
+      },
+      "recommendation": {
+        "title": "The Power of Habit",
+        "author": "Charles Duhigg",
+        "notes": "Reported nonfiction explaining how habits form and change. Stories range across individuals, businesses, sport and social movements to connect scientific research with behavior.",
+        "source_url": "https://www.penguinrandomhouse.com/books/202855/the-power-of-habit-by-charles-duhigg/9780679603856/",
+        "source_checked": "2026-10-16",
+        "notes_kind": "Assistant paraphrase of publisher/author material; not a quotation or exhaustive synopsis."
+      },
+      "reader": "Enjoyed understanding why everyday behavior repeats. Wants evidence and examples, not just motivational slogans.",
+      "scenario": "Fictional reader profile created for this experiment.",
+      "coverage_tag": "nonfiction"
+    },
+    {
+      "id": "d08",
+      "split": "development",
+      "seed": {
+        "title": "All the Light We Cannot See",
+        "author": "Anthony Doerr",
+        "notes": "Historical fiction about a blind French girl and a German boy during World War II. Their interwoven paths converge in occupied France, exploring survival and efforts to treat others with humanity.",
+        "source_url": "https://www.simonandschuster.com/books/All-the-Light-We-Cannot-See/Anthony-Doerr/9781476746586",
+        "source_checked": "2026-10-16",
+        "notes_kind": "Assistant paraphrase of publisher/author material; not a quotation or exhaustive synopsis."
+      },
+      "recommendation": {
+        "title": "The Book Thief",
+        "author": "Markus Zusak",
+        "notes": "Historical fiction narrated by Death, set in Nazi Germany. Foster child Liesel learns to read and shares stolen books during bombing raids and with a Jewish man hidden by her foster family.",
+        "source_url": "https://www.penguinrandomhouse.com/books/196153/the-book-thief-anniversary-edition-by-markus-zusak/9780375842207/",
+        "source_checked": "2026-10-16",
+        "notes_kind": "Assistant paraphrase of publisher/author material; not a quotation or exhaustive synopsis."
+      },
+      "reader": "Enjoyed ordinary people trying to remain humane during war. Wants emotional stakes rather than military strategy.",
+      "scenario": "Fictional reader profile created for this experiment.",
+      "coverage_tag": "theme"
+    },
+    {
+      "id": "d09",
+      "split": "development",
+      "seed": {
+        "title": "The Warmth of Other Suns",
+        "author": "Isabel Wilkerson",
+        "notes": "Narrative nonfiction about Black Americans’ migration from the Jim Crow South to northern and western cities. Individual lives give human scale to a broad history of race, movement and opportunity.",
+        "source_url": "https://www.penguinrandomhouse.com/books/190696/the-warmth-of-other-suns-by-isabel-wilkerson/",
+        "source_checked": "2026-10-16",
+        "notes_kind": "Assistant paraphrase of publisher/author material; not a quotation or exhaustive synopsis."
+      },
+      "recommendation": {
+        "title": "Evicted",
+        "author": "Matthew Desmond",
+        "notes": "Reported nonfiction following eight families struggling to retain housing in Milwaukee. Close observation of their lives connects housing insecurity with poverty and economic exploitation.",
+        "source_url": "https://www.penguinrandomhouse.com/books/247816/evicted-by-matthew-desmond/",
+        "source_checked": "2026-10-16",
+        "notes_kind": "Assistant paraphrase of publisher/author material; not a quotation or exhaustive synopsis."
+      },
+      "reader": "Enjoyed social history made concrete through individual lives. Open to contemporary reporting, but wants the difference made honest.",
+      "scenario": "Fictional reader profile created for this experiment.",
+      "coverage_tag": "adjacent"
+    },
+    {
+      "id": "d10",
+      "split": "development",
+      "seed": {
+        "title": "Quiet",
+        "author": "Susan Cain",
+        "notes": "Nonfiction about introversion and a culture that prizes extroversion. Research and profiles of real people examine how introverts think, work and contribute. It is not a crime story.",
+        "source_url": "https://www.penguinrandomhouse.com/books/22821/quiet-by-susan-cain/9780307352149/",
+        "source_checked": "2026-10-16",
+        "notes_kind": "Assistant paraphrase of publisher/author material; not a quotation or exhaustive synopsis."
+      },
+      "recommendation": {
+        "title": "The Silent Patient",
+        "author": "Alex Michaelides",
+        "notes": "Psychological thriller. Painter Alicia Berenson stops speaking after killing her husband. A psychotherapist becomes determined to uncover her motive. The central silence is part of a crime mystery.",
+        "source_url": "https://us.macmillan.com/books/9781250301697/thesilentpatient/",
+        "source_checked": "2026-10-16",
+        "notes_kind": "Assistant paraphrase of publisher/author material; not a quotation or exhaustive synopsis."
+      },
+      "reader": "Enjoyed research that made introversion feel understood. Wants reflective nonfiction and dislikes violent thrillers.",
+      "scenario": "Fictional reader profile created for this experiment.",
+      "coverage_tag": "weak_connection"
+    }
+  ],
+  "outputs": [
+    {
+      "case_id": "d09",
+      "variant": "candidate",
+      "reason": "Contemporary reporting where individual families give human scale to systemic hardship",
+      "raw_text": "{\"reason\":\"Contemporary reporting where individual families give human scale to systemic hardship\"}",
+      "stop_reason": "end_turn",
+      "actual_model": "claude-opus-5-5",
+      "usage": {
+        "input_tokens": 933,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 0
+        },
+        "output_tokens": 33,
+        "output_tokens_details": {
+          "thinking_tokens": 0
+        },
+        "service_tier": "standard",
+        "inference_geo": "global",
+        "speed": "standard"
+      },
+      "seconds": 2.71,
+      "prompt_sha256": "a81423418a11c3b6e960b0823e856d1ee79205267aa5641b73a5fa98cf4d80aa",
+      "checks": {
+        "word_limit": true,
+        "character_limit": true,
+        "single_line": true,
+        "abstained": false
+      }
+    },
+    {
+      "case_id": "d07",
+      "variant": "baseline",
+      "reason": "Why everyday routines repeat, explained through research and real-world stories",
+      "raw_text": "{\"reason\":\"Why everyday routines repeat, explained through research and real-world stories\"}",
+      "stop_reason": "end_turn",
+      "actual_model": "claude-opus-5-5",
+      "usage": {
+        "input_tokens": 814,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 0
+        },
+        "output_tokens": 31,
+        "output_tokens_details": {
+          "thinking_tokens": 0
+        },
+        "service_tier": "standard",
+        "inference_geo": "global",
+        "speed": "standard"
+      },
+      "seconds": 3.03,
+      "prompt_sha256": "574952eda897ce1dfa6a6b580265fb548d7380d309e8bb694a0928ef84534e99",
+      "checks": {
+        "word_limit": true,
+        "character_limit": true,
+        "single_line": true,
+        "abstained": false
+      }
+    },
+    {
+      "case_id": "d03",
+      "variant": "baseline",
+      "reason": "Generations of one family's descendants, shaped by displacement and its long consequences",
+      "raw_text": "{\"reason\":\"Generations of one family's descendants, shaped by displacement and its long consequences\"}",
+      "stop_reason": "end_turn",
+      "actual_model": "claude-opus-5-5",
+      "usage": {
+        "input_tokens": 830,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 0
+        },
+        "output_tokens": 34,
+        "output_tokens_details": {
+          "thinking_tokens": 0
+        },
+        "service_tier": "standard",
+        "inference_geo": "global",
+        "speed": "standard"
+      },
+      "seconds": 3.15,
+      "prompt_sha256": "1ed15a08509384cd4f1751e24d60ad66e90dbda6fc0653a0dfb6a82231179421",
+      "checks": {
+        "word_limit": true,
+        "character_limit": true,
+        "single_line": true,
+        "abstained": false
+      }
+    },
+    {
+      "case_id": "d02",
+      "variant": "baseline",
+      "reason": "Young Dubliners navigating desire and shifting, overlapping relationships with close psychological attention",
+      "raw_text": "{\"reason\":\"Young Dubliners navigating desire and shifting, overlapping relationships with close psychological attention\"}",
+      "stop_reason": "end_turn",
+      "actual_model": "claude-opus-5-5",
+      "usage": {
+        "input_tokens": 842,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 0
+        },
+        "output_tokens": 41,
+        "output_tokens_details": {
+          "thinking_tokens": 0
+        },
+        "service_tier": "standard",
+        "inference_geo": "global",
+        "speed": "standard"
+      },
+      "seconds": 2.15,
+      "prompt_sha256": "7852c9744073bc15a1eb4556fd42e3fb7f1df8c319c05cd1159d08d47a0067bf",
+      "checks": {
+        "word_limit": true,
+        "character_limit": true,
+        "single_line": true,
+        "abstained": false
+      }
+    },
+    {
+      "case_id": "d10",
+      "variant": "candidate",
+      "reason": "",
+      "raw_text": "{\"reason\":\"\"}",
+      "stop_reason": "end_turn",
+      "actual_model": "claude-opus-5-5",
+      "usage": {
+        "input_tokens": 928,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 0
+        },
+        "output_tokens": 9,
+        "output_tokens_details": {
+          "thinking_tokens": 0
+        },
+        "service_tier": "standard",
+        "inference_geo": "global",
+        "speed": "standard"
+      },
+      "seconds": 2.72,
+      "prompt_sha256": "facfc98589651c9e8c396df0c5276ba5a902fb9742bf7187c692866fa57d4e91",
+      "checks": {
+        "word_limit": true,
+        "character_limit": true,
+        "single_line": true,
+        "abstained": true
+      }
+    },
+    {
+      "case_id": "d07",
+      "variant": "candidate",
+      "reason": "Why everyday habits repeat, explained through research and real-world stories",
+      "raw_text": "{\"reason\":\"Why everyday habits repeat, explained through research and real-world stories\"}",
+      "stop_reason": "end_turn",
+      "actual_model": "claude-opus-5-5",
+      "usage": {
+        "input_tokens": 910,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 0
+        },
+        "output_tokens": 31,
+        "output_tokens_details": {
+          "thinking_tokens": 0
+        },
+        "service_tier": "standard",
+        "inference_geo": "global",
+        "speed": "standard"
+      },
+      "seconds": 2.58,
+      "prompt_sha256": "a1c625ba5855cbcc33d9cfa27b548ef65fface6630750ff2063329a3223b9916",
+      "checks": {
+        "word_limit": true,
+        "character_limit": true,
+        "single_line": true,
+        "abstained": false
+      }
+    },
+    {
+      "case_id": "d08",
+      "variant": "baseline",
+      "reason": "Small acts of decency by young people inside wartime Germany",
+      "raw_text": "{\"reason\":\"Small acts of decency by young people inside wartime Germany\"}",
+      "stop_reason": "end_turn",
+      "actual_model": "claude-opus-5-5",
+      "usage": {
+        "input_tokens": 839,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 0
+        },
+        "output_tokens": 28,
+        "output_tokens_details": {
+          "thinking_tokens": 0
+        },
+        "service_tier": "standard",
+        "inference_geo": "global",
+        "speed": "standard"
+      },
+      "seconds": 2.71,
+      "prompt_sha256": "e1f80bffa312373cd1b6cb36ebc3f9fa37eea8928df9338fa5dc890b58c2522e",
+      "checks": {
+        "word_limit": true,
+        "character_limit": true,
+        "single_line": true,
+        "abstained": false
+      }
+    },
+    {
+      "case_id": "d10",
+      "variant": "baseline",
+      "reason": "",
+      "raw_text": "{\"reason\":\"\"}",
+      "stop_reason": "end_turn",
+      "actual_model": "claude-opus-5-5",
+      "usage": {
+        "input_tokens": 832,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 0
+        },
+        "output_tokens": 94,
+        "output_tokens_details": {
+          "thinking_tokens": 85
+        },
+        "service_tier": "standard",
+        "inference_geo": "global",
+        "speed": "standard"
+      },
+      "seconds": 2.51,
+      "prompt_sha256": "4ef78ca66f713230dbbcb5e123134f5d2fee925c1d7c17d08476a508cc6b3dd3",
+      "checks": {
+        "word_limit": true,
+        "character_limit": true,
+        "single_line": true,
+        "abstained": true
+      }
+    },
+    {
+      "case_id": "d08",
+      "variant": "candidate",
+      "reason": "Ordinary Germans choosing small kindnesses amid the dangers of World War II",
+      "raw_text": "{\"reason\":\"Ordinary Germans choosing small kindnesses amid the dangers of World War II\"}",
+      "stop_reason": "end_turn",
+      "actual_model": "claude-opus-5-5",
+      "usage": {
+        "input_tokens": 935,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 0
+        },
+        "output_tokens": 37,
+        "output_tokens_details": {
+          "thinking_tokens": 0
+        },
+        "service_tier": "standard",
+        "inference_geo": "global",
+        "speed": "standard"
+      },
+      "seconds": 2.59,
+      "prompt_sha256": "f42fbabc379b92191435bdd933552b3370ea919c50ea6daf6a9f0b85bf3914a1",
+      "checks": {
+        "word_limit": true,
+        "character_limit": true,
+        "single_line": true,
+        "abstained": false
+      }
+    },
+    {
+      "case_id": "d09",
+      "variant": "baseline",
+      "reason": "Systemic hardship shown through families' lives, now in present-day reporting",
+      "raw_text": "{\"reason\":\"Systemic hardship shown through families' lives, now in present-day reporting\"}",
+      "stop_reason": "end_turn",
+      "actual_model": "claude-opus-5-5",
+      "usage": {
+        "input_tokens": 837,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 0
+        },
+        "output_tokens": 33,
+        "output_tokens_details": {
+          "thinking_tokens": 0
+        },
+        "service_tier": "standard",
+        "inference_geo": "global",
+        "speed": "standard"
+      },
+      "seconds": 3.15,
+      "prompt_sha256": "d1119863dbed912609498b6b33305934afa88b985ac85fe8011c5dd9412ad1f1",
+      "checks": {
+        "word_limit": true,
+        "character_limit": true,
+        "single_line": true,
+        "abstained": false
+      }
+    },
+    {
+      "case_id": "d06",
+      "variant": "baseline",
+      "reason": "Wonder shading into unease, with impossible mysteries left unexplained",
+      "raw_text": "{\"reason\":\"Wonder shading into unease, with impossible mysteries left unexplained\"}",
+      "stop_reason": "end_turn",
+      "actual_model": "claude-opus-5-5",
+      "usage": {
+        "input_tokens": 852,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 0
+        },
+        "output_tokens": 33,
+        "output_tokens_details": {
+          "thinking_tokens": 0
+        },
+        "service_tier": "standard",
+        "inference_geo": "global",
+        "speed": "standard"
+      },
+      "seconds": 1.69,
+      "prompt_sha256": "7a082bfa9127b50a879cd5c622ce20c83ec839364e2b9b4d44f9ab739a90423d",
+      "checks": {
+        "word_limit": true,
+        "character_limit": true,
+        "single_line": true,
+        "abstained": false
+      }
+    },
+    {
+      "case_id": "d04",
+      "variant": "candidate",
+      "reason": "Unreliable narrators trading accounts until no version of the truth holds",
+      "raw_text": "{\"reason\":\"Unreliable narrators trading accounts until no version of the truth holds\"}",
+      "stop_reason": "end_turn",
+      "actual_model": "claude-opus-5-5",
+      "usage": {
+        "input_tokens": 928,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 0
+        },
+        "output_tokens": 32,
+        "output_tokens_details": {
+          "thinking_tokens": 0
+        },
+        "service_tier": "standard",
+        "inference_geo": "global",
+        "speed": "standard"
+      },
+      "seconds": 2.46,
+      "prompt_sha256": "e572269317273051c7fc33e42e0798c0a31cc84c752b9d07060222ee62d7cf86",
+      "checks": {
+        "word_limit": true,
+        "character_limit": true,
+        "single_line": true,
+        "abstained": false
+      }
+    },
+    {
+      "case_id": "d03",
+      "variant": "candidate",
+      "reason": "Centuries of history traced through one family's descendants, across continents",
+      "raw_text": "{\"reason\":\"Centuries of history traced through one family's descendants, across continents\"}",
+      "stop_reason": "end_turn",
+      "actual_model": "claude-opus-5-5",
+      "usage": {
+        "input_tokens": 926,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 0
+        },
+        "output_tokens": 29,
+        "output_tokens_details": {
+          "thinking_tokens": 0
+        },
+        "service_tier": "standard",
+        "inference_geo": "global",
+        "speed": "standard"
+      },
+      "seconds": 1.92,
+      "prompt_sha256": "132a53f9118327c5cf1715aab15dea5a3ee20015680da19417590a70759b22c3",
+      "checks": {
+        "word_limit": true,
+        "character_limit": true,
+        "single_line": true,
+        "abstained": false
+      }
+    },
+    {
+      "case_id": "d04",
+      "variant": "baseline",
+      "reason": "Unreliable narrators competing until you can't tell whose account to trust",
+      "raw_text": "{\"reason\":\"Unreliable narrators competing until you can't tell whose account to trust\"}",
+      "stop_reason": "end_turn",
+      "actual_model": "claude-opus-5-5",
+      "usage": {
+        "input_tokens": 832,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 0
+        },
+        "output_tokens": 32,
+        "output_tokens_details": {
+          "thinking_tokens": 0
+        },
+        "service_tier": "standard",
+        "inference_geo": "global",
+        "speed": "standard"
+      },
+      "seconds": 2.21,
+      "prompt_sha256": "c04241c4f120f2094e242a99e52748f1dd9b8f920cd404ad0e8dad2cde390b7f",
+      "checks": {
+        "word_limit": true,
+        "character_limit": true,
+        "single_line": true,
+        "abstained": false
+      }
+    },
+    {
+      "case_id": "d05",
+      "variant": "candidate",
+      "reason": "Loving, clear-eyed memory of parents whose devotion and damage coexist",
+      "raw_text": "{\"reason\":\"Loving, clear-eyed memory of parents whose devotion and damage coexist\"}",
+      "stop_reason": "end_turn",
+      "actual_model": "claude-opus-5-5",
+      "usage": {
+        "input_tokens": 945,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 0
+        },
+        "output_tokens": 36,
+        "output_tokens_details": {
+          "thinking_tokens": 0
+        },
+        "service_tier": "standard",
+        "inference_geo": "global",
+        "speed": "standard"
+      },
+      "seconds": 1.86,
+      "prompt_sha256": "42236136e4b586052403bd136d5dc1e8c88796b12596dbc861b44dbc04a751be",
+      "checks": {
+        "word_limit": true,
+        "character_limit": true,
+        "single_line": true,
+        "abstained": false
+      }
+    },
+    {
+      "case_id": "d01",
+      "variant": "candidate",
+      "reason": "Witty survival in space, powered by hands-on science and clever fixes",
+      "raw_text": "{\"reason\":\"Witty survival in space, powered by hands-on science and clever fixes\"}",
+      "stop_reason": "end_turn",
+      "actual_model": "claude-opus-5-5",
+      "usage": {
+        "input_tokens": 922,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 0
+        },
+        "output_tokens": 32,
+        "output_tokens_details": {
+          "thinking_tokens": 0
+        },
+        "service_tier": "standard",
+        "inference_geo": "global",
+        "speed": "standard"
+      },
+      "seconds": 2.34,
+      "prompt_sha256": "aefe1b27afca0a80af40b8209c870e0b58724106a73ab83c9cc73cbfcbcb450a",
+      "checks": {
+        "word_limit": true,
+        "character_limit": true,
+        "single_line": true,
+        "abstained": false
+      }
+    },
+    {
+      "case_id": "d01",
+      "variant": "baseline",
+      "reason": "Stranded alone, solving survival problems with science and wry humor",
+      "raw_text": "{\"reason\":\"Stranded alone, solving survival problems with science and wry humor\"}",
+      "stop_reason": "end_turn",
+      "actual_model": "claude-opus-5-5",
+      "usage": {
+        "input_tokens": 826,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 0
+        },
+        "output_tokens": 30,
+        "output_tokens_details": {
+          "thinking_tokens": 0
+        },
+        "service_tier": "standard",
+        "inference_geo": "global",
+        "speed": "standard"
+      },
+      "seconds": 2.75,
+      "prompt_sha256": "5fb109d15eb487338c181e8ac1f7430e389b1e306656a998bdfbbd5f8e2f0c28",
+      "checks": {
+        "word_limit": true,
+        "character_limit": true,
+        "single_line": true,
+        "abstained": false
+      }
+    },
+    {
+      "case_id": "d02",
+      "variant": "candidate",
+      "reason": "Young Dubliners navigating desire and shifting, tangled relationships",
+      "raw_text": "{\"reason\":\"Young Dubliners navigating desire and shifting, tangled relationships\"}",
+      "stop_reason": "end_turn",
+      "actual_model": "claude-opus-5-5",
+      "usage": {
+        "input_tokens": 938,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 0
+        },
+        "output_tokens": 33,
+        "output_tokens_details": {
+          "thinking_tokens": 0
+        },
+        "service_tier": "standard",
+        "inference_geo": "global",
+        "speed": "standard"
+      },
+      "seconds": 1.83,
+      "prompt_sha256": "7beb7d9de7511536d43e3bc999864efb57b73874cd20fac00535d3f5b8acbef9",
+      "checks": {
+        "word_limit": true,
+        "character_limit": true,
+        "single_line": true,
+        "abstained": false
+      }
+    },
+    {
+      "case_id": "d05",
+      "variant": "baseline",
+      "reason": "Love and damage intertwined in a memoir of an unconventional, chaotic upbringing",
+      "raw_text": "{\"reason\":\"Love and damage intertwined in a memoir of an unconventional, chaotic upbringing\"}",
+      "stop_reason": "end_turn",
+      "actual_model": "claude-opus-5-5",
+      "usage": {
+        "input_tokens": 849,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 0
+        },
+        "output_tokens": 39,
+        "output_tokens_details": {
+          "thinking_tokens": 0
+        },
+        "service_tier": "standard",
+        "inference_geo": "global",
+        "speed": "standard"
+      },
+      "seconds": 1.85,
+      "prompt_sha256": "31e78ebb091d4ef69e268cc8b1b2f6d3b9d7583a42c0d488e45d2e7c816c00dd",
+      "checks": {
+        "word_limit": true,
+        "character_limit": true,
+        "single_line": true,
+        "abstained": false
+      }
+    },
+    {
+      "case_id": "d06",
+      "variant": "candidate",
+      "reason": "Wonder laced with dread, where impossible things feel quietly real",
+      "raw_text": "{\"reason\":\"Wonder laced with dread, where impossible things feel quietly real\"}",
+      "stop_reason": "end_turn",
+      "actual_model": "claude-opus-5-5",
+      "usage": {
+        "input_tokens": 948,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 0
+        },
+        "output_tokens": 31,
+        "output_tokens_details": {
+          "thinking_tokens": 0
+        },
+        "service_tier": "standard",
+        "inference_geo": "global",
+        "speed": "standard"
+      },
+      "seconds": 2.38,
+      "prompt_sha256": "f144ccca8949cc2215fe7a72c93cb5dff742e850bf964bef5bd5d8e63b5fdcd0",
+      "checks": {
+        "word_limit": true,
+        "character_limit": true,
+        "single_line": true,
+        "abstained": false
+      }
+    }
+  ],
+  "status": "ready"
+}
