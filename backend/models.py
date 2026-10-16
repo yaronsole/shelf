@@ -68,6 +68,11 @@ class BookOverviewRequest(BaseModel):
     description_is_fallback: bool = False
 
 
+class BookRatingRequest(BaseModel):
+    title: str = Field(min_length=1, max_length=300)
+    author: str = Field(min_length=1, max_length=200)
+
+
 class SuggestionsRequest(BaseModel):
     seed_book_title: str
     seed_book_author: str

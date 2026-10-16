@@ -13,6 +13,7 @@ ANTHROPIC_API_KEY="${ANTHROPIC_API_KEY:-}"
 GOOGLE_BOOKS_API_KEY="${GOOGLE_BOOKS_API_KEY:-}"
 CRON_SECRET="${CRON_SECRET:-}"
 NYT_API_KEY="${NYT_API_KEY:-}"
+HARDCOVER_API_KEY="${HARDCOVER_API_KEY:-}"
 COMMUNITY_LIST_SIZE="${COMMUNITY_LIST_SIZE:-60}"
 # ─────────────────────────────────────────────────────────────────────────────
 
@@ -40,13 +41,18 @@ IMAGE_DIGEST=$(gcloud container images describe "$IMAGE:latest" \
 echo "  digest: $IMAGE_DIGEST"
 
 echo "▶ Deploying to Cloud Run: $SERVICE_NAME ($REGION)"
+# Preserve optional server credentials when they aren't supplied by this shell.
+ENV_UPDATES="ANTHROPIC_API_KEY=$ANTHROPIC_API_KEY,GOOGLE_BOOKS_API_KEY=$GOOGLE_BOOKS_API_KEY,CRON_SECRET=$CRON_SECRET,NYT_API_KEY=$NYT_API_KEY,COMMUNITY_LIST_SIZE=$COMMUNITY_LIST_SIZE"
+if [[ -n "$HARDCOVER_API_KEY" ]]; then
+  ENV_UPDATES+=",HARDCOVER_API_KEY=$HARDCOVER_API_KEY"
+fi
 gcloud run deploy "$SERVICE_NAME" \
   --project "$PROJECT_ID" \
   --image "$IMAGE@$IMAGE_DIGEST" \
   --region "$REGION" \
   --platform managed \
   --allow-unauthenticated \
-  --set-env-vars "ANTHROPIC_API_KEY=$ANTHROPIC_API_KEY,GOOGLE_BOOKS_API_KEY=$GOOGLE_BOOKS_API_KEY,CRON_SECRET=$CRON_SECRET,NYT_API_KEY=$NYT_API_KEY,COMMUNITY_LIST_SIZE=$COMMUNITY_LIST_SIZE" \
+  --update-env-vars "$ENV_UPDATES" \
   --memory 512Mi \
   --cpu 1 \
   --min-instances 0 \

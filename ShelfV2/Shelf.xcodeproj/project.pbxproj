@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		A16161616161616161616161 /* BookRatingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A16161616161616161616162 /* BookRatingView.swift */; };
 		073A57C1B8E184ECB508D30B /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = AEE65A95AA9D516A78DF7D9D /* Assets.xcassets */; };
 		08F38D0307A9E3050F084385 /* BookCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE8EDF4A47F6F9E4178D5737 /* BookCardView.swift */; };
 		097B8B7E963010C26A7ED3D5 /* ListDetailViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = B9630CB65578DEFE58EB9108 /* ListDetailViewModel.swift */; };
@@ -63,6 +64,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		A16161616161616161616162 /* BookRatingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BookRatingView.swift; sourceTree = "<group>"; };
 		095B1AFF9ADFD41FA8BCAB3A /* SeedBookSearchView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SeedBookSearchView.swift; sourceTree = "<group>"; };
 		0A0F51D0619ED12B7D71F19A /* BookCoverView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BookCoverView.swift; sourceTree = "<group>"; };
 		0EEE3A732552A1C887B8B77B /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
@@ -189,6 +191,7 @@
 			children = (
 				48D6969E3A40329AF660E34A /* AlreadyReadSheet.swift */,
 				0A0F51D0619ED12B7D71F19A /* BookCoverView.swift */,
+				A16161616161616161616162 /* BookRatingView.swift */,
 				8F8E1802500C18A43D64EBAD /* BookSearchView.swift */,
 				7AD600CEEBFB621B2BC16658 /* ColorHex.swift */,
 				7645C4F2E00DD48F412E16A8 /* EmptyStateView.swift */,
@@ -382,6 +385,7 @@
 				D45A91B8F859D3E0AAA63B6D /* AppState.swift in Sources */,
 				08F38D0307A9E3050F084385 /* BookCardView.swift in Sources */,
 				415CF0B8A6321AB931F51913 /* BookCoverView.swift in Sources */,
+				A16161616161616161616161 /* BookRatingView.swift in Sources */,
 				2EF22D7928641DD698ECFB71 /* BookDetailView.swift in Sources */,
 				576C11498DD4C5F698192CDF /* BookSearchResult.swift in Sources */,
 				B4CD8AD210A70422374BAF7C /* BookSearchView.swift in Sources */,
@@ -555,7 +559,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
-				CURRENT_PROJECT_VERSION = 128;
+				CURRENT_PROJECT_VERSION = 132;
 				DEVELOPMENT_TEAM = B464PS28T6;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = Shelf;
@@ -568,7 +572,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 2.3;
+				MARKETING_VERSION = 2.4;
 				PRODUCT_BUNDLE_IDENTIFIER = com.ysole.shelf;
 				SDKROOT = iphoneos;
 				SWIFT_VERSION = 5.1;
@@ -581,7 +585,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
-				CURRENT_PROJECT_VERSION = 128;
+				CURRENT_PROJECT_VERSION = 132;
 				DEVELOPMENT_TEAM = B464PS28T6;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = Shelf;
@@ -594,7 +598,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 2.3;
+				MARKETING_VERSION = 2.4;
 				PRODUCT_BUNDLE_IDENTIFIER = com.ysole.shelf;
 				SDKROOT = iphoneos;
 				SWIFT_VERSION = 5.1;

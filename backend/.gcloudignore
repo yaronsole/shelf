@@ -1,9 +1,10 @@
-# Keep the Cloud Build upload small and free of stale artifacts.
-__pycache__/
-*.py[cod]
+.gcloudignore
+.git
 .venv/
-venv/
-env/
-.DS_Store
+__pycache__/
+**/__pycache__/
+*.pyc
+.env
+.env.*
+*.secret
 *.log
-.pytest_cache/

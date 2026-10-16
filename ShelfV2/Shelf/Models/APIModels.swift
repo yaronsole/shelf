@@ -243,6 +243,42 @@ struct DebugInfoDTO: Decodable {
     }
 }
 
+// MARK: Optional aggregate book rating
+
+struct BookRatingRequest: Encodable {
+    let title: String
+    let author: String
+}
+
+struct BookRatingResponse: Decodable {
+    let rating: BookRatingDTO?
+}
+
+struct BookRatingDTO: Decodable {
+    let score: Double
+    let source: String
+    let fetchedAt: String
+
+    enum CodingKeys: String, CodingKey {
+        case score, source
+        case fetchedAt = "fetched_at"
+    }
+
+    func isDisplayable(at now: Date = .now) -> Bool {
+        guard source == "Hardcover", score.isFinite, score > 0, score <= 5 else { return false }
+        let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        var fetched = formatter.date(from: fetchedAt)
+        if fetched == nil {
+            formatter.formatOptions = [.withInternetDateTime]
+            fetched = formatter.date(from: fetchedAt)
+        }
+        guard let fetched else { return false }
+        let age = now.timeIntervalSince(fetched)
+        return age >= 0 && age < 7 * 24 * 60 * 60
+    }
+}
+
 // MARK: Book Overview (structured: synopsis + pull-quotes + accolade badges)
 
 struct BookOverviewRequest: Encodable {

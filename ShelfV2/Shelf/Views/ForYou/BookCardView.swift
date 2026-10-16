@@ -191,6 +191,8 @@ struct BookHeaderSection: View {
     /// The feed card ends the description with an inline "See more" (the whole
     /// card opens the detail page), so the cue costs no extra line.
     var showSeeMore: Bool = false
+    var showRating: Bool = false
+    @State private var rating: BookRatingDTO?
 
     private var quoteText: String { display.quote.isEmpty ? (fillQuote?.text ?? "") : display.quote }
     private var quoteSource: String { display.quote.isEmpty ? (fillQuote?.source ?? "") : display.quoteSource }
@@ -241,6 +243,9 @@ struct BookHeaderSection: View {
                         .font(.caption)
                         .foregroundStyle(.tertiary)
                 }
+                if showRating, let rating, rating.isDisplayable() {
+                    BookRatingView(rating: rating)
+                }
             }
             .padding(.horizontal, 16)
 
@@ -290,6 +295,13 @@ struct BookHeaderSection: View {
                 PullQuoteView(text: quoteText, source: quoteSource)
                     .padding(.horizontal, 16)
             }
+        }
+        .task(id: "\(showRating)|\(display.title)|\(display.author)") {
+            rating = nil
+            guard showRating else { return }
+            let result = try? await APIClient.shared.fetchBookRating(title: display.title, author: display.author)
+            guard !Task.isCancelled else { return }
+            rating = result
         }
     }
 }

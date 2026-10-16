@@ -1,0 +1,868 @@
+{
+  "reviewed_at": "2026-10-12",
+  "method": "100-book identity audit; null IDs are unresolved duplicates. No rating values are embedded.",
+  "books": [
+    {
+      "title": "Tomorrow, and Tomorrow, and Tomorrow",
+      "author": "Gabrielle Zevin",
+      "hardcover_id": 479910,
+      "hardcover_title": "Tomorrow, and Tomorrow, and Tomorrow",
+      "hardcover_authors": [
+        "Gabrielle Zevin"
+      ]
+    },
+    {
+      "title": "Crying in H Mart",
+      "author": "Michelle Zauner",
+      "hardcover_id": 428211,
+      "hardcover_title": "Crying in H Mart",
+      "hardcover_authors": [
+        "Michelle Zauner"
+      ]
+    },
+    {
+      "title": "Project Hail Mary",
+      "author": "Andy Weir",
+      "hardcover_id": 427578,
+      "hardcover_title": "Project Hail Mary",
+      "hardcover_authors": [
+        "Andy Weir"
+      ]
+    },
+    {
+      "title": "The Seven Husbands of Evelyn Hugo",
+      "author": "Taylor Jenkins Reid",
+      "hardcover_id": 340654,
+      "hardcover_title": "The Seven Husbands of Evelyn Hugo",
+      "hardcover_authors": [
+        "Taylor Jenkins Reid"
+      ]
+    },
+    {
+      "title": "Killers of the Flower Moon",
+      "author": "David Grann",
+      "hardcover_id": 434558,
+      "hardcover_title": "Killers of the Flower Moon: The Osage Murders and the Birth of the FBI",
+      "hardcover_authors": [
+        "David Grann"
+      ]
+    },
+    {
+      "title": "The Hate U Give",
+      "author": "Angie Thomas",
+      "hardcover_id": 386091,
+      "hardcover_title": "The Hate U Give",
+      "hardcover_authors": [
+        "Angie Thomas"
+      ]
+    },
+    {
+      "title": "Lessons in Chemistry",
+      "author": "Bonnie Garmus",
+      "hardcover_id": 490300,
+      "hardcover_title": "Lessons in Chemistry",
+      "hardcover_authors": [
+        "Bonnie Garmus"
+      ]
+    },
+    {
+      "title": "Educated",
+      "author": "Tara Westover",
+      "hardcover_id": 44186,
+      "hardcover_title": "Educated: A Memoir",
+      "hardcover_authors": [
+        "Tara Westover"
+      ]
+    },
+    {
+      "title": "Babel",
+      "author": "R. F. Kuang",
+      "hardcover_id": 496492,
+      "hardcover_title": "Babel, or The Necessity of Violence: An Arcane History of the Oxford Translators' Revolution",
+      "hardcover_authors": [
+        "R.F. Kuang"
+      ]
+    },
+    {
+      "title": "The Silent Patient",
+      "author": "Alex Michaelides",
+      "hardcover_id": 187993,
+      "hardcover_title": "The Silent Patient",
+      "hardcover_authors": [
+        "Alex Michaelides"
+      ]
+    },
+    {
+      "title": "Sapiens",
+      "author": "Yuval Noah Harari",
+      "hardcover_id": 375634,
+      "hardcover_title": "Sapiens: A Brief History of Humankind",
+      "hardcover_authors": [
+        "Yuval Noah Harari"
+      ]
+    },
+    {
+      "title": "Six of Crows",
+      "author": "Leigh Bardugo",
+      "hardcover_id": 1898835,
+      "hardcover_title": "Six of Crows",
+      "hardcover_authors": [
+        "Leigh Bardugo"
+      ]
+    },
+    {
+      "title": "Pachinko",
+      "author": "Min Jin Lee",
+      "hardcover_id": 127044,
+      "hardcover_title": "Pachinko",
+      "hardcover_authors": [
+        "Min Jin Lee"
+      ]
+    },
+    {
+      "title": "Normal People",
+      "author": "Sally Rooney",
+      "hardcover_id": 61787,
+      "hardcover_title": "Normal People",
+      "hardcover_authors": [
+        "Sally Rooney"
+      ]
+    },
+    {
+      "title": "Atomic Habits",
+      "author": "James Clear",
+      "hardcover_id": 428023,
+      "hardcover_title": "Atomic habits: An Easy & Proven Way to Build Good Habits & Break Bad Ones",
+      "hardcover_authors": [
+        "James Clear"
+      ]
+    },
+    {
+      "title": "Where the Crawdads Sing",
+      "author": "Delia Owens",
+      "hardcover_id": 428261,
+      "hardcover_title": "Where the Crawdads Sing",
+      "hardcover_authors": [
+        "Delia Owens"
+      ]
+    },
+    {
+      "title": "The Warmth of Other Suns",
+      "author": "Isabel Wilkerson",
+      "hardcover_id": 26303,
+      "hardcover_title": "The Warmth of Other Suns: The Epic Story of America's Great Migration",
+      "hardcover_authors": [
+        "Isabel Wilkerson"
+      ]
+    },
+    {
+      "title": "Beach Read",
+      "author": "Emily Henry",
+      "hardcover_id": 429002,
+      "hardcover_title": "Beach Read",
+      "hardcover_authors": [
+        "Emily Henry"
+      ]
+    },
+    {
+      "title": "The Three-Body Problem",
+      "author": "Liu Cixin",
+      "hardcover_id": 208339,
+      "hardcover_title": "The Three-Body Problem",
+      "hardcover_authors": [
+        "Cixin Liu",
+        "Ken Liu"
+      ]
+    },
+    {
+      "title": "Demon Copperhead",
+      "author": "Barbara Kingsolver",
+      "hardcover_id": 512106,
+      "hardcover_title": "Demon Copperhead",
+      "hardcover_authors": [
+        "Barbara Kingsolver"
+      ]
+    },
+    {
+      "title": "Born a Crime",
+      "author": "Trevor Noah",
+      "hardcover_id": 375699,
+      "hardcover_title": "Born A Crime: Stories from a South African Childhood",
+      "hardcover_authors": [
+        "Trevor Noah"
+      ]
+    },
+    {
+      "title": "The Fault in Our Stars",
+      "author": "John Green",
+      "hardcover_id": 197990,
+      "hardcover_title": "The Fault in Our Stars",
+      "hardcover_authors": [
+        "John Green"
+      ]
+    },
+    {
+      "title": "A Little Life",
+      "author": "Hanya Yanagihara",
+      "hardcover_id": 179241,
+      "hardcover_title": "A Little Life",
+      "hardcover_authors": [
+        "Hanya Yanagihara"
+      ]
+    },
+    {
+      "title": "The Body Keeps the Score",
+      "author": "Bessel van der Kolk",
+      "hardcover_id": 358355,
+      "hardcover_title": "The Body Keeps the Score: Brain, Mind, and Body in the Healing of Trauma",
+      "hardcover_authors": [
+        "Bessel van der Kolk"
+      ]
+    },
+    {
+      "title": "The Goldfinch",
+      "author": "Donna Tartt",
+      "hardcover_id": 381936,
+      "hardcover_title": "The Goldfinch",
+      "hardcover_authors": [
+        "Donna Tartt"
+      ]
+    },
+    {
+      "title": "Gone Girl",
+      "author": "Gillian Flynn",
+      "hardcover_id": 1145808,
+      "hardcover_title": "Gone Girl",
+      "hardcover_authors": [
+        "Gillian Flynn"
+      ]
+    },
+    {
+      "title": "Piranesi",
+      "author": "Susanna Clarke",
+      "hardcover_id": 175280,
+      "hardcover_title": "Piranesi",
+      "hardcover_authors": [
+        "Susanna Clarke"
+      ]
+    },
+    {
+      "title": "All the Light We Cannot See",
+      "author": "Anthony Doerr",
+      "hardcover_id": 478556,
+      "hardcover_title": "All the Light We Cannot See",
+      "hardcover_authors": [
+        "Anthony Doerr"
+      ]
+    },
+    {
+      "title": "Big Little Lies",
+      "author": "Liane Moriarty",
+      "hardcover_id": null
+    },
+    {
+      "title": "The Underground Railroad",
+      "author": "Colson Whitehead",
+      "hardcover_id": 1487609,
+      "hardcover_title": "The Underground Railroad",
+      "hardcover_authors": [
+        "Colson Whitehead"
+      ]
+    },
+    {
+      "title": "Convenience Store Woman",
+      "author": "Sayaka Murata",
+      "hardcover_id": 357003,
+      "hardcover_title": "Convenience Store Woman",
+      "hardcover_authors": [
+        "Sayaka Murata",
+        "Ginny Tapley Takemori"
+      ]
+    },
+    {
+      "title": "Norwegian Wood",
+      "author": "Haruki Murakami",
+      "hardcover_id": 776952,
+      "hardcover_title": "Norwegian Wood",
+      "hardcover_authors": [
+        "Haruki Murakami",
+        "Jay Rubin"
+      ]
+    },
+    {
+      "title": "One Hundred Years of Solitude",
+      "author": "Gabriel García Márquez",
+      "hardcover_id": 762271,
+      "hardcover_title": "One Hundred Years of Solitude",
+      "hardcover_authors": [
+        "Gabriel García Márquez"
+      ]
+    },
+    {
+      "title": "Quiet",
+      "author": "Susan Cain",
+      "hardcover_id": 817984,
+      "hardcover_title": "Quiet : The Power of Introverts in a World That Can't Stop Talking",
+      "hardcover_authors": [
+        "Susan Cain"
+      ]
+    },
+    {
+      "title": "Just Kids",
+      "author": "Patti Smith",
+      "hardcover_id": 376077,
+      "hardcover_title": "Just Kids",
+      "hardcover_authors": [
+        "Patti Smith"
+      ]
+    },
+    {
+      "title": "Between the World and Me",
+      "author": "Ta-Nehisi Coates",
+      "hardcover_id": 383308,
+      "hardcover_title": "Between the World and Me",
+      "hardcover_authors": [
+        "Ta-Nehisi Coates"
+      ]
+    },
+    {
+      "title": "When Breath Becomes Air",
+      "author": "Paul Kalanithi",
+      "hardcover_id": 381825,
+      "hardcover_title": "When Breath Becomes Air",
+      "hardcover_authors": [
+        "Abraham Verghese",
+        "Paul Kalanithi"
+      ]
+    },
+    {
+      "title": "Interpreter of Maladies",
+      "author": "Jhumpa Lahiri",
+      "hardcover_id": 431161,
+      "hardcover_title": "Interpreter of Maladies",
+      "hardcover_authors": [
+        "Jhumpa Lahiri"
+      ]
+    },
+    {
+      "title": "The Road",
+      "author": "Cormac McCarthy",
+      "hardcover_id": 36087,
+      "hardcover_title": "The Road",
+      "hardcover_authors": [
+        "Cormac McCarthy"
+      ]
+    },
+    {
+      "title": "The Master and Margarita",
+      "author": "Mikhail Bulgakov",
+      "hardcover_id": 473854,
+      "hardcover_title": "The Master and Margarita",
+      "hardcover_authors": [
+        "Mikhail Bulgakov",
+        "Katherine Tiernan O'Connor",
+        "Diana Lewis Burgin",
+        "Ellendea Proffer"
+      ]
+    },
+    {
+      "title": "In the Woods",
+      "author": "Tana French",
+      "hardcover_id": 353770,
+      "hardcover_title": "In the Woods",
+      "hardcover_authors": [
+        "Tana French"
+      ]
+    },
+    {
+      "title": "To Kill a Mockingbird",
+      "author": "Harper Lee",
+      "hardcover_id": 149361,
+      "hardcover_title": "To Kill A Mockingbird",
+      "hardcover_authors": [
+        "Harper Lee"
+      ]
+    },
+    {
+      "title": "Pride and Prejudice",
+      "author": "Jane Austen",
+      "hardcover_id": null
+    },
+    {
+      "title": "Slaughterhouse-Five",
+      "author": "Kurt Vonnegut",
+      "hardcover_id": null
+    },
+    {
+      "title": "Orbital",
+      "author": "Samantha Harvey",
+      "hardcover_id": 775856,
+      "hardcover_title": "Orbital",
+      "hardcover_authors": [
+        "Samantha Harvey"
+      ]
+    },
+    {
+      "title": "Lincoln in the Bardo",
+      "author": "George Saunders",
+      "hardcover_id": 377416,
+      "hardcover_title": "Lincoln in the Bardo",
+      "hardcover_authors": [
+        "George Saunders"
+      ]
+    },
+    {
+      "title": "Wolf Hall",
+      "author": "Hilary Mantel",
+      "hardcover_id": 153901,
+      "hardcover_title": "Wolf Hall",
+      "hardcover_authors": [
+        "Hilary Mantel"
+      ]
+    },
+    {
+      "title": "True History of the Kelly Gang",
+      "author": "Peter Carey",
+      "hardcover_id": 470308,
+      "hardcover_title": "True History of the Kelly Gang",
+      "hardcover_authors": [
+        "Peter Carey"
+      ]
+    },
+    {
+      "title": "Paddy Clarke Ha Ha Ha",
+      "author": "Roddy Doyle",
+      "hardcover_id": 42169,
+      "hardcover_title": "Paddy Clarke Ha Ha Ha",
+      "hardcover_authors": [
+        "Roddy Doyle"
+      ]
+    },
+    {
+      "title": "The Bone People",
+      "author": "Keri Hulme",
+      "hardcover_id": 204733,
+      "hardcover_title": "The Bone People",
+      "hardcover_authors": [
+        "Keri Hulme"
+      ]
+    },
+    {
+      "title": "Staying On",
+      "author": "Paul Scott",
+      "hardcover_id": 115491,
+      "hardcover_title": "Staying On",
+      "hardcover_authors": [
+        "Paul Scott"
+      ]
+    },
+    {
+      "title": "Something to Answer For",
+      "author": "P.H. Newby",
+      "hardcover_id": null
+    },
+    {
+      "title": "James",
+      "author": "Percival Everett",
+      "hardcover_id": 1010023,
+      "hardcover_title": "James",
+      "hardcover_authors": [
+        "Percival Everett"
+      ]
+    },
+    {
+      "title": "Yellowface",
+      "author": "R.F. Kuang",
+      "hardcover_id": 590689,
+      "hardcover_title": "Yellowface",
+      "hardcover_authors": [
+        "R.F. Kuang"
+      ]
+    },
+    {
+      "title": "Beautiful World, Where Are You",
+      "author": "Sally Rooney",
+      "hardcover_id": 432621,
+      "hardcover_title": "Beautiful World, Where Are You",
+      "hardcover_authors": [
+        "Sally Rooney"
+      ]
+    },
+    {
+      "title": "The Midnight Library",
+      "author": "Matt Haig",
+      "hardcover_id": 428018,
+      "hardcover_title": "The Midnight Library",
+      "hardcover_authors": [
+        "Matt Haig"
+      ]
+    },
+    {
+      "title": "Washington Black",
+      "author": "Esi Edugyan",
+      "hardcover_id": 169268,
+      "hardcover_title": "Washington Black",
+      "hardcover_authors": [
+        "Esi Edugyan"
+      ]
+    },
+    {
+      "title": "The Night Circus",
+      "author": "Erin Morgenstern",
+      "hardcover_id": 375064,
+      "hardcover_title": "The Night Circus",
+      "hardcover_authors": [
+        "Erin Morgenstern"
+      ]
+    },
+    {
+      "title": "The Girl with the Dragon Tattoo",
+      "author": "Stieg Larsson",
+      "hardcover_id": 1218611,
+      "hardcover_title": "The Girl with the Dragon Tattoo",
+      "hardcover_authors": [
+        "Stieg Larsson"
+      ]
+    },
+    {
+      "title": "The Help",
+      "author": "Kathryn Stockett",
+      "hardcover_id": 373226,
+      "hardcover_title": "The Help",
+      "hardcover_authors": [
+        "Kathryn Stockett"
+      ]
+    },
+    {
+      "title": "All Fours",
+      "author": "Miranda July",
+      "hardcover_id": 1217638,
+      "hardcover_title": "All Fours",
+      "hardcover_authors": [
+        "Miranda July"
+      ]
+    },
+    {
+      "title": "The Empusium",
+      "author": "Olga Tokarczuk",
+      "hardcover_id": 1250746,
+      "hardcover_title": "The Empusium: A Health Resort Horror Story",
+      "hardcover_authors": [
+        "Antonia Lloyd-Jones",
+        "Olga Tokarczuk"
+      ]
+    },
+    {
+      "title": "The Hunter",
+      "author": "Tana French",
+      "hardcover_id": 1083941,
+      "hardcover_title": "The Hunter",
+      "hardcover_authors": [
+        "Tana French"
+      ]
+    },
+    {
+      "title": "Piglet",
+      "author": "Lottie Hazell",
+      "hardcover_id": 922933,
+      "hardcover_title": "Piglet",
+      "hardcover_authors": [
+        "Lottie Hazell"
+      ]
+    },
+    {
+      "title": "Whale Fall",
+      "author": "Elizabeth O'Connor",
+      "hardcover_id": null
+    },
+    {
+      "title": "Challenger",
+      "author": "Adam Higginbotham",
+      "hardcover_id": null
+    },
+    {
+      "title": "John Lewis",
+      "author": "David Greenberg",
+      "hardcover_id": 1591850,
+      "hardcover_title": "John Lewis: A Life",
+      "hardcover_authors": [
+        "David Greenberg"
+      ]
+    },
+    {
+      "title": "There's Always This Year",
+      "author": "Hanif Abdurraqib",
+      "hardcover_id": 1099801,
+      "hardcover_title": "There's Always This Year: On Basketball and Ascension",
+      "hardcover_authors": [
+        "Hanif Abdurraqib"
+      ]
+    },
+    {
+      "title": "Intermezzo",
+      "author": "Sally Rooney",
+      "hardcover_id": null
+    },
+    {
+      "title": "The God of the Woods",
+      "author": "Liz Moore",
+      "hardcover_id": 1148409,
+      "hardcover_title": "The God of the Woods",
+      "hardcover_authors": [
+        "Liz Moore"
+      ]
+    },
+    {
+      "title": "Beautiful Days",
+      "author": "Zach Williams",
+      "hardcover_id": null
+    },
+    {
+      "title": "The Covenant of Water",
+      "author": "Abraham Verghese",
+      "hardcover_id": 659692,
+      "hardcover_title": "The Covenant of Water",
+      "hardcover_authors": [
+        "Abraham Verghese"
+      ]
+    },
+    {
+      "title": "The Removed",
+      "author": "Brandon Hobson",
+      "hardcover_id": 434660,
+      "hardcover_title": "The Removed",
+      "hardcover_authors": [
+        "Brandon Hobson"
+      ]
+    },
+    {
+      "title": "How to Be an Antiracist",
+      "author": "Ibram X. Kendi",
+      "hardcover_id": 433204,
+      "hardcover_title": "How to Be an Antiracist",
+      "hardcover_authors": [
+        "Ibram X. Kendi"
+      ]
+    },
+    {
+      "title": "The Water Dancer",
+      "author": "Ta-Nehisi Coates",
+      "hardcover_id": 432450,
+      "hardcover_title": "The Water Dancer",
+      "hardcover_authors": [
+        "Ta-Nehisi Coates"
+      ]
+    },
+    {
+      "title": "Evicted",
+      "author": "Matthew Desmond",
+      "hardcover_id": 386199,
+      "hardcover_title": "Evicted: Poverty and Profit in the American City",
+      "hardcover_authors": [
+        "Matthew Desmond"
+      ]
+    },
+    {
+      "title": "The Deep End of the Ocean",
+      "author": "Jacquelyn Mitchard",
+      "hardcover_id": 199700,
+      "hardcover_title": "The Deep End of the Ocean",
+      "hardcover_authors": [
+        "Jacquelyn Mitchard"
+      ]
+    },
+    {
+      "title": "Paradise",
+      "author": "Toni Morrison",
+      "hardcover_id": 384639,
+      "hardcover_title": "Paradise",
+      "hardcover_authors": [
+        "Toni Morrison"
+      ]
+    },
+    {
+      "title": "Tara Road",
+      "author": "Maeve Binchy",
+      "hardcover_id": 80296,
+      "hardcover_title": "Tara Road",
+      "hardcover_authors": [
+        "Maeve Binchy"
+      ]
+    },
+    {
+      "title": "Cane River",
+      "author": "Lalita Tademy",
+      "hardcover_id": null
+    },
+    {
+      "title": "As I Lay Dying",
+      "author": "William Faulkner",
+      "hardcover_id": 305151,
+      "hardcover_title": "As I Lay Dying",
+      "hardcover_authors": [
+        "William Faulkner"
+      ]
+    },
+    {
+      "title": "The Story of Edgar Sawtelle",
+      "author": "David Wroblewski",
+      "hardcover_id": null
+    },
+    {
+      "title": "An American Marriage",
+      "author": "Tayari Jones",
+      "hardcover_id": 51507,
+      "hardcover_title": "An American Marriage",
+      "hardcover_authors": [
+        "Tayari Jones"
+      ]
+    },
+    {
+      "title": "Wellness",
+      "author": "Nathan Hill",
+      "hardcover_id": null
+    },
+    {
+      "title": "Long Island Compromise",
+      "author": "Taffy Brodesser-Akner",
+      "hardcover_id": 1162700,
+      "hardcover_title": "Long Island Compromise",
+      "hardcover_authors": [
+        "Taffy Brodesser-Akner"
+      ]
+    },
+    {
+      "title": "The Sympathizer",
+      "author": "Viet Thanh Nguyen",
+      "hardcover_id": 432357,
+      "hardcover_title": "The Sympathizer",
+      "hardcover_authors": [
+        "Viet Thanh Nguyen"
+      ]
+    },
+    {
+      "title": "Gilead",
+      "author": "Marilynne Robinson",
+      "hardcover_id": 247430,
+      "hardcover_title": "Gilead",
+      "hardcover_authors": [
+        "Marilynne Robinson"
+      ]
+    },
+    {
+      "title": "Martin Dressler",
+      "author": "Steven Millhauser",
+      "hardcover_id": 286272,
+      "hardcover_title": "Martin Dressler",
+      "hardcover_authors": [
+        "Steven Millhauser"
+      ]
+    },
+    {
+      "title": "Breathing Lessons",
+      "author": "Anne Tyler",
+      "hardcover_id": 432367,
+      "hardcover_title": "Breathing Lessons",
+      "hardcover_authors": [
+        "Anne Tyler"
+      ]
+    },
+    {
+      "title": "The Executioner's Song",
+      "author": "Norman Mailer",
+      "hardcover_id": 178001,
+      "hardcover_title": "The Executioner's Song",
+      "hardcover_authors": [
+        "Norman Mailer",
+        "Dave Eggers"
+      ]
+    },
+    {
+      "title": "Collected Stories",
+      "author": "Jean Stafford",
+      "hardcover_id": 432381,
+      "hardcover_title": "The Collected Stories of Jean Stafford",
+      "hardcover_authors": [
+        "Jean Stafford",
+        "Joyce Carol Oates"
+      ]
+    },
+    {
+      "title": "Tales of the South Pacific",
+      "author": "James A. Michener",
+      "hardcover_id": 859112,
+      "hardcover_title": "Tales of the South Pacific",
+      "hardcover_authors": [
+        "James A. Michener"
+      ]
+    },
+    {
+      "title": "Eleanor Oliphant Is Completely Fine",
+      "author": "Gail Honeyman",
+      "hardcover_id": 39920,
+      "hardcover_title": "Eleanor Oliphant Is Completely Fine",
+      "hardcover_authors": [
+        "Gail Honeyman"
+      ]
+    },
+    {
+      "title": "The Last Mrs. Parrish",
+      "author": "Liv Constantine",
+      "hardcover_id": null
+    },
+    {
+      "title": "The Proposal",
+      "author": "Jasmine Guillory",
+      "hardcover_id": 437220,
+      "hardcover_title": "The Proposal",
+      "hardcover_authors": [
+        "Jasmine Guillory"
+      ]
+    },
+    {
+      "title": "The Guest List",
+      "author": "Lucy Foley",
+      "hardcover_id": 428504,
+      "hardcover_title": "The Guest List",
+      "hardcover_authors": [
+        "Lucy Foley"
+      ]
+    },
+    {
+      "title": "The Love Songs of W.E.B. Du Bois",
+      "author": "Honorée Fanonne Jeffers",
+      "hardcover_id": 436356,
+      "hardcover_title": "The Love Songs of W.E.B. Du Bois",
+      "hardcover_authors": [
+        "Honorée Fanonne Jeffers"
+      ]
+    },
+    {
+      "title": "Carrie Soto Is Back",
+      "author": "Taylor Jenkins Reid",
+      "hardcover_id": 495319,
+      "hardcover_title": "Carrie Soto Is Back",
+      "hardcover_authors": [
+        "Taylor Jenkins Reid"
+      ]
+    },
+    {
+      "title": "Bright Young Women",
+      "author": "Jessica Knoll",
+      "hardcover_id": 876726,
+      "hardcover_title": "Bright Young Women",
+      "hardcover_authors": [
+        "Jessica Knoll"
+      ]
+    },
+    {
+      "title": "The Maid",
+      "author": "Nita Prose",
+      "hardcover_id": 437709,
+      "hardcover_title": "The Maid",
+      "hardcover_authors": [
+        "Nita Prose"
+      ]
+    }
+  ]
+}

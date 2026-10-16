@@ -219,6 +219,7 @@ struct BookDetailSheet: View {
     @State private var inSentimentMode = false
     @State private var overview: BookOverviewDTO? = nil   // structured overview (fetched on open)
     @State private var overviewLoaded = false
+    @State private var rating: BookRatingDTO?
 
     private var contextLine: String {
         guard let year = book.year else { return listTitle }
@@ -247,6 +248,9 @@ struct BookDetailSheet: View {
                             Text(contextLine)
                                 .font(.caption)
                                 .foregroundStyle(.tertiary)
+                        }
+                        if let rating, rating.isDisplayable() {
+                            BookRatingView(rating: rating)
                         }
                     }
                     .padding(.horizontal, 16)
@@ -292,6 +296,12 @@ struct BookDetailSheet: View {
             }
             .animation(.easeInOut(duration: 0.22), value: inSentimentMode)
             .task { await loadOverview() }
+            .task(id: book.title + "|" + book.author) {
+                rating = nil
+                let result = try? await APIClient.shared.fetchBookRating(title: book.title, author: book.author)
+                guard !Task.isCancelled else { return }
+                rating = result
+            }
         }
     }
 
