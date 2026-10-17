@@ -100,7 +100,9 @@ rating volume and hidden counts are unchanged.
   Goldfinch; Dune still returned no accepted rating.
 - Interactive feed/popover behavior remains unverified with the connected tools.
 - Xcode confirmed build 133 uploaded after renewal of its Apple account session.
-  App Store Connect initially showed the build processing.
+  App Store Connect completed processing and showed Ready to Submit for external
+  testing. The existing internal Sole group uses automatic distribution; build
+  133 had not yet appeared in its build list at the subsequent check.
 
 ## Rollback
 
