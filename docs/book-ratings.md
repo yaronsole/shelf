@@ -99,7 +99,8 @@ rating volume and hidden counts are unchanged.
 - Live production checks returned scores for Project Hail Mary, Babel and The
   Goldfinch; Dune still returned no accepted rating.
 - Interactive feed/popover behavior remains unverified with the connected tools.
-- Upload is pending renewal of the Apple account session in Xcode.
+- Xcode confirmed build 133 uploaded after renewal of its Apple account session.
+  App Store Connect initially showed the build processing.
 
 ## Rollback
 
