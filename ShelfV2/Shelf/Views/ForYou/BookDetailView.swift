@@ -165,8 +165,7 @@ struct BookDetailView: View {
                     BookHeaderSection(
                         display: display,
                         fillQuote: overview?.pullQuotes.first.map { (text: $0.text, source: $0.source) },
-                        fillAccolades: overview?.accolades ?? [],
-                        showRating: true
+                        fillAccolades: overview?.accolades ?? []
                     )
 
                     overviewSection

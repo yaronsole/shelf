@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Optional PDP metadata. Loading and failure deliberately occupy no space.
+/// Optional book metadata. Loading and failure deliberately occupy no space.
 struct BookRatingView: View {
     let rating: BookRatingDTO
     @State private var showSource = false

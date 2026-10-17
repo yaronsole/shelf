@@ -6,7 +6,8 @@ link. VoiceOver names the score out of five and explains the source action.
 
 The same component appears below title/author metadata in both detail layouts:
 For You / Similar Books and Discover / search / saved books / community rankings.
-Feed cards do not request or display ratings. Rating loading is independent of
+For You and Similar Books cards use the same rating control in their shared header.
+The lazy For You feed loads ratings as cards appear. Rating loading is independent of
 overview generation; unavailable data renders no placeholder or error message.
 
 ## Source and identity
@@ -79,11 +80,26 @@ reset early by the provider, errors omit the control until the key is replaced.
   and candidate URLs; checks used the actual API routes and catalogue instead.
 - Xcode confirmed **Shelf 2.4 (132) uploaded** to App Store Connect. Upload success
   does not establish TestFlight processing completion or public App Store release.
-  The App Store Connect browser check requested sign-in, so TestFlight availability
-  remains unverified.
+  A subsequent signed-in App Store Connect check confirmed build 132 in the internal
+  Sole group and installed on the owner's iPhone. External testing remained Ready
+  to Submit.
 - Existing Cloud Run settings were preserved. The key is server-only; no personal
   libraries, reviews or profile permissions were granted.
 - [Implementation PR](https://github.com/yaronsole/shelf/pull/4).
+
+## Feed visibility correction — build 133
+
+The owner reported seeing no ratings while browsing several For You cards. Build
+132 had explicitly disabled rating loading in cards, even though the cards and
+detail screens share their header. The header now loads available ratings in both
+places, including Similar Books cards. The compact control, source popover, minimum
+rating volume and hidden counts are unchanged.
+
+- Simulator Debug build and signed Release archive succeeded for **2.4 (133)**.
+- Live production checks returned scores for Project Hail Mary, Babel and The
+  Goldfinch; Dune still returned no accepted rating.
+- Interactive feed/popover behavior remains unverified with the connected tools.
+- Upload is pending renewal of the Apple account session in Xcode.
 
 ## Rollback
 
