@@ -120,6 +120,8 @@ below the stars. Both layouts retain one accessible rating announcement.
   full and partial fills at 1.0, 3.5, 4.1, 4.5 and 5.0, in light and dark appearance,
   and the fallback at a constrained width. This is component rendering evidence,
   not an on-device iOS touch, popover or Dynamic Type check.
+- Xcode confirmed **Shelf 2.4 (134) uploaded**. The App Store Connect browser
+  session had expired, so TestFlight availability was not independently confirmed.
 
 ## Rollback
 
