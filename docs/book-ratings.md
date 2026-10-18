@@ -1,8 +1,12 @@
 # Book detail ratings
 
-Approved presentation: **★ 4.1 ⓘ**. The whole 44-point-high control opens a native
+Approved presentation: **five stars filled proportionally**, the numeric score and
+an info icon. A 4.1 rating fills four stars and 10% of the fifth; a 3.5 rating fills
+three stars and half of the fourth. The whole 44-point-high control opens a native
 popover saying **Ratings from Hardcover**. No visible label, count or outbound
 link. VoiceOver names the score out of five and explains the source action.
+The star row is decorative for VoiceOver, avoiding five redundant announcements.
+This replaces the single-star symbol in build **2.4 (134)**.
 
 The same component appears below title/author metadata in both detail layouts:
 For You / Similar Books and Discover / search / saved books / community rankings.
@@ -103,6 +107,19 @@ rating volume and hidden counts are unchanged.
   App Store Connect completed processing and showed Ready to Submit for external
   testing. The existing internal Sole group uses automatic distribution; build
   133 had not yet appeared in its build list at the subsequent check.
+
+## Five-star display — build 134
+
+The shared control now renders five outlined stars with a separate proportional
+fill for each star. The numeric score and source popover remain available in the
+same button. If the row cannot fit horizontally, the score and info icon move
+below the stars. Both layouts retain one accessible rating announcement.
+
+- Simulator Debug build and signed Release archive succeeded for **2.4 (134)**.
+- A native macOS SwiftUI ImageRenderer preview using the shared component confirmed
+  full and partial fills at 1.0, 3.5, 4.1, 4.5 and 5.0, in light and dark appearance,
+  and the fallback at a constrained width. This is component rendering evidence,
+  not an on-device iOS touch, popover or Dynamic Type check.
 
 ## Rollback
 
