@@ -9,14 +9,15 @@ struct BookRatingView: View {
         Group {
             if rating.isDisplayable() {
                 Button { showSource = true } label: {
-                    HStack(spacing: 6) {
-                        Image(systemName: "star.fill")
-                            .foregroundStyle(.secondary)
-                        Text(rating.score, format: .number.precision(.fractionLength(1)))
-                            .monospacedDigit()
-                        Image(systemName: "info.circle")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
+                    ViewThatFits(in: .horizontal) {
+                        HStack(spacing: 6) {
+                            RatingStars(score: rating.score)
+                            scoreAndInfo
+                        }
+                        VStack(spacing: 4) {
+                            RatingStars(score: rating.score)
+                            scoreAndInfo
+                        }
                     }
                     .font(.subheadline.weight(.medium))
                     .padding(.horizontal, 8)
@@ -34,5 +35,41 @@ struct BookRatingView: View {
                 }
             }
         }
+    }
+
+    private var scoreAndInfo: some View {
+        HStack(spacing: 6) {
+            Text(rating.score, format: .number.precision(.fractionLength(1)))
+                .monospacedDigit()
+            Image(systemName: "info.circle")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        }
+    }
+}
+
+/// Clip each star separately so the gaps never count toward the rating.
+private struct RatingStars: View {
+    let score: Double
+
+    var body: some View {
+        HStack(spacing: 3) {
+            ForEach(0..<5) { index in
+                Image(systemName: "star")
+                    .foregroundStyle(.secondary)
+                    .overlay {
+                        Image(systemName: "star.fill")
+                            .foregroundStyle(.primary)
+                            .mask {
+                                GeometryReader { geometry in
+                                    Rectangle()
+                                        .frame(width: geometry.size.width * min(max(score - Double(index), 0), 1))
+                                        .frame(maxWidth: .infinity, alignment: .leading)
+                                }
+                            }
+                    }
+            }
+        }
+        .accessibilityHidden(true)
     }
 }
